@@ -1,0 +1,11 @@
+# CHURN TRAINING DATA TEMPLATE
+# Remove this comment line before use.
+# Instructions:
+#   - Export 2+ years of billing history from your practice management system
+#   - One row = one client-year observation
+#   - label = 1 if client left within 12 months, 0 if they stayed
+#
+total_billed,yoy_billing_change,matters_opened,days_since_last_matter,disputes_this_year,writeoff_pct,gc_changed,days_since_last_contact,practice_area_count,label
+850000,-0.38,2,120,2,0.08,1,45,1,1
+1200000,0.12,5,30,0,0.02,0,7,3,0
+320000,-0.22,1,200,1,0.15,0,60,1,1

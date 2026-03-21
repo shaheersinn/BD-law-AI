@@ -1,0 +1,9 @@
+# URGENCY TRAINING DATA TEMPLATE
+# Remove this comment line before use.
+# One row = one company-90day observation
+# label = 1 if they retained outside counsel in the next 90 days
+#
+sedar_material_change,sedar_confidentiality,sedar_going_concern,edgar_sc13d,edgar_8k_auditor,edgar_8k_director,job_gc_hire,job_cco_urgent,job_privacy_counsel,job_ma_counsel,jet_baystreet_2x,satellite_parking_drop,permit_environmental,news_lawsuit,news_investigation,news_breach,linkedin_gc_spike,yoy_revenue_growth,leverage,stock_volatility_90d,label
+1,1,0,0,0,1,0,0,0,1,1,0,0,0,0,0,1,-0.15,0.65,0.28,1
+0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0.08,0.22,0.18,1
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.15,0.18,0.12,0
