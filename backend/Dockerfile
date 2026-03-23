@@ -1,32 +1,30 @@
-FROM python:3.12-slim
+# ORACLE Backend — Multi-stage Dockerfile
+# Stage 1: builder | Stage 2: minimal runtime
 
-# System deps for lxml, psycopg2, playwright
+FROM python:3.12-slim AS builder
+WORKDIR /build
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc g++ libpq-dev curl \
-    && rm -rf /var/lib/apt/lists/*
-
-WORKDIR /app
-
-# Install Python deps first (cached layer)
+    build-essential libpq-dev curl && rm -rf /var/lib/apt/lists/*
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN python -m venv /opt/venv && \
+    /opt/venv/bin/pip install --upgrade pip && \
+    /opt/venv/bin/pip install --no-cache-dir -r requirements.txt
 
-# Install spaCy English model
-RUN python -m spacy download en_core_web_sm
-
-# Install Playwright browsers (for JS-rendered portals)
-RUN playwright install chromium --with-deps
-
-# Copy application code
+FROM python:3.12-slim AS runtime
+WORKDIR /app
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq-dev curl && rm -rf /var/lib/apt/lists/*
+RUN groupadd -r oracle && useradd -r -g oracle -d /app -s /sbin/nologin oracle
+COPY --from=builder /opt/venv /opt/venv
 COPY . .
-
-# Create models directory
-RUN mkdir -p /app/models
-
-# Non-root user for security
-RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
-USER appuser
-
+RUN mkdir -p data/models data/raw data/features data/labels data/training && \
+    chown -R oracle:oracle /app
+USER oracle
+ENV PATH="/opt/venv/bin:$PATH"
+ENV PYTHONPATH="/app"
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:8000/api/health || exit 1
 EXPOSE 8000
-
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2", "--no-access-log"]

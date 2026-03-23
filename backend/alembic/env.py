@@ -1,8 +1,16 @@
 """
-alembic/env.py — async Alembic migration environment.
+alembic/env.py — Async Alembic migration environment for ORACLE.
+
+Configured for:
+  - Async SQLAlchemy 2.0 with asyncpg driver
+  - Auto-detection of all models via Base.metadata
+  - DATABASE_URL read from environment (not hardcoded)
 """
 
+from __future__ import annotations
+
 import asyncio
+import os
 from logging.config import fileConfig
 
 from alembic import context
@@ -10,11 +18,17 @@ from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
-# Import all models so Alembic autogenerate can see them
+# Import Base and ALL models so Alembic can detect them for autogenerate
 from app.database import Base
-import app.models  # noqa: F401 — registers all ORM models
+from app.auth.models import User  # noqa: F401
 
 config = context.config
+
+database_url = os.getenv(
+    "DATABASE_URL",
+    "postgresql+asyncpg://oracle:oracle@localhost:5432/oracle_db",
+)
+config.set_main_option("sqlalchemy.url", database_url)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
@@ -22,37 +36,34 @@ if config.config_file_name is not None:
 target_metadata = Base.metadata
 
 
-def get_url() -> str:
-    from app.config import get_settings
-    url = str(get_settings().database_url)
-    # alembic needs sync URL for migration generation
-    return url.replace("+asyncpg", "")
-
-
 def run_migrations_offline() -> None:
-    url = get_url()
+    url = config.get_main_option("sqlalchemy.url")
     context.configure(
         url=url,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
         compare_type=True,
+        compare_server_default=True,
     )
     with context.begin_transaction():
         context.run_migrations()
 
 
 def do_run_migrations(connection: Connection) -> None:
-    context.configure(connection=connection, target_metadata=target_metadata, compare_type=True)
+    context.configure(
+        connection=connection,
+        target_metadata=target_metadata,
+        compare_type=True,
+        compare_server_default=True,
+    )
     with context.begin_transaction():
         context.run_migrations()
 
 
 async def run_async_migrations() -> None:
-    cfg = config.get_section(config.config_ini_section, {})
-    cfg["sqlalchemy.url"] = get_url()
     connectable = async_engine_from_config(
-        cfg,
+        config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )

@@ -1,126 +1,212 @@
 version: "3.9"
 
+# ==============================================================================
+# ORACLE — Docker Compose (Local Development)
+#
+# Services:
+#   db        — PostgreSQL 15 (structured data)
+#   mongodb   — MongoDB 7 (social signals, corporate graph)
+#   redis     — Redis 7 (broker, cache, rate limiting)
+#   api       — FastAPI backend
+#   worker    — Celery worker (scrapers, features, scoring)
+#   beat      — Celery Beat scheduler (RedBeat)
+#   frontend  — React/Vite (development server)
+#
+# Start:    docker compose up
+# API:      http://localhost:8000/api/docs
+# Frontend: http://localhost:5173
+# Flower:   http://localhost:5555
+# ==============================================================================
+
 services:
-  # ── PostgreSQL ───────────────────────────────────────────────────────────────
+
+  # ── PostgreSQL ──────────────────────────────────────────────────────────────
   db:
-    image: postgres:16-alpine
+    image: postgres:15-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: bdforlaw
-      POSTGRES_PASSWORD: bdforlaw
-      POSTGRES_DB: bdforlaw
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+      POSTGRES_USER: oracle
+      POSTGRES_PASSWORD: oracle
+      POSTGRES_DB: oracle_db
     ports:
       - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U bdforlaw"]
+      test: ["CMD-SHELL", "pg_isready -U oracle -d oracle_db"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
 
-  # ── Redis ────────────────────────────────────────────────────────────────────
+  # ── MongoDB ─────────────────────────────────────────────────────────────────
+  mongodb:
+    image: mongo:7-jammy
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_DATABASE: oracle_signals
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  # ── Redis ───────────────────────────────────────────────────────────────────
   redis:
     image: redis:7-alpine
     restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
     ports:
       - "6379:6379"
+    volumes:
+      - redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # ── FastAPI backend ──────────────────────────────────────────────────────────
+  # ── FastAPI Backend ─────────────────────────────────────────────────────────
   api:
     build:
       context: ./backend
       dockerfile: Dockerfile
     restart: unless-stopped
+    command: >
+      sh -c "
+        cd /app &&
+        alembic upgrade head &&
+        python -m scripts.seed_db --skip-if-seeded &&
+        uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --reload-dir app
+      "
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - model_artifacts:/app/data/models
+    env_file:
+      - .env
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - DATABASE_URL=postgresql+asyncpg://oracle:oracle@db:5432/oracle_db
+      - MONGODB_URL=mongodb://mongodb:27017
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
-    environment:
-      DATABASE_URL: postgresql+asyncpg://bdforlaw:bdforlaw@db:5432/bdforlaw
-      REDIS_URL: redis://redis:6379/0
-      CELERY_BROKER_URL: redis://redis:6379/0
-      CELERY_RESULT_BACKEND: redis://redis:6379/1
-      ENVIRONMENT: production
-      # These come from .env or your deployment platform secrets:
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
-      SECRET_KEY: ${SECRET_KEY}
-      GROQ_API_KEY: ${GROQ_API_KEY:-}
-      SENDGRID_API_KEY: ${SENDGRID_API_KEY:-}
-      SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL:-}
-      CANLII_API_KEY: ${CANLII_API_KEY:-}
-      OPENSKY_USERNAME: ${OPENSKY_USERNAME:-}
-      OPENSKY_PASSWORD: ${OPENSKY_PASSWORD:-}
-      ALLOWED_ORIGINS: '["http://localhost:5173","http://localhost:3000","https://your-domain.com"]'
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./backend/models:/app/models  # persist trained ML models
-    command: >
-      sh -c "
-        alembic upgrade head &&
-        python -m scripts.seed_db &&
-        uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2
-      "
+      mongodb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
-  # ── Celery worker ────────────────────────────────────────────────────────────
+  # ── Celery Worker ───────────────────────────────────────────────────────────
   worker:
     build:
       context: ./backend
       dockerfile: Dockerfile
     restart: unless-stopped
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+    command: >
+      celery -A app.tasks.celery_app:celery_app worker
+      --loglevel=info
+      --concurrency=4
+      --queues=scrapers,features,scoring,agents,default
+      --max-tasks-per-child=1000
+    volumes:
+      - ./backend:/app
+      - model_artifacts:/app/data/models
+    env_file:
+      - .env
     environment:
-      DATABASE_URL: postgresql+asyncpg://bdforlaw:bdforlaw@db:5432/bdforlaw
-      REDIS_URL: redis://redis:6379/0
-      CELERY_BROKER_URL: redis://redis:6379/0
-      CELERY_RESULT_BACKEND: redis://redis:6379/1
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
-      SECRET_KEY: ${SECRET_KEY}
-      GROQ_API_KEY: ${GROQ_API_KEY:-}
-      CANLII_API_KEY: ${CANLII_API_KEY:-}
-      OPENSKY_USERNAME: ${OPENSKY_USERNAME:-}
-      OPENSKY_PASSWORD: ${OPENSKY_PASSWORD:-}
-    command: celery -A app.tasks.celery_app:celery_app worker --loglevel=info --concurrency=2
+      - ENVIRONMENT=development
+      - DATABASE_URL=postgresql+asyncpg://oracle:oracle@db:5432/oracle_db
+      - MONGODB_URL=mongodb://mongodb:27017
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+    depends_on:
+      - redis
+      - db
+      - mongodb
 
-  # ── Celery beat (scheduler) ─────────────────────────────────────────────────
+  # ── Celery Beat Scheduler ───────────────────────────────────────────────────
   beat:
     build:
       context: ./backend
       dockerfile: Dockerfile
     restart: unless-stopped
+    command: >
+      celery -A app.tasks.celery_app:celery_app beat
+      --loglevel=info
+      --scheduler redbeat.RedBeatScheduler
+    volumes:
+      - ./backend:/app
+    env_file:
+      - .env
+    environment:
+      - ENVIRONMENT=development
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
     depends_on:
       - redis
-    environment:
-      CELERY_BROKER_URL: redis://redis:6379/0
-      CELERY_RESULT_BACKEND: redis://redis:6379/1
-      DATABASE_URL: postgresql+asyncpg://bdforlaw:bdforlaw@db:5432/bdforlaw
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
-      SECRET_KEY: ${SECRET_KEY}
-    command: celery -A app.tasks.celery_app:celery_app beat --loglevel=info --scheduler celery.beat:PersistentScheduler
 
-  # ── React frontend (dev) ─────────────────────────────────────────────────────
-  frontend:
+  # ── Flower — Celery Monitoring ──────────────────────────────────────────────
+  flower:
     build:
-      context: ./frontend
+      context: ./backend
       dockerfile: Dockerfile
     restart: unless-stopped
+    command: >
+      celery -A app.tasks.celery_app:celery_app flower
+      --port=5555
+      --broker=redis://redis:6379/0
+    ports:
+      - "5555:5555"
+    env_file:
+      - .env
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    depends_on:
+      - redis
+    profiles:
+      - monitoring  # Only starts with: docker compose --profile monitoring up
+
+  # ── React Frontend (development) ────────────────────────────────────────────
+  frontend:
+    image: node:20-alpine
+    restart: unless-stopped
+    working_dir: /app
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules  # Anonymous volume prevents host node_modules from overwriting
+    environment:
+      - VITE_API_URL=http://localhost:8000
     depends_on:
       - api
-    ports:
-      - "3000:3000"
-    environment:
-      VITE_API_URL: http://localhost:8000
 
 volumes:
   postgres_data:
+    driver: local
+  mongodb_data:
+    driver: local
+  redis_data:
+    driver: local
+  model_artifacts:
+    driver: local

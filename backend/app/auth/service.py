@@ -1,167 +1,217 @@
 """
-app/auth/service.py — Authentication service.
+app/auth/service.py — Authentication business logic.
 
-Provides:
-  - Password hashing (bcrypt via passlib)
-  - JWT access + refresh token issuance
-  - Token verification and claims extraction
-  - Account lockout after repeated failures
+Handles:
+  - Password hashing (bcrypt with cost factor 12)
+  - JWT access and refresh token creation and verification
+  - Account lockout logic
+  - User authentication
+
+Security notes:
+  - bcrypt cost factor 12 is the industry standard for 2024
+  - Access tokens expire in 30 minutes (configurable)
+  - Refresh tokens expire in 7 days (configurable)
+  - Refresh tokens are stored as hashed values (treated like passwords)
+  - Tokens carry user_id and role claims only — no sensitive data
 """
 
-import logging
+from __future__ import annotations
+
 from datetime import datetime, timedelta, timezone
-from typing import Optional
+from typing import Literal
 
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
 
-from app.auth.models import User, UserRole
+from app.auth.models import User
 from app.config import get_settings
 
-log = logging.getLogger(__name__)
 settings = get_settings()
 
-_pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# bcrypt with cost factor 12 — standard for production authentication
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__rounds=12)
 
-# Token lifetimes
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 8    # 8 hours — full working day
-REFRESH_TOKEN_EXPIRE_DAYS   = 30
-ALGORITHM = "HS256"
-
-# Account lockout
-MAX_FAILED_ATTEMPTS = 5
-LOCKOUT_MINUTES = 15
+# Token type literals
+TokenType = Literal["access", "refresh"]
 
 
-# ── Password helpers ───────────────────────────────────────────────────────────
+# ── Password Utilities ─────────────────────────────────────────────────────────
 
-def hash_password(plain: str) -> str:
-    return _pwd_ctx.hash(plain)
-
-
-def verify_password(plain: str, hashed: str) -> bool:
-    return _pwd_ctx.verify(plain, hashed)
+def hash_password(password: str) -> str:
+    """Hash a plaintext password using bcrypt."""
+    return pwd_context.hash(password)
 
 
-# ── Token issuance ─────────────────────────────────────────────────────────────
-
-def _encode(data: dict, expire_delta: timedelta) -> str:
-    payload = data.copy()
-    payload["exp"] = datetime.now(timezone.utc) + expire_delta
-    payload["iat"] = datetime.now(timezone.utc)
-    return jwt.encode(payload, settings.secret_key, algorithm=ALGORITHM)
+def verify_password(plaintext: str, hashed: str) -> bool:
+    """Verify a plaintext password against a stored hash."""
+    return pwd_context.verify(plaintext, hashed)
 
 
-def create_access_token(user: User) -> str:
-    return _encode(
-        {
-            "sub": str(user.id),
-            "email": user.email,
-            "role": user.role.value,
-            "partner_id": user.partner_id,
-            "type": "access",
-        },
-        timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
+# ── JWT Token Utilities ────────────────────────────────────────────────────────
+
+def create_access_token(user_id: int, role: str) -> str:
+    """
+    Create a signed JWT access token.
+
+    Payload claims:
+      - sub: user ID (string) — "subject"
+      - role: user role
+      - type: "access"
+      - exp: expiry timestamp
+      - iat: issued-at timestamp
+    """
+    now = datetime.now(timezone.utc)
+    expire = now + timedelta(minutes=settings.access_token_expire_minutes)
+
+    payload = {
+        "sub": str(user_id),
+        "role": role,
+        "type": "access",
+        "iat": now,
+        "exp": expire,
+    }
+    return jwt.encode(payload, settings.secret_key, algorithm=settings.algorithm)
+
+
+def create_refresh_token(user_id: int) -> str:
+    """
+    Create a signed JWT refresh token.
+
+    Refresh tokens have a longer expiry and carry fewer claims.
+    They are stored hashed in the database to prevent theft.
+    """
+    now = datetime.now(timezone.utc)
+    expire = now + timedelta(days=settings.refresh_token_expire_days)
+
+    payload = {
+        "sub": str(user_id),
+        "type": "refresh",
+        "iat": now,
+        "exp": expire,
+    }
+    return jwt.encode(payload, settings.secret_key, algorithm=settings.algorithm)
+
+
+def decode_token(token: str, expected_type: TokenType) -> dict:  # type: ignore[type-arg]
+    """
+    Decode and validate a JWT token.
+
+    Args:
+        token: JWT token string
+        expected_type: "access" or "refresh"
+
+    Returns:
+        Token payload dict
+
+    Raises:
+        JWTError: If token is invalid, expired, or wrong type
+    """
+    payload = jwt.decode(
+        token,
+        settings.secret_key,
+        algorithms=[settings.algorithm],
     )
 
+    if payload.get("type") != expected_type:
+        raise JWTError(f"Expected {expected_type} token, got {payload.get('type')}")
 
-def create_refresh_token(user: User) -> str:
-    return _encode(
-        {"sub": str(user.id), "type": "refresh"},
-        timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS),
+    return payload
+
+
+# ── User Authentication ────────────────────────────────────────────────────────
+
+async def get_user_by_email(db: AsyncSession, email: str) -> User | None:
+    """Fetch user by email address."""
+    result = await db.execute(
+        select(User).where(User.email == email.lower().strip())
     )
+    return result.scalar_one_or_none()
 
 
-# ── Token verification ─────────────────────────────────────────────────────────
-
-class TokenClaims:
-    def __init__(self, sub: int, email: str, role: UserRole, partner_id: Optional[int]):
-        self.user_id   = sub
-        self.email     = email
-        self.role      = role
-        self.partner_id = partner_id
-
-    @property
-    def is_admin(self) -> bool:
-        return self.role == UserRole.admin
-
-    @property
-    def is_partner_or_above(self) -> bool:
-        return self.role in (UserRole.admin, UserRole.partner)
-
-    def can_write(self) -> bool:
-        return self.role in (UserRole.admin, UserRole.partner, UserRole.associate)
-
-
-def decode_token(token: str) -> TokenClaims:
-    """Decode and validate a JWT. Raises JWTError on failure."""
-    payload = jwt.decode(token, settings.secret_key, algorithms=[ALGORITHM])
-    if payload.get("type") != "access":
-        raise JWTError("Not an access token")
-    return TokenClaims(
-        sub=int(payload["sub"]),
-        email=payload["email"],
-        role=UserRole(payload["role"]),
-        partner_id=payload.get("partner_id"),
-    )
-
-
-# ── Database helpers ───────────────────────────────────────────────────────────
-
-async def get_user_by_email(email: str, db: AsyncSession) -> Optional[User]:
-    result = await db.execute(select(User).where(User.email == email.lower()))
-    return result.scalars().first()
+async def get_user_by_id(db: AsyncSession, user_id: int) -> User | None:
+    """Fetch user by primary key."""
+    result = await db.execute(select(User).where(User.id == user_id))
+    return result.scalar_one_or_none()
 
 
 async def authenticate_user(
-    email: str, password: str, db: AsyncSession
-) -> Optional[User]:
+    db: AsyncSession,
+    email: str,
+    password: str,
+) -> User | None:
     """
-    Verify credentials. Handles account lockout.
-    Returns the User on success, None on failure.
-    Updates failed_login_count on failure.
+    Authenticate a user by email and password.
+
+    Handles:
+      - Account lockout (returns None if locked)
+      - Failed attempt tracking
+      - Lockout after max attempts
+      - Successful login resets failed attempts
+
+    Returns:
+        User if authentication succeeds, None otherwise.
     """
-    user = await get_user_by_email(email, db)
-    if not user or not user.is_active:
+    user = await get_user_by_email(db, email)
+    if user is None:
+        # Perform a dummy password hash to prevent timing attacks
+        pwd_context.hash("dummy_password_to_prevent_timing_attack")
         return None
 
-    # Check lockout
-    if user.locked_until and user.locked_until > datetime.now(timezone.utc):
-        log.warning("Login attempt on locked account: %s", email)
+    # Check if account is locked
+    if user.is_locked:
         return None
 
+    # Verify password
     if not verify_password(password, user.hashed_password):
-        user.failed_login_count += 1
-        if user.failed_login_count >= MAX_FAILED_ATTEMPTS:
-            user.locked_until = datetime.now(timezone.utc) + timedelta(minutes=LOCKOUT_MINUTES)
-            log.warning("Account locked after %d failures: %s", MAX_FAILED_ATTEMPTS, email)
+        # Increment failed attempts
+        user.failed_login_attempts += 1
+
+        if user.failed_login_attempts >= settings.max_login_attempts:
+            user.locked_until = datetime.now(timezone.utc) + timedelta(
+                minutes=settings.lockout_duration_minutes
+            )
+
         await db.commit()
         return None
 
-    # Success — reset counters
-    user.failed_login_count = 0
+    # Successful login — reset security counters
+    user.failed_login_attempts = 0
     user.locked_until = None
-    user.last_login = datetime.now(timezone.utc)
+    user.last_login_at = datetime.now(timezone.utc)
     await db.commit()
+
     return user
 
 
 async def create_user(
-    email: str,
-    full_name: str,
-    password: str,
-    role: UserRole,
     db: AsyncSession,
-    partner_id: Optional[int] = None,
+    email: str,
+    password: str,
+    full_name: str,
+    role: str = "readonly",
 ) -> User:
+    """
+    Create a new user account.
+
+    Args:
+        db: Database session
+        email: User email (normalized to lowercase)
+        password: Plaintext password (hashed before storage)
+        full_name: Display name
+        role: User role (default: readonly)
+
+    Returns:
+        Created User object
+    """
     user = User(
-        email=email.lower(),
-        full_name=full_name,
+        email=email.lower().strip(),
         hashed_password=hash_password(password),
+        full_name=full_name,
         role=role,
-        partner_id=partner_id,
+        is_active=True,
+        is_verified=True,  # Admin-created users are pre-verified
     )
     db.add(user)
     await db.commit()

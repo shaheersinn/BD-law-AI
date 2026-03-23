@@ -1,116 +1,124 @@
 """
-app/middleware/rate_limiter.py — Redis-backed per-user rate limiting.
+app/middleware/rate_limiter.py — Per-user Redis-backed rate limiting.
 
-Separate limits by endpoint class:
-  - AI generation: 60 calls/hour (expensive, token-cost endpoint)
-  - Standard API:  600 calls/hour
-  - Auth:          20 attempts/hour (brute-force protection)
+Uses Redis sorted sets (sliding window algorithm) for accurate rate limiting.
+The sliding window approach is more accurate than fixed windows and prevents
+burst exploitation at window boundaries.
 
-Uses sliding window log algorithm for accuracy.
-Falls back to allow-all if Redis is unavailable (fail open).
+Rate limits:
+  - Default: 100 requests per hour per authenticated user
+  - Unauthenticated: 20 requests per hour per IP
+  - Health/version endpoints: exempt
 """
 
-import logging
+from __future__ import annotations
+
 import time
-from typing import Optional
+from typing import Callable
 
-from fastapi import HTTPException, Request, status
+import structlog
+from fastapi import Request, Response
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import JSONResponse
 
-from app.cache.client import cache
+log = structlog.get_logger(__name__)
 
-log = logging.getLogger(__name__)
-
-# ── Rate limit buckets ─────────────────────────────────────────────────────────
-
-LIMITS = {
-    "ai":       (60,  3600),   # 60 requests per hour
-    "standard": (600, 3600),   # 600 requests per hour
-    "auth":     (20,  3600),   # 20 attempts per hour
-    "scrape":   (10,  3600),   # 10 manual scrape triggers per hour
-}
+# Endpoints exempt from rate limiting
+EXEMPT_PATHS = {"/api/health", "/api/ready", "/api/version", "/api/docs", "/api/redoc"}
 
 
-async def check_rate_limit(
-    identifier: str,
-    limit_type: str = "standard",
-) -> tuple[bool, dict]:
+class RateLimitMiddleware(BaseHTTPMiddleware):
     """
-    Check if identifier (user_id or IP) has exceeded the rate limit.
+    Sliding window rate limiter using Redis sorted sets.
 
-    Returns:
-        (allowed: bool, headers: dict) — headers include RateLimit-* values
+    Algorithm:
+      1. Key = rate_limit:{user_id_or_ip}
+      2. Add current timestamp to sorted set with score=timestamp
+      3. Remove entries older than the window
+      4. Count remaining entries
+      5. If count > limit: return 429
+      6. Otherwise: proceed
 
-    Uses token bucket algorithm: increment counter, set expiry on first call.
+    This ensures requests are evenly distributed over time,
+    not just limited per window boundary.
     """
-    max_calls, window = LIMITS.get(limit_type, LIMITS["standard"])
-    key = f"rl:{limit_type}:{identifier}"
 
-    try:
-        count = await cache.incr(key)
-        if count == 1:
-            # First call in window — set expiry
-            await cache.expire(key, window)
+    async def dispatch(self, request: Request, call_next: Callable) -> Response:  # type: ignore[type-arg]
+        # Skip exempt paths
+        if request.url.path in EXEMPT_PATHS:
+            return await call_next(request)
 
-        remaining = max(0, max_calls - count)
-        allowed = count <= max_calls
+        # Get rate limit settings
+        from app.config import get_settings
+        settings = get_settings()
 
-        headers = {
-            "X-RateLimit-Limit":     str(max_calls),
-            "X-RateLimit-Remaining": str(remaining),
-            "X-RateLimit-Window":    str(window),
-        }
-        return allowed, headers
-
-    except Exception as e:
-        log.debug("Rate limit check failed (allowing): %s", e)
-        return True, {}
-
-
-async def enforce_rate_limit(
-    request: Request,
-    limit_type: str = "standard",
-    identifier: Optional[str] = None,
-) -> None:
-    """
-    FastAPI dependency — raises 429 if rate limit exceeded.
-    Identifier defaults to authenticated user ID or client IP.
-
-    Usage:
-        @router.post("/ai/brief")
-        async def brief(
-            _: None = Depends(lambda req=Request: enforce_rate_limit(req, "ai"))
-        ):
-    """
-    ident = identifier
-    if not ident:
-        # Prefer user ID from token (set by auth middleware)
+        # Determine rate limit key
         user_id = getattr(request.state, "user_id", None)
-        ident = str(user_id) if user_id else (
-            request.client.host if request.client else "unknown"
-        )
+        if user_id:
+            key = f"rate_limit:user:{user_id}"
+            limit = settings.rate_limit_requests
+        else:
+            # Use IP for unauthenticated requests
+            client_ip = self._get_client_ip(request)
+            key = f"rate_limit:ip:{client_ip}"
+            limit = 20  # Stricter limit for unauthenticated
 
-    allowed, headers = await check_rate_limit(ident, limit_type)
+        window_seconds = settings.rate_limit_window_seconds
 
-    # Always add rate limit headers
-    request.state.rate_limit_headers = headers
+        # Apply rate limit via Redis
+        try:
+            from app.cache.client import cache as redis_cache
+            allowed, remaining = await redis_cache.check_rate_limit(
+                key=key,
+                limit=limit,
+                window_seconds=window_seconds,
+            )
+        except Exception as e:
+            # Redis unavailable — fail open (allow request) to avoid service disruption
+            log.warning("Rate limit check failed (Redis unavailable), allowing request", error=str(e))
+            response = await call_next(request)
+            return response
 
-    if not allowed:
-        raise HTTPException(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail=f"Rate limit exceeded for {limit_type} endpoint. Try again later.",
-            headers={**headers, "Retry-After": "3600"},
-        )
+        if not allowed:
+            request_id = getattr(request.state, "request_id", "-")
+            log.warning(
+                "Rate limit exceeded",
+                key=key,
+                request_id=request_id,
+                path=str(request.url.path),
+            )
+            return JSONResponse(
+                status_code=429,
+                content={
+                    "error": "Rate limit exceeded. Please slow down.",
+                    "code": "RATE_LIMIT_EXCEEDED",
+                    "request_id": request_id,
+                    "path": str(request.url.path),
+                    "status_code": 429,
+                },
+                headers={
+                    "Retry-After": str(window_seconds),
+                    "X-RateLimit-Limit": str(limit),
+                    "X-RateLimit-Remaining": "0",
+                    "X-RateLimit-Reset": str(int(time.time()) + window_seconds),
+                },
+            )
 
+        response = await call_next(request)
+        response.headers["X-RateLimit-Limit"] = str(limit)
+        response.headers["X-RateLimit-Remaining"] = str(remaining)
+        return response
 
-# ── Convenience dependency factories ──────────────────────────────────────────
+    @staticmethod
+    def _get_client_ip(request: Request) -> str:
+        """
+        Extract client IP from request headers.
 
-def ai_rate_limit(request: Request):
-    """Use as: Depends(ai_rate_limit)"""
-    import asyncio
-    return asyncio.ensure_future(enforce_rate_limit(request, "ai"))
-
-
-def auth_rate_limit(request: Request):
-    """Use as: Depends(auth_rate_limit) on login endpoints"""
-    import asyncio
-    return asyncio.ensure_future(enforce_rate_limit(request, "auth"))
+        Respects X-Forwarded-For header for requests behind load balancers
+        (DigitalOcean App Platform injects this header).
+        """
+        forwarded_for = request.headers.get("X-Forwarded-For")
+        if forwarded_for:
+            # Take the first IP in the chain (client IP, not proxy IP)
+            return forwarded_for.split(",")[0].strip()
+        return request.client.host if request.client else "unknown"
