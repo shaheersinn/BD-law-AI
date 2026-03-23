@@ -1,279 +1,215 @@
 """
-app/models/signal.py — all intelligence signal ORM models.
-Covers: Prospect, Trigger, Alert, JetTrack, FootTrafficEvent,
-        SatelliteSignal, PermitFiling, RegulatoryAlert, CompetitorThreat.
+app/models/signal.py — Signal ORM model.
+
+A Signal is a single scraped data point that may indicate legal mandate need.
+
+Every scraper writes Signal records. The feature engineering pipeline (Phase 2)
+reads signals and transforms them into numeric features per company per day.
+
+Design:
+  - content_hash (SHA256) prevents duplicate signals from the same source
+  - practice_area_flags: 34-bit integer, one bit per practice area (bitmask)
+  - signal_strength: raw signal weight before ML calibration (0.0–1.0)
+  - source_reliability: trust score for the source (configured in BaseScraper)
 """
 
-import enum
+from __future__ import annotations
+
 from datetime import datetime
-from decimal import Decimal
+from typing import Optional
 
 from sqlalchemy import (
+    BigInteger,
     Boolean,
     DateTime,
-    Enum,
     Float,
     ForeignKey,
+    Index,
     Integer,
-    Numeric,
     String,
     Text,
     func,
 )
-from sqlalchemy.dialects.postgresql import ARRAY, JSONB
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
 
 
-# ── Enums ──────────────────────────────────────────────────────────────────────
+# ── Practice Area Bitmask Constants ───────────────────────────────────────────
+# Each practice area has a fixed bit position.
+# Signal.practice_area_flags is an integer bitmask.
+# Example: a signal relevant to M&A (bit 0) and Insolvency (bit 4) = 0b10001 = 17
 
-class AlertThreshold(str, enum.Enum):
-    critical = "CRITICAL"
-    high = "HIGH"
-    moderate = "MODERATE"
-    watch = "WATCH"
-
-
-class TriggerSource(str, enum.Enum):
-    sedar = "SEDAR"
-    edgar = "EDGAR"
-    canlii = "CANLII"
-    jobs = "JOBS"
-    osc = "OSC"
-    osfi = "OSFI"
-    fintrac = "FINTRAC"
-    comp_bureau = "COMP_BUREAU"
-    news = "NEWS"
-    linkedin = "LINKEDIN"
-
-
-# ── Prospect ───────────────────────────────────────────────────────────────────
-
-class Prospect(Base):
-    __tablename__ = "prospects"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    name: Mapped[str] = mapped_column(String(200), nullable=False, index=True)
-    industry: Mapped[str | None] = mapped_column(String(100))
-    region: Mapped[str | None] = mapped_column(String(100))
-
-    # Scoring
-    legal_urgency_score: Mapped[int] = mapped_column(Integer, default=0)   # 0-100
-    predicted_need: Mapped[str | None] = mapped_column(String(200))
-    estimated_value: Mapped[str | None] = mapped_column(String(50))
-    outreach_window: Mapped[str | None] = mapped_column(String(50))
-    warmth: Mapped[str] = mapped_column(String(20), default="cold")         # cold/lukewarm/warm
-
-    # Raw signals (JSON list of strings)
-    signals: Mapped[list] = mapped_column(JSONB, default=list)
-
-    score_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+PRACTICE_AREA_BITS = {
+    "ma_corporate": 0,
+    "litigation": 1,
+    "regulatory_compliance": 2,
+    "employment_labour": 3,
+    "insolvency_restructuring": 4,
+    "securities_capital_markets": 5,
+    "competition_antitrust": 6,
+    "privacy_cybersecurity": 7,
+    "environmental_indigenous_energy": 8,
+    "tax": 9,
+    "real_estate_construction": 10,
+    "banking_finance": 11,
+    "intellectual_property": 12,
+    "immigration_corporate": 13,
+    "infrastructure_project_finance": 14,
+    "wills_estates": 15,
+    "administrative_public_law": 16,
+    "arbitration": 17,
+    "class_actions": 18,
+    "construction_disputes": 19,
+    "defamation_media": 20,
+    "financial_regulatory": 21,
+    "franchise_distribution": 22,
+    "health_life_sciences": 23,
+    "insurance_reinsurance": 24,
+    "international_trade_customs": 25,
+    "mining_natural_resources": 26,
+    "municipal_land_use": 27,
+    "nfp_charity": 28,
+    "pension_benefits": 29,
+    "product_liability": 30,
+    "sports_entertainment": 31,
+    "technology_fintech_regulatory": 32,
+    "data_privacy_technology": 33,
+}
 
 
-# ── Live trigger feed ──────────────────────────────────────────────────────────
-
-class Trigger(Base):
+class Signal(Base):
     """
-    Real-time legal trigger — one row per detected event from any scraper.
-    Powers the Live Triggers page.
+    A single scraped data point relevant to legal mandate prediction.
+
+    Written by scrapers, read by the feature engineering pipeline.
+    Stored in PostgreSQL (not MongoDB — signals are structured with FK to Company).
     """
 
-    __tablename__ = "triggers"
+    __tablename__ = "signals"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    source: Mapped[TriggerSource] = mapped_column(
-        Enum(TriggerSource), nullable=False, index=True
-    )
-    trigger_type: Mapped[str] = mapped_column(String(100), nullable=False)
-    company_name: Mapped[str] = mapped_column(String(200), nullable=False, index=True)
-    client_id: Mapped[int | None] = mapped_column(
-        Integer, ForeignKey("clients.id"), index=True
-    )
+    # ── Primary Key ───────────────────────────────────────────────────────────
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
 
-    title: Mapped[str] = mapped_column(Text, nullable=False)
-    description: Mapped[str | None] = mapped_column(Text)
-    url: Mapped[str | None] = mapped_column(String(800))
-
-    filed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    detected_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
+    # ── Company FK ────────────────────────────────────────────────────────────
+    company_id: Mapped[Optional[int]] = mapped_column(
+        Integer,
+        ForeignKey("companies.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+        comment="Null until entity resolution links signal to a company",
     )
 
-    urgency: Mapped[int] = mapped_column(Integer, default=50)         # 0-100
-    practice_area: Mapped[str | None] = mapped_column(String(100))
-    practice_confidence: Mapped[int] = mapped_column(Integer, default=50)
-
-    # Partner feedback loop
-    confirmed: Mapped[bool | None] = mapped_column(Boolean)
-    dismissed: Mapped[bool | None] = mapped_column(Boolean)
-    matter_opened: Mapped[bool | None] = mapped_column(Boolean)
-    actioned: Mapped[bool] = mapped_column(Boolean, default=False)
-    actioned_by: Mapped[str | None] = mapped_column(String(100))
-
-    # Training features (computed nightly)
-    features: Mapped[dict | None] = mapped_column(JSONB)
-
-
-# ── Mandate alert (scored convergence) ─────────────────────────────────────────
-
-class Alert(Base):
-    """
-    Fired when a company's convergence score crosses a threshold.
-    One alert per threshold crossing per company.
-    """
-
-    __tablename__ = "alerts"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    company_name: Mapped[str] = mapped_column(String(200), nullable=False, index=True)
-    client_id: Mapped[int | None] = mapped_column(
-        Integer, ForeignKey("clients.id"), index=True
+    # ── Source Identification ─────────────────────────────────────────────────
+    scraper_name: Mapped[str] = mapped_column(
+        String(100), nullable=False, index=True,
+        comment="Scraper that produced this signal (e.g., 'osc_enforcement')"
     )
-    is_existing_client: Mapped[bool] = mapped_column(Boolean, default=False)
-
-    score: Mapped[float] = mapped_column(Float, nullable=False)
-    prev_score: Mapped[float | None] = mapped_column(Float)
-    threshold: Mapped[AlertThreshold] = mapped_column(Enum(AlertThreshold), nullable=False)
-
-    practice_area: Mapped[str | None] = mapped_column(String(100))
-    pa_confidence: Mapped[float | None] = mapped_column(Float)
-    top_signals: Mapped[list] = mapped_column(JSONB, default=list)
-    routed_to: Mapped[list] = mapped_column(JSONB, default=list)   # list of partner IDs
-
-    # Feedback
-    confirmed: Mapped[bool | None] = mapped_column(Boolean)
-    dismissed: Mapped[bool | None] = mapped_column(Boolean)
-    matter_opened: Mapped[bool | None] = mapped_column(Boolean)
-    matter_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("matters.id"))
-    mandate_confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-
-    fired_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), index=True
+    source_url: Mapped[Optional[str]] = mapped_column(
+        String(2000), nullable=True
     )
 
-
-# ── Geospatial signals ─────────────────────────────────────────────────────────
-
-class JetTrack(Base):
-    __tablename__ = "jet_tracks"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    company: Mapped[str] = mapped_column(String(200), nullable=False, index=True)
-    tail_number: Mapped[str] = mapped_column(String(20), nullable=False)
-    executive: Mapped[str | None] = mapped_column(String(200))
-    origin_icao: Mapped[str] = mapped_column(String(10), nullable=False)
-    origin_name: Mapped[str | None] = mapped_column(String(200))
-    dest_icao: Mapped[str] = mapped_column(String(10), nullable=False)
-    dest_name: Mapped[str | None] = mapped_column(String(200))
-    departed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    signal_text: Mapped[str | None] = mapped_column(Text)
-    predicted_mandate: Mapped[str | None] = mapped_column(String(200))
-    confidence: Mapped[int] = mapped_column(Integer, default=50)
-    relationship_warmth: Mapped[int] = mapped_column(Integer, default=0)
-    bay_street_trip_count: Mapped[int] = mapped_column(Integer, default=1)
-    is_flagged: Mapped[bool] = mapped_column(Boolean, default=False)
-    detected_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
+    # ── Signal Classification ─────────────────────────────────────────────────
+    signal_type: Mapped[str] = mapped_column(
+        String(100), nullable=False, index=True,
+        comment="e.g., enforcement_action, corporate_filing, job_posting, news_mention"
+    )
+    practice_area_flags: Mapped[int] = mapped_column(
+        BigInteger, nullable=False, default=0,
+        comment="34-bit bitmask — one bit per practice area"
+    )
+    primary_practice_area: Mapped[Optional[str]] = mapped_column(
+        String(100), nullable=True, index=True,
+        comment="Highest-confidence practice area for this signal"
     )
 
-
-class FootTrafficEvent(Base):
-    __tablename__ = "foot_traffic_events"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    target_company: Mapped[str] = mapped_column(String(200), nullable=False, index=True)
-    client_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("clients.id"))
-    location_name: Mapped[str] = mapped_column(String(300), nullable=False)
-    location_address: Mapped[str | None] = mapped_column(String(300))
-    location_type: Mapped[str] = mapped_column(String(50))  # competitor/regulator/bank
-    device_count: Mapped[int] = mapped_column(Integer, nullable=False)
-    avg_duration_minutes: Mapped[int | None] = mapped_column(Integer)
-    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    threat_assessment: Mapped[str | None] = mapped_column(Text)
-    severity: Mapped[str] = mapped_column(String(20), default="medium")
-    recommended_action: Mapped[str | None] = mapped_column(Text)
-    detected_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
+    # ── Signal Content ────────────────────────────────────────────────────────
+    title: Mapped[Optional[str]] = mapped_column(String(1000), nullable=True)
+    summary: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    raw_entity_name: Mapped[Optional[str]] = mapped_column(
+        String(500), nullable=True, index=True,
+        comment="Company name as it appeared in the source (before entity resolution)"
     )
 
-
-class SatelliteSignal(Base):
-    __tablename__ = "satellite_signals"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    company: Mapped[str] = mapped_column(String(200), nullable=False, index=True)
-    client_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("clients.id"))
-    location: Mapped[str] = mapped_column(String(200), nullable=False)
-    latitude: Mapped[float | None] = mapped_column(Float)
-    longitude: Mapped[float | None] = mapped_column(Float)
-    signal_type: Mapped[str] = mapped_column(String(50))  # Workforce/Construction/Environmental
-    observation: Mapped[str] = mapped_column(Text, nullable=False)
-    legal_inference: Mapped[str] = mapped_column(Text, nullable=False)
-    confidence: Mapped[int] = mapped_column(Integer, default=50)
-    urgency: Mapped[str] = mapped_column(String(20), default="medium")
-    lead_partner: Mapped[str | None] = mapped_column(String(100))
-    imagery_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    detected_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
+    # ── Deduplication ─────────────────────────────────────────────────────────
+    content_hash: Mapped[str] = mapped_column(
+        String(64), nullable=False, unique=True, index=True,
+        comment="SHA256 of (scraper_name + source_url + published_at.date) — prevents duplicates"
     )
 
-
-class PermitFiling(Base):
-    __tablename__ = "permit_filings"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    company: Mapped[str] = mapped_column(String(200), nullable=False, index=True)
-    client_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("clients.id"))
-    permit_type: Mapped[str] = mapped_column(String(200), nullable=False)
-    project_type: Mapped[str | None] = mapped_column(String(300))
-    location: Mapped[str] = mapped_column(String(200), nullable=False)
-    filed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    legal_work_triggered: Mapped[list] = mapped_column(JSONB, default=list)
-    urgency: Mapped[str] = mapped_column(String(20), default="medium")
-    estimated_fee: Mapped[str | None] = mapped_column(String(30))
-    lead_partner: Mapped[str | None] = mapped_column(String(100))
-    source_portal: Mapped[str | None] = mapped_column(String(100))
-    source_url: Mapped[str | None] = mapped_column(String(800))
-    detected_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
+    # ── Signal Quality ────────────────────────────────────────────────────────
+    signal_strength: Mapped[float] = mapped_column(
+        Float, nullable=False, default=0.5,
+        comment="Raw pre-ML signal weight 0.0–1.0"
+    )
+    source_reliability: Mapped[float] = mapped_column(
+        Float, nullable=False, default=0.8,
+        comment="Trust score for the source 0.0–1.0 (configured per scraper)"
     )
 
-
-# ── Regulatory alerts ──────────────────────────────────────────────────────────
-
-class RegulatoryAlert(Base):
-    __tablename__ = "regulatory_alerts"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    external_id: Mapped[str | None] = mapped_column(String(100), unique=True)
-    source: Mapped[str] = mapped_column(String(30), nullable=False, index=True)
-    title: Mapped[str] = mapped_column(Text, nullable=False)
-    summary: Mapped[str | None] = mapped_column(Text)
-    url: Mapped[str | None] = mapped_column(String(800))
-    practice_area: Mapped[str | None] = mapped_column(String(100))
-    severity: Mapped[str] = mapped_column(String(20), default="medium")
-    published_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    detected_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
+    # ── Entity Resolution ─────────────────────────────────────────────────────
+    entity_resolved: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, index=True,
+        comment="True after entity resolution has linked signal to a Company"
     )
-    affected_client_ids: Mapped[list] = mapped_column(JSONB, default=list)
-
-
-# ── Competitor intelligence ────────────────────────────────────────────────────
-
-class CompetitorThreat(Base):
-    __tablename__ = "competitor_threats"
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    firm_name: Mapped[str] = mapped_column(String(200), nullable=False)
-    signal: Mapped[str] = mapped_column(Text, nullable=False)
-    category: Mapped[str] = mapped_column(String(50))  # Lateral Hire/Practice Expansion/etc.
-    level: Mapped[str] = mapped_column(String(20), default="medium")
-    affected_clients: Mapped[list] = mapped_column(JSONB, default=list)
-    detected_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
+    entity_resolution_confidence: Mapped[Optional[float]] = mapped_column(
+        Float, nullable=True,
+        comment="Confidence of entity match 0.0–1.0"
     )
+
+    # ── Extra Metadata ────────────────────────────────────────────────────────
+    metadata: Mapped[Optional[dict]] = mapped_column(
+        JSONB, nullable=True,
+        comment="Source-specific fields (fine amount, case number, etc.)"
+    )
+
+    # ── Timestamps ────────────────────────────────────────────────────────────
+    published_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True, index=True,
+        comment="When the original event occurred / was published"
+    )
+    scraped_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), index=True
+    )
+
+    # ── Relationships ─────────────────────────────────────────────────────────
+    company: Mapped[Optional["Company"]] = relationship(  # type: ignore[name-defined]
+        "Company", back_populates="signals", lazy="noload"
+    )
+
+    # ── Indexes ───────────────────────────────────────────────────────────────
+    __table_args__ = (
+        Index("ix_signals_company_type_date", "company_id", "signal_type", "published_at"),
+        Index("ix_signals_practice_area", "primary_practice_area", "published_at"),
+        Index("ix_signals_unresolved", "entity_resolved", "scraped_at"),
+        Index("ix_signals_scraper_date", "scraper_name", "scraped_at"),
+    )
+
+    def __repr__(self) -> str:
+        return (
+            f"<Signal id={self.id} scraper={self.scraper_name!r} "
+            f"type={self.signal_type!r} company_id={self.company_id}>"
+        )
+
+    def has_practice_area(self, practice_area: str) -> bool:
+        """Check if this signal is relevant to a given practice area."""
+        bit = PRACTICE_AREA_BITS.get(practice_area)
+        if bit is None:
+            return False
+        return bool(self.practice_area_flags & (1 << bit))
+
+    def set_practice_area(self, practice_area: str) -> None:
+        """Set the bitmask bit for a given practice area."""
+        bit = PRACTICE_AREA_BITS.get(practice_area)
+        if bit is not None:
+            self.practice_area_flags |= 1 << bit
+
+    @property
+    def practice_areas(self) -> list[str]:
+        """Return list of practice area names from bitmask."""
+        return [
+            name
+            for name, bit in PRACTICE_AREA_BITS.items()
+            if self.practice_area_flags & (1 << bit)
+        ]
