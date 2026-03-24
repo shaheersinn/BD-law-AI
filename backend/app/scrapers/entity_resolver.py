@@ -14,11 +14,14 @@ Resolution hierarchy (highest confidence first):
 
 Resolved company_ids are cached in Redis (TTL: 24h) to avoid repeat DB lookups.
 """
+
 from __future__ import annotations
+
 import re
 import unicodedata
+
 import structlog
-from sqlalchemy import or_, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 log = structlog.get_logger(__name__)
@@ -45,11 +48,22 @@ def normalize_company_name(name: str) -> str:
 
     # Remove common legal suffixes
     suffixes = [
-        r"\binc\.?\b", r"\bltd\.?\b", r"\bcorp\.?\b", r"\bllc\.?\b",
-        r"\blp\.?\b", r"\bllp\.?\b", r"\bco\.?\b", r"\bcompany\b",
-        r"\bcorporation\b", r"\blimited\b", r"\bincorporated\b",
-        r"\bpartnership\b", r"\bholdings?\b", r"\bgroup\b",
-        r"\binternational\b", r"\bcanada\b",
+        r"\binc\.?\b",
+        r"\bltd\.?\b",
+        r"\bcorp\.?\b",
+        r"\bllc\.?\b",
+        r"\blp\.?\b",
+        r"\bllp\.?\b",
+        r"\bco\.?\b",
+        r"\bcompany\b",
+        r"\bcorporation\b",
+        r"\blimited\b",
+        r"\bincorporated\b",
+        r"\bpartnership\b",
+        r"\bholdings?\b",
+        r"\bgroup\b",
+        r"\binternational\b",
+        r"\bcanada\b",
     ]
     for suffix in suffixes:
         name = re.sub(suffix, "", name)
@@ -57,7 +71,13 @@ def normalize_company_name(name: str) -> str:
     # Remove punctuation
     name = re.sub(r"[^\w\s]", " ", name)
 
-    # Collapse whitespace
+    # Collapse whitespace once before stripping dangling stop words
+    name = re.sub(r"\s+", " ", name).strip()
+
+    # Remove dangling prepositions / stop words left after suffix removal
+    name = re.sub(r"\s+\b(of|the|and|de|du)\s*$", "", name).strip()
+
+    # Final collapse
     name = re.sub(r"\s+", " ", name).strip()
     return name
 
@@ -117,9 +137,7 @@ class EntityResolver:
             if cached is not None:
                 return cached, 1.0
 
-            result = await self._db.execute(
-                select(Company.id).where(Company.cik == cik).limit(1)
-            )
+            result = await self._db.execute(select(Company.id).where(Company.cik == cik).limit(1))
             row = result.scalar_one_or_none()
             if row:
                 await self._cache_set(cache_key, row)
@@ -155,9 +173,7 @@ class EntityResolver:
 
             # Check company table first
             result = await self._db.execute(
-                select(Company.id)
-                .where(Company.name_normalized == normalized)
-                .limit(1)
+                select(Company.id).where(Company.name_normalized == normalized).limit(1)
             )
             row = result.scalar_one_or_none()
             if row:
@@ -191,7 +207,8 @@ class EntityResolver:
 
     async def _fuzzy_match(self, normalized: str) -> tuple[int | None, float]:
         """Fuzzy name match using rapidfuzz. Returns (company_id, score)."""
-        from rapidfuzz import process, fuzz
+        from rapidfuzz import fuzz, process
+
         from app.models.company import Company
 
         result = await self._db.execute(
@@ -221,7 +238,7 @@ class EntityResolver:
                     company_id = int(val)
                     self._local_cache[key] = company_id
                     return company_id
-            except Exception:
+            except Exception:  # nosec B110
                 pass
         return None
 
@@ -230,5 +247,5 @@ class EntityResolver:
         if self._redis:
             try:
                 await self._redis.setex(key, ttl, str(company_id))
-            except Exception:
+            except Exception:  # nosec B110
                 pass

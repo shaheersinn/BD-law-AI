@@ -55,9 +55,7 @@ structlog.configure(
     cache_logger_on_first_use=True,
 )
 
-logging.basicConfig(
-    level=getattr(logging, settings.log_level.upper(), logging.INFO)
-)
+logging.basicConfig(level=getattr(logging, settings.log_level.upper(), logging.INFO))
 
 log = structlog.get_logger(__name__)
 
@@ -79,6 +77,7 @@ if settings.sentry_dsn:
 
 
 # ── Application Lifespan ───────────────────────────────────────────────────────
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):  # type: ignore[type-arg]
@@ -161,7 +160,10 @@ app = FastAPI(
 # Last added = outermost = first executed on incoming request.
 
 # Import middleware here to avoid circular imports at module level
-from app.middleware.error_handler import ErrorHandlerMiddleware, RequestLoggingMiddleware  # noqa: E402
+from app.middleware.error_handler import (  # noqa: E402
+    ErrorHandlerMiddleware,
+    RequestLoggingMiddleware,
+)
 from app.middleware.rate_limiter import RateLimitMiddleware  # noqa: E402
 
 app.add_middleware(RateLimitMiddleware)
@@ -178,6 +180,7 @@ app.add_middleware(
 
 
 # ── Exception Handlers ─────────────────────────────────────────────────────────
+
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
@@ -229,6 +232,11 @@ PREFIX = "/api"
 
 app.include_router(auth_router.router, prefix=PREFIX)
 
+# Phase 1B — Scraper Health Dashboard
+from app.routes.scrapers import router as scrapers_router  # noqa: E402
+
+app.include_router(scrapers_router, prefix=PREFIX)
+
 # Phase 1+ routers — stubs registered now, implemented in later phases
 # These are imported conditionally to avoid import errors during Phase 0
 # Uncomment as each phase is implemented:
@@ -243,6 +251,7 @@ app.include_router(auth_router.router, prefix=PREFIX)
 
 # ── System Endpoints ───────────────────────────────────────────────────────────
 
+
 @app.get("/api/health", tags=["system"], summary="Health check")
 async def health() -> dict:  # type: ignore[type-arg]
     """
@@ -256,6 +265,7 @@ async def health() -> dict:  # type: ignore[type-arg]
 
     # Import cache health check here to avoid circular imports
     from app.cache.client import cache as redis_cache
+
     redis_ok = await redis_cache.health_check()
 
     overall = "ok" if (pg_ok and mongo_ok and redis_ok) else "degraded"
@@ -328,7 +338,5 @@ if FRONTEND_DIST.exists():
             )
         return JSONResponse(
             status_code=503,
-            content={
-                "error": "Frontend not built. Run: cd frontend && npm run build"
-            },
+            content={"error": "Frontend not built. Run: cd frontend && npm run build"},
         )

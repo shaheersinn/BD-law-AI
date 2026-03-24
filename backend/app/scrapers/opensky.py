@@ -5,8 +5,7 @@ Schedule: daily at 3am, or on-demand for watch-list tail numbers.
 """
 
 import logging
-from datetime import datetime, timedelta, timezone
-from typing import Optional
+from datetime import UTC, datetime, timedelta
 
 import httpx
 
@@ -23,12 +22,18 @@ BAY_STREET_AIRPORTS = set(settings.jet_bay_street_airports)
 
 # Airports considered "deal hub" — adds to confidence
 DEAL_HUB_AIRPORTS = {
-    "KJFK", "KEWR", "KLGA",   # New York
-    "EGLL", "EGLC", "EGKK",   # London
-    "LFPG", "LFPO",            # Paris
-    "EHAM",                    # Amsterdam
-    "CYTZ", "CYYZ",            # Toronto
-    "CYVR",                    # Vancouver
+    "KJFK",
+    "KEWR",
+    "KLGA",  # New York
+    "EGLL",
+    "EGLC",
+    "EGKK",  # London
+    "LFPG",
+    "LFPO",  # Paris
+    "EHAM",  # Amsterdam
+    "CYTZ",
+    "CYYZ",  # Toronto
+    "CYVR",  # Vancouver
 }
 
 
@@ -43,7 +48,7 @@ class OpenSkyScraper(BaseScraper):
 
     def __init__(self) -> None:
         super().__init__()
-        self._auth: Optional[tuple[str, str]] = None
+        self._auth: tuple[str, str] | None = None
         if settings.opensky_username and settings.opensky_password:
             self._auth = (settings.opensky_username, settings.opensky_password)
 
@@ -68,10 +73,8 @@ class OpenSkyScraper(BaseScraper):
         Fetch flight history for one aircraft ICAO24 address.
         Returns list of {departure_airport, arrival_airport, departed_at, arrived_at}.
         """
-        end_ts = int(datetime.now(timezone.utc).timestamp())
-        start_ts = int(
-            (datetime.now(timezone.utc) - timedelta(days=days_back)).timestamp()
-        )
+        end_ts = int(datetime.now(UTC).timestamp())
+        start_ts = int((datetime.now(UTC) - timedelta(days=days_back)).timestamp())
 
         url = f"{OPENSKY_BASE}/flights/aircraft"
         params = {
@@ -92,11 +95,13 @@ class OpenSkyScraper(BaseScraper):
                 arr = flight.get("estArrivalAirport") or ""
                 depart_ts = flight.get("firstSeen", 0)
 
-                flights.append({
-                    "departure_airport": dep.upper(),
-                    "arrival_airport": arr.upper(),
-                    "departed_at": datetime.fromtimestamp(depart_ts, tz=timezone.utc),
-                })
+                flights.append(
+                    {
+                        "departure_airport": dep.upper(),
+                        "arrival_airport": arr.upper(),
+                        "departed_at": datetime.fromtimestamp(depart_ts, tz=UTC),
+                    }
+                )
             return flights
 
         except Exception as e:
@@ -110,19 +115,21 @@ class OpenSkyScraper(BaseScraper):
         executive: str,
         flights: list[dict],
         relationship_warmth: int = 0,
-    ) -> Optional[dict]:
+    ) -> dict | None:
         """
         Analyse flight history for Bay Street / deal-hub patterns.
         Returns a dict ready for JetTrack creation, or None if no signal.
         """
         bay_street_trips = [
-            f for f in flights
+            f
+            for f in flights
             if f["arrival_airport"] in BAY_STREET_AIRPORTS
             or f["departure_airport"] in BAY_STREET_AIRPORTS
         ]
 
-        deal_hub_trips = [
-            f for f in flights
+        [
+            f
+            for f in flights
             if f["arrival_airport"] in DEAL_HUB_AIRPORTS
             or f["departure_airport"] in DEAL_HUB_AIRPORTS
         ]

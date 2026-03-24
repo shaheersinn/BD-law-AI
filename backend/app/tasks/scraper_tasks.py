@@ -21,18 +21,21 @@ Beat schedule (defined in celery_app.py):
   geo          every 24 hours
   law_blogs    every 6 hours
 """
+
 from __future__ import annotations
+
 import asyncio
 import time
-from datetime import datetime, timezone
+from datetime import UTC
 from typing import Any
 
 import structlog
 
-from app.tasks.celery_app import celery_app
-from app.database import AsyncSessionLocal, get_motor_client
+from app.database import AsyncSessionLocal
+from app.database import get_mongo_client as get_motor_client
 from app.scrapers.registry import ScraperRegistry
 from app.scrapers.storage import persist_signals
+from app.tasks.celery_app import celery_app
 
 log = structlog.get_logger(__name__)
 
@@ -43,6 +46,7 @@ def _run_async(coro: Any) -> Any:
         loop = asyncio.get_event_loop()
         if loop.is_running():
             import concurrent.futures
+
             with concurrent.futures.ThreadPoolExecutor() as pool:
                 future = pool.submit(asyncio.run, coro)
                 return future.result(timeout=300)
@@ -80,31 +84,36 @@ async def _run_category(category_prefix: str) -> dict[str, Any]:
                 saved = await persist_signals(results, db, mongo_db)
                 elapsed = time.monotonic() - start
                 summary["signals"] += saved
-                summary["scraper_details"].append({
-                    "source_id": scraper.source_id,
-                    "records": saved,
-                    "duration_s": round(elapsed, 2),
-                    "status": "ok",
-                })
-                log.info("scraper_task_ok",
-                         source=scraper.source_id,
-                         saved=saved,
-                         duration=round(elapsed, 2))
+                summary["scraper_details"].append(
+                    {
+                        "source_id": scraper.source_id,
+                        "records": saved,
+                        "duration_s": round(elapsed, 2),
+                        "status": "ok",
+                    }
+                )
+                log.info(
+                    "scraper_task_ok",
+                    source=scraper.source_id,
+                    saved=saved,
+                    duration=round(elapsed, 2),
+                )
 
             except Exception as exc:
                 elapsed = time.monotonic() - start
                 summary["errors"] += 1
-                summary["scraper_details"].append({
-                    "source_id": scraper.source_id,
-                    "records": 0,
-                    "duration_s": round(elapsed, 2),
-                    "status": "error",
-                    "error": str(exc)[:200],
-                })
-                log.error("scraper_task_error",
-                          source=scraper.source_id,
-                          error=str(exc),
-                          exc_info=True)
+                summary["scraper_details"].append(
+                    {
+                        "source_id": scraper.source_id,
+                        "records": 0,
+                        "duration_s": round(elapsed, 2),
+                        "status": "error",
+                        "error": str(exc)[:200],
+                    }
+                )
+                log.error(
+                    "scraper_task_error", source=scraper.source_id, error=str(exc), exc_info=True
+                )
 
     return summary
 
@@ -121,7 +130,7 @@ async def _run_category(category_prefix: str) -> dict[str, Any]:
 def run_corporate_scrapers(self: Any) -> dict[str, Any]:
     """Run all corporate filing scrapers (SEDAR+, EDGAR, SEDI, etc.)."""
     log.info("task_start", task="run_corporate_scrapers")
-    result = _run_async(_run_category("corporate"))
+    result: dict[str, Any] = _run_async(_run_category("corporate"))  # type: ignore[assignment]
     log.info("task_complete", task="run_corporate_scrapers", **result)
     return result
 
@@ -138,7 +147,7 @@ def run_corporate_scrapers(self: Any) -> dict[str, Any]:
 def run_legal_scrapers(self: Any) -> dict[str, Any]:
     """Run all legal/court scrapers (CanLII, OSB, SCC, Competition Tribunal, etc.)."""
     log.info("task_start", task="run_legal_scrapers")
-    result = _run_async(_run_category("legal"))
+    result: dict[str, Any] = _run_async(_run_category("legal"))  # type: ignore[assignment]
     log.info("task_complete", task="run_legal_scrapers", **result)
     return result
 
@@ -155,7 +164,7 @@ def run_legal_scrapers(self: Any) -> dict[str, Any]:
 def run_regulatory_scrapers(self: Any) -> dict[str, Any]:
     """Run all regulatory scrapers (OSC, FINTRAC, OPC, OSFI, etc.)."""
     log.info("task_start", task="run_regulatory_scrapers")
-    result = _run_async(_run_category("regulatory"))
+    result: dict[str, Any] = _run_async(_run_category("regulatory"))  # type: ignore[assignment]
     log.info("task_complete", task="run_regulatory_scrapers", **result)
     return result
 
@@ -172,7 +181,7 @@ def run_regulatory_scrapers(self: Any) -> dict[str, Any]:
 def run_jobs_scrapers(self: Any) -> dict[str, Any]:
     """Run all job posting scrapers (Indeed, Job Bank, LinkedIn, etc.)."""
     log.info("task_start", task="run_jobs_scrapers")
-    result = _run_async(_run_category("jobs"))
+    result: dict[str, Any] = _run_async(_run_category("jobs"))  # type: ignore[assignment]
     log.info("task_complete", task="run_jobs_scrapers", **result)
     return result
 
@@ -189,7 +198,7 @@ def run_jobs_scrapers(self: Any) -> dict[str, Any]:
 def run_market_scrapers(self: Any) -> dict[str, Any]:
     """Run all market data scrapers (Alpha Vantage, Yahoo Finance, TMX, etc.)."""
     log.info("task_start", task="run_market_scrapers")
-    result = _run_async(_run_category("market"))
+    result: dict[str, Any] = _run_async(_run_category("market"))  # type: ignore[assignment]
     log.info("task_complete", task="run_market_scrapers", **result)
     return result
 
@@ -206,7 +215,7 @@ def run_market_scrapers(self: Any) -> dict[str, Any]:
 def run_news_scrapers(self: Any) -> dict[str, Any]:
     """Run all news scrapers (Globe, FP, BNN, CBC, Reuters, etc.)."""
     log.info("task_start", task="run_news_scrapers")
-    result = _run_async(_run_category("news"))
+    result: dict[str, Any] = _run_async(_run_category("news"))  # type: ignore[assignment]
     log.info("task_complete", task="run_news_scrapers", **result)
     return result
 
@@ -223,7 +232,7 @@ def run_news_scrapers(self: Any) -> dict[str, Any]:
 def run_social_scrapers(self: Any) -> dict[str, Any]:
     """Run all social scrapers (Reddit, Twitter, Stockhouse, HIBP, etc.)."""
     log.info("task_start", task="run_social_scrapers")
-    result = _run_async(_run_category("social"))
+    result: dict[str, Any] = _run_async(_run_category("social"))  # type: ignore[assignment]
     log.info("task_complete", task="run_social_scrapers", **result)
     return result
 
@@ -240,7 +249,7 @@ def run_social_scrapers(self: Any) -> dict[str, Any]:
 def run_geo_scrapers(self: Any) -> dict[str, Any]:
     """Run all geographic/macro scrapers (Google Trends, StatsCan, CIPO, etc.)."""
     log.info("task_start", task="run_geo_scrapers")
-    result = _run_async(_run_category("geo"))
+    result: dict[str, Any] = _run_async(_run_category("geo"))  # type: ignore[assignment]
     log.info("task_complete", task="run_geo_scrapers", **result)
     return result
 
@@ -257,7 +266,7 @@ def run_geo_scrapers(self: Any) -> dict[str, Any]:
 def run_law_blog_scrapers(self: Any) -> dict[str, Any]:
     """Run all 27 law firm blog scrapers + trend detector."""
     log.info("task_start", task="run_law_blog_scrapers")
-    result = _run_async(_run_category("lawblog"))
+    result: dict[str, Any] = _run_async(_run_category("lawblog"))  # type: ignore[assignment]
     log.info("task_complete", task="run_law_blog_scrapers", **result)
     return result
 
@@ -272,12 +281,13 @@ def run_law_blog_scrapers(self: Any) -> dict[str, Any]:
 )
 def health_check_all_scrapers() -> dict[str, Any]:
     """Run health checks on all registered scrapers and update ScraperHealth table."""
+
     async def _check_all() -> dict[str, Any]:
         scrapers = ScraperRegistry.all_scrapers()
         healthy = 0
         unhealthy = 0
         results = []
-        async with AsyncSessionLocal() as db:
+        async with AsyncSessionLocal():
             for scraper in scrapers:
                 try:
                     is_healthy = await asyncio.wait_for(scraper.health_check(), timeout=15.0)
@@ -285,22 +295,31 @@ def health_check_all_scrapers() -> dict[str, Any]:
                         healthy += 1
                     else:
                         unhealthy += 1
-                    results.append({
-                        "source_id": scraper.source_id,
-                        "healthy": is_healthy,
-                    })
+                    results.append(
+                        {
+                            "source_id": scraper.source_id,
+                            "healthy": is_healthy,
+                        }
+                    )
                 except Exception as exc:
                     unhealthy += 1
-                    results.append({
-                        "source_id": scraper.source_id,
-                        "healthy": False,
-                        "error": str(exc)[:100],
-                    })
+                    results.append(
+                        {
+                            "source_id": scraper.source_id,
+                            "healthy": False,
+                            "error": str(exc)[:100],
+                        }
+                    )
                 finally:
                     await scraper.close()
-        return {"total": len(scrapers), "healthy": healthy, "unhealthy": unhealthy, "details": results}
+        return {
+            "total": len(scrapers),
+            "healthy": healthy,
+            "unhealthy": unhealthy,
+            "details": results,
+        }
 
-    return _run_async(_check_all())
+    return _run_async(_check_all())  # type: ignore[no-any-return]
 
 
 # ── Single scraper trigger (on-demand) ────────────────────────────────────────
@@ -313,6 +332,7 @@ def health_check_all_scrapers() -> dict[str, Any]:
 )
 def run_single_scraper(source_id: str) -> dict[str, Any]:
     """Run a single scraper by source_id. Used for on-demand scraping."""
+
     async def _run() -> dict[str, Any]:
         scraper = ScraperRegistry.get(source_id)
         async with AsyncSessionLocal() as db:
@@ -323,4 +343,58 @@ def run_single_scraper(source_id: str) -> dict[str, Any]:
         await scraper.close()
         return {"source_id": source_id, "scraped": len(results), "saved": saved}
 
-    return _run_async(_run())
+    return _run_async(_run())  # type: ignore[no-any-return]
+
+
+# ── Canary System ─────────────────────────────────────────────────────────────
+
+
+@celery_app.task(
+    name="scrapers.canary_check",
+    queue="default",
+    max_retries=1,
+    soft_time_limit=120,
+    time_limit=150,
+)
+def run_canary_check() -> dict[str, Any]:
+    """
+    Synthetic end-to-end pipeline verification (Agent 008 — Canary).
+
+    Creates a synthetic ScraperResult, validates it with quality_validator,
+    and attempts to persist it. If any step fails, logs a CRITICAL alert.
+
+    Scheduled every 30 minutes via RedBeat.
+    """
+
+    async def _canary() -> dict[str, Any]:
+        from datetime import datetime  # noqa: PLC0415
+
+        from app.scrapers.base import ScraperResult  # noqa: PLC0415
+        from app.scrapers.quality_validator import validate_signal  # noqa: PLC0415
+
+        canary = ScraperResult(
+            source_id="canary",
+            signal_type="canary_heartbeat",
+            signal_text=f"CANARY-{datetime.now(tz=UTC).isoformat()}",
+            confidence_score=1.0,
+            practice_area_hints=["litigation"],
+            signal_value={"canary": True, "ts": datetime.now(tz=UTC).isoformat()},
+            is_negative_label=False,
+        )
+
+        # Step 1: Validate synthetic signal
+        vr = validate_signal(canary)
+        if not vr.valid:
+            log.critical("canary_validation_failed", errors=vr.errors)
+            return {"status": "FAIL", "stage": "validation", "errors": vr.errors}
+
+        # Step 2: Persist (dedup means it may not save every time — that's OK)
+        async with AsyncSessionLocal() as db:
+            motor = get_motor_client()
+            mongo_db = motor["oracle_signals"] if motor else None
+            saved = await persist_signals([canary], db, mongo_db)
+
+        log.info("canary_ok", saved=saved, validated=True)
+        return {"status": "OK", "saved": saved, "validated": True}
+
+    return _run_async(_canary())  # type: ignore[no-any-return]

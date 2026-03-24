@@ -6,8 +6,15 @@ from datetime import date, datetime
 from decimal import Decimal
 
 from sqlalchemy import (
-    Boolean, Date, DateTime, Float, ForeignKey,
-    Integer, Numeric, String, Text, func,
+    Boolean,
+    Date,
+    DateTime,
+    ForeignKey,
+    Integer,
+    Numeric,
+    String,
+    Text,
+    func,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -27,9 +34,7 @@ class Partner(Base):
     target_industries: Mapped[list] = mapped_column(JSONB, default=list)
     firm_name: Mapped[str] = mapped_column(String(200), default="Halcyon Legal Partners LLP")
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     # Relationships
     activities: Mapped[list["BDActivity"]] = relationship(
@@ -145,9 +150,7 @@ class WritingSample(Base):
     )
     text: Mapped[str] = mapped_column(Text, nullable=False)
     content_type: Mapped[str] = mapped_column(String(50), default="linkedin_post")
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     partner: Mapped["Partner"] = relationship("Partner", back_populates="writing_samples")
 
@@ -168,9 +171,7 @@ class ClientInquiry(Base):
         String(50), default="cold"
     )  # linkedin/article/referral/cold/event
     attributed_content_ids: Mapped[list] = mapped_column(JSONB, default=list)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
 class Alumni(Base):
@@ -188,6 +189,4 @@ class Alumni(Base):
     linkedin_url: Mapped[str | None] = mapped_column(String(400))
     has_active_trigger: Mapped[bool] = mapped_column(Boolean, default=False)
     trigger_description: Mapped[str | None] = mapped_column(Text)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

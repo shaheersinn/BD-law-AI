@@ -1,18 +1,23 @@
 """app/scrapers/filings/ciro.py — CIRO (formerly IIROC) enforcement and member notices."""
+
 from __future__ import annotations
+
 from app.scrapers.base import BaseScraper, SignalData
 
+
 class CiroScraper(BaseScraper):
-    NAME = "ciro_enforcement"
-    CATEGORY = "filings"
+    source_id = "corporate_ciro"
+    source_name = "CIRO Enforcement"
+    CATEGORY = "corporate"
+    signal_types = ["enforcement_action"]
     SOURCE_URL = "https://www.ciro.ca"
-    RATE_LIMIT_RPS = 1.0
-    MAX_CONCURRENT = 2
+    rate_limit_rps = 1.0
+    concurrency = 2
     SOURCE_RELIABILITY = 0.95
 
     _ENFORCEMENT_URL = "https://www.ciro.ca/enforcement/disciplinary-proceedings"
 
-    async def run(self) -> list[SignalData]:
+    async def scrape(self) -> list[SignalData]:
         signals: list[SignalData] = []
         soup = await self.get_soup(self._ENFORCEMENT_URL)
         if soup is None:
@@ -29,16 +34,21 @@ class CiroScraper(BaseScraper):
                 continue
             if link and not link.startswith("http"):
                 link = f"{self.SOURCE_URL}{link}"
-            signals.append(SignalData(
-                scraper_name=self.NAME,
-                signal_type="enforcement_action",
-                raw_entity_name=title,
-                title=f"CIRO enforcement: {title}",
-                summary=f"CIRO disciplinary proceeding: {title}",
-                source_url=link,
-                published_at=self.parse_date(date_str),
-                practice_areas=["financial_regulatory", "securities_capital_markets", "regulatory_compliance"],
-                signal_strength=0.85,
-                metadata={"regulator": "CIRO"},
-            ))
+            signals.append(
+                SignalData(
+                    source_id=self.source_id,
+                    signal_type="enforcement_action",
+                    raw_company_name=title,
+                    signal_text=f"CIRO disciplinary proceeding: {title}",
+                    source_url=link,
+                    published_at=self.parse_date(date_str),
+                    practice_area_hints=[
+                        "financial_regulatory",
+                        "securities_capital_markets",
+                        "regulatory_compliance",
+                    ],
+                    confidence_score=0.85,
+                    signal_value={"regulator": "CIRO", "title": f"CIRO enforcement: {title}"},
+                )
+            )
         return signals

@@ -14,7 +14,8 @@ Rate limits:
 from __future__ import annotations
 
 import time
-from typing import Callable
+from collections.abc import Callable
+from typing import cast
 
 import structlog
 from fastapi import Request, Response
@@ -46,10 +47,11 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: Callable) -> Response:  # type: ignore[type-arg]
         # Skip exempt paths
         if request.url.path in EXEMPT_PATHS:
-            return await call_next(request)
+            return cast(Response, await call_next(request))  # type: ignore[no-any-return]
 
         # Get rate limit settings
         from app.config import get_settings
+
         settings = get_settings()
 
         # Determine rate limit key
@@ -68,6 +70,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         # Apply rate limit via Redis
         try:
             from app.cache.client import cache as redis_cache
+
             allowed, remaining = await redis_cache.check_rate_limit(
                 key=key,
                 limit=limit,
@@ -75,9 +78,10 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             )
         except Exception as e:
             # Redis unavailable — fail open (allow request) to avoid service disruption
-            log.warning("Rate limit check failed (Redis unavailable), allowing request", error=str(e))
-            response = await call_next(request)
-            return response
+            log.warning(
+                "Rate limit check failed (Redis unavailable), allowing request", error=str(e)
+            )
+            return cast(Response, await call_next(request))
 
         if not allowed:
             request_id = getattr(request.state, "request_id", "-")
@@ -104,7 +108,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 },
             )
 
-        response = await call_next(request)
+        response = cast(Response, await call_next(request))
         response.headers["X-RateLimit-Limit"] = str(limit)
         response.headers["X-RateLimit-Remaining"] = str(remaining)
         return response

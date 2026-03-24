@@ -17,10 +17,14 @@ Signal types:
 
 Rate: 0.1 rps (Stats Canada WDS allows bulk downloads)
 """
+
 from __future__ import annotations
+
 import csv
 import io
+
 import structlog
+
 from app.scrapers.base import BaseScraper, ScraperResult
 from app.scrapers.registry import register
 
@@ -31,10 +35,13 @@ _STATSCAN_API = "https://www150.statcan.gc.ca/t1/tbl1/en/dtbl/downloadTbl/csvDow
 
 
 _TABLES = [
-    ("3510002701", "geo_statscan_court_volume", ["litigation", "class_actions"],
-     "Court cases by type of offence"),
-    ("1410001701", "geo_statscan_employment_stress", ["employment"],
-     "Job vacancies by industry"),
+    (
+        "3510002701",
+        "geo_statscan_court_volume",
+        ["litigation", "class_actions"],
+        "Court cases by type of offence",
+    ),
+    ("1410001701", "geo_statscan_employment_stress", ["employment"], "Job vacancies by industry"),
 ]
 
 
@@ -42,6 +49,7 @@ _TABLES = [
 class StatsCanScraper(BaseScraper):
     source_id = "geo_statscan"
     source_name = "Statistics Canada (WDS)"
+    CATEGORY = "geo"
     signal_types = ["geo_statscan_court_volume", "geo_statscan_employment_stress"]
     rate_limit_rps = 0.1
     concurrency = 1
@@ -69,23 +77,27 @@ class StatsCanScraper(BaseScraper):
                 for row in recent:
                     if not any(row.values()):
                         continue
-                    results.append(ScraperResult(
-                        source_id=self.source_id,
-                        signal_type=signal_type,
-                        signal_value={
-                            "table_pid": pid,
-                            "description": description,
-                            "period": row.get("REF_DATE") or row.get("Date", ""),
-                            "value": row.get("VALUE") or row.get("Value", ""),
-                            "geography": row.get("GEO") or row.get("Geography", ""),
-                            "indicator": row.get("Statistics") or row.get("Indicator", ""),
-                        },
-                        signal_text=f"Stats Canada {description}: {row.get('VALUE', '')} ({row.get('REF_DATE', '')})",
-                        published_at=self._parse_date(row.get("REF_DATE") or row.get("Date", "")),
-                        practice_area_hints=hints,
-                        raw_payload=dict(row),
-                        confidence_score=0.9,
-                    ))
+                    results.append(
+                        ScraperResult(
+                            source_id=self.source_id,
+                            signal_type=signal_type,
+                            signal_value={
+                                "table_pid": pid,
+                                "description": description,
+                                "period": row.get("REF_DATE") or row.get("Date", ""),
+                                "value": row.get("VALUE") or row.get("Value", ""),
+                                "geography": row.get("GEO") or row.get("Geography", ""),
+                                "indicator": row.get("Statistics") or row.get("Indicator", ""),
+                            },
+                            signal_text=f"Stats Canada {description}: {row.get('VALUE', '')} ({row.get('REF_DATE', '')})",
+                            published_at=self._parse_date(
+                                row.get("REF_DATE") or row.get("Date", "")
+                            ),
+                            practice_area_hints=hints,
+                            raw_payload=dict(row),
+                            confidence_score=0.9,
+                        )
+                    )
                 await self._rate_limit_sleep()
             except Exception as exc:
                 log.error("statscan_table_error", pid=pid, error=str(exc))

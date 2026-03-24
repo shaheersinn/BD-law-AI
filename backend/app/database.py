@@ -15,7 +15,7 @@ Design decisions:
 from __future__ import annotations
 
 import logging
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from sqlalchemy import text
@@ -36,6 +36,7 @@ settings = get_settings()
 
 # ── SQLAlchemy Base ────────────────────────────────────────────────────────────
 
+
 class Base(DeclarativeBase):
     """
     Declarative base for all SQLAlchemy ORM models.
@@ -43,10 +44,12 @@ class Base(DeclarativeBase):
     All models in app/models/ must inherit from this class.
     Metadata is shared across all models for Alembic migration discovery.
     """
+
     pass
 
 
 # ── PostgreSQL Engine ──────────────────────────────────────────────────────────
+
 
 def _create_engine() -> AsyncEngine:
     """
@@ -120,7 +123,7 @@ async def check_db_connection() -> bool:
             await conn.execute(text("SELECT 1"))
         return True
     except Exception as e:
-        log.error("PostgreSQL health check failed", error=str(e))
+        log.error("PostgreSQL health check failed", error=str(e))  # type: ignore[call-arg]
         return False
 
 
@@ -152,10 +155,10 @@ def get_mongo_client() -> AsyncIOMotorClient:
             settings.mongodb_url,
             maxPoolSize=settings.mongodb_max_pool_size,
             serverSelectionTimeoutMS=5000,  # 5s timeout for server selection
-            connectTimeoutMS=10000,          # 10s connection timeout
-            socketTimeoutMS=30000,           # 30s socket timeout
+            connectTimeoutMS=10000,  # 10s connection timeout
+            socketTimeoutMS=30000,  # 30s socket timeout
         )
-        log.info("MongoDB client created", url=settings.mongodb_url[:30] + "...")
+        log.info("MongoDB client created", url=settings.mongodb_url[:30] + "...")  # type: ignore[call-arg]
     return _mongo_client
 
 
@@ -208,7 +211,7 @@ async def check_mongo_connection() -> bool:
         await client.admin.command("ping")
         return True
     except Exception as e:
-        log.error("MongoDB health check failed", error=str(e))
+        log.error("MongoDB health check failed", error=str(e))  # type: ignore[call-arg]
         return False
 
 

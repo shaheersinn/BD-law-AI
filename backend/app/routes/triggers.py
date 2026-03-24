@@ -11,8 +11,7 @@ Routes:
 """
 
 import logging
-from datetime import datetime, timedelta, timezone
-from typing import Optional
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
@@ -20,7 +19,7 @@ from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.dependencies import require_auth, require_partner, require_write
+from app.auth.dependencies import require_auth, require_write
 from app.auth.service import TokenClaims
 from app.cache.client import TTL_AI, TTL_SHORT, cache
 from app.database import get_db
@@ -36,29 +35,30 @@ router = APIRouter(prefix="/triggers", tags=["triggers"])
 
 # ── Schemas ────────────────────────────────────────────────────────────────────
 
+
 class TriggerOut(BaseModel):
     id: int
     source: str
     trigger_type: str
     company_name: str
-    client_id: Optional[int]
+    client_id: int | None
     title: str
-    description: Optional[str]
-    url: Optional[str]
+    description: str | None
+    url: str | None
     urgency: int
-    practice_area: Optional[str]
+    practice_area: str | None
     practice_confidence: int
     filed_at: datetime
     detected_at: datetime
-    confirmed: Optional[bool]
-    dismissed: Optional[bool]
+    confirmed: bool | None
+    dismissed: bool | None
     actioned: bool
     model_config = {"from_attributes": True}
 
 
 class LabelRequest(BaseModel):
-    outcome: str   # "confirmed" | "dismissed" | "matter_opened"
-    notes: Optional[str] = None
+    outcome: str  # "confirmed" | "dismissed" | "matter_opened"
+    notes: str | None = None
 
 
 class TriggerStats(BaseModel):
@@ -71,9 +71,12 @@ class TriggerStats(BaseModel):
 
 # ── Routes ─────────────────────────────────────────────────────────────────────
 
+
 @router.get("/live", response_model=list[TriggerOut])
 async def live_triggers(
-    source: Optional[str] = Query(default=None, description="Filter by source: SEDAR|EDGAR|CANLII|JOBS|OSC"),
+    source: str | None = Query(
+        default=None, description="Filter by source: SEDAR|EDGAR|CANLII|JOBS|OSC"
+    ),
     min_urgency: int = Query(default=50, ge=0, le=100),
     hours_back: int = Query(default=72, ge=1, le=168),
     unactioned_only: bool = Query(default=False),
@@ -87,8 +90,13 @@ async def live_triggers(
     High urgency (≥80) triggers are never cached — always fresh.
     """
     # Only cache standard queries, not custom filters
-    use_cache = (source is None and min_urgency == 50 and hours_back == 72
-                 and not unactioned_only and skip == 0)
+    use_cache = (
+        source is None
+        and min_urgency == 50
+        and hours_back == 72
+        and not unactioned_only
+        and skip == 0
+    )
     cache_key = cache.trigger_feed_key(source or "ALL", min_urgency, hours_back)
 
     if use_cache:
@@ -96,7 +104,7 @@ async def live_triggers(
         if cached:
             return cached
 
-    cutoff = datetime.now(timezone.utc) - timedelta(hours=hours_back)
+    cutoff = datetime.now(UTC) - timedelta(hours=hours_back)
     q = (
         select(Trigger)
         .where(Trigger.urgency >= min_urgency, Trigger.filed_at >= cutoff)
@@ -107,7 +115,7 @@ async def live_triggers(
     if source:
         q = q.where(Trigger.source == source)
     if unactioned_only:
-        q = q.where(Trigger.actioned == False)
+        q = q.where(not Trigger.actioned)
 
     result = await db.execute(q)
     triggers = result.scalars().all()
@@ -137,20 +145,18 @@ async def trigger_stats(
     if cached:
         return TriggerStats(**cached)
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     # Counts by time window
     total_24h = (
         await db.execute(
-            select(func.count(Trigger.id))
-            .where(Trigger.detected_at >= now - timedelta(hours=24))
+            select(func.count(Trigger.id)).where(Trigger.detected_at >= now - timedelta(hours=24))
         )
     ).scalar() or 0
 
     total_72h = (
         await db.execute(
-            select(func.count(Trigger.id))
-            .where(Trigger.detected_at >= now - timedelta(hours=72))
+            select(func.count(Trigger.id)).where(Trigger.detected_at >= now - timedelta(hours=72))
         )
     ).scalar() or 0
 
@@ -160,33 +166,36 @@ async def trigger_stats(
         .where(Trigger.detected_at >= now - timedelta(hours=72))
         .group_by(Trigger.source)
     )
-    by_source = {
-        (s if isinstance(s, str) else s.value): c
-        for s, c in source_rows.all()
-    }
+    by_source = {(s if isinstance(s, str) else s.value): c for s, c in source_rows.all()}
 
     # By urgency band
     all_recent = (
-        await db.execute(
-            select(Trigger.urgency)
-            .where(Trigger.detected_at >= now - timedelta(hours=72))
+        (
+            await db.execute(
+                select(Trigger.urgency).where(Trigger.detected_at >= now - timedelta(hours=72))
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
 
     bands = {"CRITICAL (95-100)": 0, "HIGH (80-94)": 0, "MODERATE (65-79)": 0, "WATCH (50-64)": 0}
     for u in all_recent:
-        if u >= 95:   bands["CRITICAL (95-100)"] += 1
-        elif u >= 80: bands["HIGH (80-94)"] += 1
-        elif u >= 65: bands["MODERATE (65-79)"] += 1
-        elif u >= 50: bands["WATCH (50-64)"] += 1
+        if u >= 95:
+            bands["CRITICAL (95-100)"] += 1
+        elif u >= 80:
+            bands["HIGH (80-94)"] += 1
+        elif u >= 65:
+            bands["MODERATE (65-79)"] += 1
+        elif u >= 50:
+            bands["WATCH (50-64)"] += 1
 
     # Unactioned high-urgency
     unlabelled = (
         await db.execute(
-            select(func.count(Trigger.id))
-            .where(
+            select(func.count(Trigger.id)).where(
                 Trigger.urgency >= 80,
-                Trigger.actioned == False,
+                not Trigger.actioned,
                 Trigger.detected_at >= now - timedelta(hours=72),
             )
         )
@@ -243,7 +252,7 @@ async def label_trigger(
         t.dismissed = True
     elif req.outcome == "matter_opened":
         t.matter_opened = True
-        t.confirmed = True   # matter opened implies confirmed
+        t.confirmed = True  # matter opened implies confirmed
 
     t.actioned = True
     t.actioned_by = claims.email

@@ -16,10 +16,13 @@ Signal types:
 
 Rate limit: 0.1 rps (government site, RSS preferred)
 """
+
 from __future__ import annotations
-import xml.etree.ElementTree as ET
-from datetime import datetime, timezone, timedelta
+
+import xml.etree.ElementTree as ET  # nosec B405
+
 import structlog
+
 from app.scrapers.base import BaseScraper, ScraperResult
 from app.scrapers.registry import register
 
@@ -29,9 +32,23 @@ _GAZETTE_RSS_P1 = "https://canadagazette.gc.ca/rss/p1.xml"
 _GAZETTE_RSS_P2 = "https://canadagazette.gc.ca/rss/p2.xml"
 
 _LEGAL_KEYWORDS = [
-    "act", "regulation", "compliance", "penalty", "enforcement", "prohibition",
-    "financial", "banking", "environment", "privacy", "competition", "tax",
-    "employment", "securities", "disclosure", "registration", "licensing",
+    "act",
+    "regulation",
+    "compliance",
+    "penalty",
+    "enforcement",
+    "prohibition",
+    "financial",
+    "banking",
+    "environment",
+    "privacy",
+    "competition",
+    "tax",
+    "employment",
+    "securities",
+    "disclosure",
+    "registration",
+    "licensing",
 ]
 
 
@@ -59,16 +76,22 @@ class CanadaGazetteScraper(BaseScraper):
                     title = item.get("title", "").lower()
                     if not any(kw in title for kw in _LEGAL_KEYWORDS):
                         continue
-                    results.append(ScraperResult(
-                        source_id=self.source_id,
-                        signal_type=signal_type,
-                        source_url=item.get("link"),
-                        signal_value={"title": item.get("title"), "pub_date": item.get("pub_date"), "feed": feed_url},
-                        signal_text=item.get("title"),
-                        published_at=self._parse_date(item.get("pub_date")),
-                        practice_area_hints=self._hints(item.get("title", "")),
-                        raw_payload=item,
-                    ))
+                    results.append(
+                        ScraperResult(
+                            source_id=self.source_id,
+                            signal_type=signal_type,
+                            source_url=item.get("link"),
+                            signal_value={
+                                "title": item.get("title"),
+                                "pub_date": item.get("pub_date"),
+                                "feed": feed_url,
+                            },
+                            signal_text=item.get("title"),
+                            published_at=self._parse_date(item.get("pub_date")),
+                            practice_area_hints=self._hints(item.get("title", "")),
+                            raw_payload=item,
+                        )
+                    )
                 await self._rate_limit_sleep()
             except Exception as exc:
                 log.error("gazette_feed_error", feed=feed_url, error=str(exc))
@@ -77,15 +100,16 @@ class CanadaGazetteScraper(BaseScraper):
     def _parse_rss(self, xml_text: str) -> list[dict]:
         items = []
         try:
-            root = ET.fromstring(xml_text)
-            ns = {"dc": "http://purl.org/dc/elements/1.1/"}
+            root = ET.fromstring(xml_text)  # nosec B314 — trusted government/news RSS source
             for item in root.iter("item"):
-                items.append({
-                    "title": (item.findtext("title") or "").strip(),
-                    "link": (item.findtext("link") or "").strip(),
-                    "description": (item.findtext("description") or "").strip(),
-                    "pub_date": (item.findtext("pubDate") or "").strip(),
-                })
+                items.append(
+                    {
+                        "title": (item.findtext("title") or "").strip(),
+                        "link": (item.findtext("link") or "").strip(),
+                        "description": (item.findtext("description") or "").strip(),
+                        "pub_date": (item.findtext("pubDate") or "").strip(),
+                    }
+                )
         except ET.ParseError as e:
             log.warning("gazette_rss_parse_error", error=str(e))
         return items
@@ -94,13 +118,16 @@ class CanadaGazetteScraper(BaseScraper):
         title_lower = title.lower()
         hints = []
         mappings = {
-            "financial": ["banking"], "privacy": ["privacy"], "competition": ["competition"],
-            "tax": ["tax"], "employment": ["employment"], "environment": ["environmental"],
-            "securities": ["securities"], "immigration": ["immigration"],
+            "financial": ["banking"],
+            "privacy": ["privacy"],
+            "competition": ["competition"],
+            "tax": ["tax"],
+            "employment": ["employment"],
+            "environment": ["environmental"],
+            "securities": ["securities"],
+            "immigration": ["immigration"],
         }
         for keyword, areas in mappings.items():
             if keyword in title_lower:
                 hints.extend(areas)
         return hints
-
-

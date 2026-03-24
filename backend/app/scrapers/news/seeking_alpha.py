@@ -1,13 +1,18 @@
 """app/scrapers/news/seeking_alpha.py — Seeking Alpha / Motley Fool Canadian news."""
+
 from __future__ import annotations
+
 from app.scrapers.base import BaseScraper, SignalData
 
+
 class SeekingAlphaScraper(BaseScraper):
-    NAME = "seeking_alpha"
+    source_id = "news_seeking_alpha"
+    source_name = "Seeking Alpha"
     CATEGORY = "news"
+    signal_types = ["news_mention"]
     SOURCE_URL = "https://seekingalpha.com"
-    RATE_LIMIT_RPS = 0.3
-    MAX_CONCURRENT = 1
+    rate_limit_rps = 0.3
+    concurrency = 1
     SOURCE_RELIABILITY = 0.65
 
     _RSS_URLS = [
@@ -15,8 +20,8 @@ class SeekingAlphaScraper(BaseScraper):
         "https://seekingalpha.com/market-news/rss.xml",
     ]
 
-    async def run(self) -> list[SignalData]:
-        signals = []
+    async def scrape(self) -> list[SignalData]:
+        signals: list[SignalData] = []
         for rss_url in self._RSS_URLS:
             feed = await self.get_rss(rss_url)
             if not feed:
@@ -32,12 +37,22 @@ class SeekingAlphaScraper(BaseScraper):
                 areas = ["securities_capital_markets"]
                 strength = 0.55
                 if any(k in title_lower for k in ["lawsuit", "class action"]):
-                    areas.insert(0, "class_actions"); strength = 0.70
-                signals.append(SignalData(
-                    scraper_name=self.NAME, signal_type="news_mention",
-                    raw_entity_name=title, title=f"Seeking Alpha: {title}",
-                    summary=summary, source_url=link, published_at=published,
-                    practice_areas=areas, signal_strength=strength,
-                    metadata={"source": "Seeking Alpha"},
-                ))
+                    areas.insert(0, "class_actions")
+                    strength = 0.70
+                signals.append(
+                    SignalData(
+                        source_id=self.source_id,
+                        signal_type="news_mention",
+                        raw_company_name=title,
+                        signal_text=summary,
+                        source_url=link,
+                        published_at=published,
+                        practice_area_hints=areas,
+                        confidence_score=strength,
+                        signal_value={
+                            "source": "Seeking Alpha",
+                            "title": f"Seeking Alpha: {title}",
+                        },
+                    )
+                )
         return signals

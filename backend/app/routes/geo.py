@@ -16,15 +16,14 @@ Routes:
 """
 
 import logging
-from datetime import datetime, timedelta, timezone
-from typing import Optional
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.dependencies import require_auth, require_partner
+from app.auth.dependencies import require_auth
 from app.auth.service import TokenClaims
 from app.cache.client import TTL_AI, TTL_GEO, TTL_LONG, TTL_MEDIUM, cache
 from app.database import get_db
@@ -39,21 +38,94 @@ router = APIRouter(prefix="/geo", tags=["geospatial"])
 
 # Static jurisdiction data — in production this would be DB-driven with nightly updates
 GEO_JURISDICTIONS = [
-    {"id": "can", "label": "Canada",    "x": 195, "y": 112, "intensity": 91, "practice": "M&A + Regulatory",       "drivers": "OSC enforcement wave, energy transition mandates, Indigenous consultation law"},
-    {"id": "usa", "label": "USA",       "x": 188, "y": 172, "intensity": 88, "practice": "Securities + Litigation", "drivers": "DOJ tech enforcement, climate litigation, cross-border M&A clearance"},
-    {"id": "eu",  "label": "EU",        "x": 448, "y": 148, "intensity": 79, "practice": "Regulatory + Data",       "drivers": "EU AI Act enforcement, CSRD mandates, antitrust wave"},
-    {"id": "uk",  "label": "UK",        "x": 420, "y": 134, "intensity": 72, "practice": "Finance + Sanctions",     "drivers": "Post-Brexit disputes, OFSI sanctions compliance, crypto regulation"},
-    {"id": "uae", "label": "UAE",       "x": 552, "y": 214, "intensity": 68, "practice": "Arbitration + M&A",       "drivers": "DIFC arbitration surge, sovereign wealth structuring"},
-    {"id": "aus", "label": "Australia", "x": 698, "y": 312, "intensity": 61, "practice": "Mining + Environmental",  "drivers": "Critical minerals law, native title litigation, ESG disclosure"},
-    {"id": "sgp", "label": "Singapore", "x": 670, "y": 250, "intensity": 74, "practice": "Dispute + Finance",       "drivers": "Fintech disputes, family office structuring, supply chain arbitration"},
-    {"id": "ind", "label": "India",     "x": 610, "y": 222, "intensity": 66, "practice": "Corporate + Arbitration", "drivers": "FDI disputes, infrastructure arbitration, data localisation"},
-    {"id": "jpn", "label": "Japan",     "x": 715, "y": 172, "intensity": 63, "practice": "M&A + IP",                "drivers": "Inbound M&A, semiconductor IP disputes, carbon credit structuring"},
+    {
+        "id": "can",
+        "label": "Canada",
+        "x": 195,
+        "y": 112,
+        "intensity": 91,
+        "practice": "M&A + Regulatory",
+        "drivers": "OSC enforcement wave, energy transition mandates, Indigenous consultation law",
+    },
+    {
+        "id": "usa",
+        "label": "USA",
+        "x": 188,
+        "y": 172,
+        "intensity": 88,
+        "practice": "Securities + Litigation",
+        "drivers": "DOJ tech enforcement, climate litigation, cross-border M&A clearance",
+    },
+    {
+        "id": "eu",
+        "label": "EU",
+        "x": 448,
+        "y": 148,
+        "intensity": 79,
+        "practice": "Regulatory + Data",
+        "drivers": "EU AI Act enforcement, CSRD mandates, antitrust wave",
+    },
+    {
+        "id": "uk",
+        "label": "UK",
+        "x": 420,
+        "y": 134,
+        "intensity": 72,
+        "practice": "Finance + Sanctions",
+        "drivers": "Post-Brexit disputes, OFSI sanctions compliance, crypto regulation",
+    },
+    {
+        "id": "uae",
+        "label": "UAE",
+        "x": 552,
+        "y": 214,
+        "intensity": 68,
+        "practice": "Arbitration + M&A",
+        "drivers": "DIFC arbitration surge, sovereign wealth structuring",
+    },
+    {
+        "id": "aus",
+        "label": "Australia",
+        "x": 698,
+        "y": 312,
+        "intensity": 61,
+        "practice": "Mining + Environmental",
+        "drivers": "Critical minerals law, native title litigation, ESG disclosure",
+    },
+    {
+        "id": "sgp",
+        "label": "Singapore",
+        "x": 670,
+        "y": 250,
+        "intensity": 74,
+        "practice": "Dispute + Finance",
+        "drivers": "Fintech disputes, family office structuring, supply chain arbitration",
+    },
+    {
+        "id": "ind",
+        "label": "India",
+        "x": 610,
+        "y": 222,
+        "intensity": 66,
+        "practice": "Corporate + Arbitration",
+        "drivers": "FDI disputes, infrastructure arbitration, data localisation",
+    },
+    {
+        "id": "jpn",
+        "label": "Japan",
+        "x": 715,
+        "y": 172,
+        "intensity": 63,
+        "practice": "M&A + IP",
+        "drivers": "Inbound M&A, semiconductor IP disputes, carbon credit structuring",
+    },
 ]
 
 GEO_INDEX = {g["id"]: g for g in GEO_JURISDICTIONS}
 
 
 # ── Jurisdiction Heat Map ──────────────────────────────────────────────────────
+
 
 @router.get("/intensity")
 async def geo_intensity(claims: TokenClaims = Depends(require_auth)):
@@ -117,14 +189,17 @@ async def geo_brief_stream(
     return StreamingResponse(
         stream_ai_response(
             "geo_brief",
-            jurisdiction=geo["label"], index=geo["intensity"],
-            practice=geo["practice"], drivers=geo["drivers"],
+            jurisdiction=geo["label"],
+            index=geo["intensity"],
+            practice=geo["practice"],
+            drivers=geo["drivers"],
         ),
         headers=sse_headers(),
     )
 
 
 # ── Jet Tracker ────────────────────────────────────────────────────────────────
+
 
 @router.get("/jets")
 async def list_jet_tracks(
@@ -140,14 +215,14 @@ async def list_jet_tracks(
     if cached:
         return cached
 
-    cutoff = datetime.now(timezone.utc) - timedelta(days=days_back)
+    cutoff = datetime.now(UTC) - timedelta(days=days_back)
     q = (
         select(JetTrack)
         .where(JetTrack.departed_at >= cutoff, JetTrack.confidence >= min_confidence)
         .order_by(JetTrack.confidence.desc())
     )
     if flagged_only:
-        q = q.where(JetTrack.is_flagged == True)
+        q = q.where(JetTrack.is_flagged)
 
     result = await db.execute(q)
     data = [t.to_dict() for t in result.scalars().all()]
@@ -193,8 +268,10 @@ async def jet_brief(
     await cache.set(cache_key, data, ttl=TTL_AI)
 
     await log_event(
-        AuditEventType.ai_generate, user_id=claims.user_id,
-        resource_type="jet_track", resource_id=track_id,
+        AuditEventType.ai_generate,
+        user_id=claims.user_id,
+        resource_type="jet_track",
+        resource_id=track_id,
         detail={"prompt_key": "jet_brief", "company": track.company},
         **(extract_request_meta(request) if request else {}),
     )
@@ -217,14 +294,16 @@ async def jet_brief_stream(
     return StreamingResponse(
         stream_ai_response(
             "jet_brief",
-            company=track.company, tail=track.tail_number,
+            company=track.company,
+            tail=track.tail_number,
             executive=track.executive or "Senior Executive",
             origin=track.origin_name or track.origin_icao,
             destination=track.dest_name or track.dest_icao,
             date=track.departed_at.strftime("%b %d · %H:%M UTC"),
             signal=track.signal_text or "Bay Street proximity trip",
             mandate=track.predicted_mandate or "M&A Advisory",
-            confidence=track.confidence, warmth=track.relationship_warmth,
+            confidence=track.confidence,
+            warmth=track.relationship_warmth,
         ),
         headers=sse_headers(),
     )
@@ -232,10 +311,11 @@ async def jet_brief_stream(
 
 # ── Foot Traffic ────────────────────────────────────────────────────────────────
 
+
 @router.get("/foot-traffic")
 async def list_foot_traffic(
     days_back: int = Query(default=14, ge=1, le=60),
-    severity: Optional[str] = Query(default=None),
+    severity: str | None = Query(default=None),
     db: AsyncSession = Depends(get_db),
     claims: TokenClaims = Depends(require_auth),
 ):
@@ -244,9 +324,11 @@ async def list_foot_traffic(
     if cached:
         return cached
 
-    cutoff = datetime.now(timezone.utc) - timedelta(days=days_back)
-    q = select(FootTrafficEvent).where(FootTrafficEvent.occurred_at >= cutoff).order_by(
-        FootTrafficEvent.device_count.desc()
+    cutoff = datetime.now(UTC) - timedelta(days=days_back)
+    q = (
+        select(FootTrafficEvent)
+        .where(FootTrafficEvent.occurred_at >= cutoff)
+        .order_by(FootTrafficEvent.device_count.desc())
     )
     if severity:
         q = q.where(FootTrafficEvent.severity == severity)
@@ -291,8 +373,10 @@ async def foot_traffic_strategy(
     await cache.set(cache_key, data, ttl=TTL_AI)
 
     await log_event(
-        AuditEventType.ai_generate, user_id=claims.user_id,
-        resource_type="foot_traffic", resource_id=event_id,
+        AuditEventType.ai_generate,
+        user_id=claims.user_id,
+        resource_type="foot_traffic",
+        resource_id=event_id,
         detail={"prompt_key": "foot_traffic_strategy", "company": event.target_company},
         **(extract_request_meta(request) if request else {}),
     )
@@ -315,8 +399,10 @@ async def foot_traffic_stream(
     return StreamingResponse(
         stream_ai_response(
             "foot_traffic_strategy",
-            client=event.target_company, location=event.location_name,
-            devices=event.device_count, duration=f"{event.avg_duration_minutes or 90} min avg",
+            client=event.target_company,
+            location=event.location_name,
+            devices=event.device_count,
+            duration=f"{event.avg_duration_minutes or 90} min avg",
             date=event.occurred_at.strftime("%b %d"),
             threat=event.threat_assessment or "Competitor engagement detected",
             severity=event.severity.upper(),
@@ -327,9 +413,10 @@ async def foot_traffic_stream(
 
 # ── Satellite Signals ──────────────────────────────────────────────────────────
 
+
 @router.get("/satellite")
 async def list_satellite(
-    urgency: Optional[str] = Query(default=None),
+    urgency: str | None = Query(default=None),
     db: AsyncSession = Depends(get_db),
     claims: TokenClaims = Depends(require_auth),
 ):
@@ -369,17 +456,23 @@ async def satellite_brief(
 
     brief = await ai.generate(
         "satellite_brief",
-        company=sig.company, location=sig.location,
-        observation=sig.observation, inference=sig.legal_inference,
-        signal_type=sig.signal_type, confidence=sig.confidence, urgency=sig.urgency.upper(),
+        company=sig.company,
+        location=sig.location,
+        observation=sig.observation,
+        inference=sig.legal_inference,
+        signal_type=sig.signal_type,
+        confidence=sig.confidence,
+        urgency=sig.urgency.upper(),
     )
 
     data = {"brief": brief, "signal_id": signal_id, "company": sig.company}
     await cache.set(cache_key, data, ttl=TTL_AI)
 
     await log_event(
-        AuditEventType.ai_generate, user_id=claims.user_id,
-        resource_type="satellite", resource_id=signal_id,
+        AuditEventType.ai_generate,
+        user_id=claims.user_id,
+        resource_type="satellite",
+        resource_id=signal_id,
         detail={"prompt_key": "satellite_brief", "company": sig.company},
         **(extract_request_meta(request) if request else {}),
     )
@@ -402,9 +495,13 @@ async def satellite_brief_stream(
     return StreamingResponse(
         stream_ai_response(
             "satellite_brief",
-            company=sig.company, location=sig.location,
-            observation=sig.observation, inference=sig.legal_inference,
-            signal_type=sig.signal_type, confidence=sig.confidence, urgency=sig.urgency.upper(),
+            company=sig.company,
+            location=sig.location,
+            observation=sig.observation,
+            inference=sig.legal_inference,
+            signal_type=sig.signal_type,
+            confidence=sig.confidence,
+            urgency=sig.urgency.upper(),
         ),
         headers=sse_headers(),
     )
@@ -412,10 +509,11 @@ async def satellite_brief_stream(
 
 # ── Permit Radar ───────────────────────────────────────────────────────────────
 
+
 @router.get("/permits")
 async def list_permits(
     days_back: int = Query(default=30, ge=1, le=90),
-    urgency: Optional[str] = Query(default=None),
+    urgency: str | None = Query(default=None),
     db: AsyncSession = Depends(get_db),
     claims: TokenClaims = Depends(require_auth),
 ):
@@ -424,8 +522,12 @@ async def list_permits(
     if cached:
         return cached
 
-    cutoff = datetime.now(timezone.utc) - timedelta(days=days_back)
-    q = select(PermitFiling).where(PermitFiling.filed_at >= cutoff).order_by(PermitFiling.filed_at.desc())
+    cutoff = datetime.now(UTC) - timedelta(days=days_back)
+    q = (
+        select(PermitFiling)
+        .where(PermitFiling.filed_at >= cutoff)
+        .order_by(PermitFiling.filed_at.desc())
+    )
     if urgency:
         q = q.where(PermitFiling.urgency == urgency)
 
@@ -462,7 +564,8 @@ async def permit_brief(
 
     brief = await ai.generate(
         "permit_brief",
-        company=permit.company, permit=permit.permit_type,
+        company=permit.company,
+        permit=permit.permit_type,
         location=permit.location,
         filed=permit.filed_at.strftime("%b %d, %Y"),
         project_type=permit.project_type or "Major project",
@@ -476,8 +579,10 @@ async def permit_brief(
     await cache.set(cache_key, data, ttl=TTL_AI)
 
     await log_event(
-        AuditEventType.ai_generate, user_id=claims.user_id,
-        resource_type="permit", resource_id=permit_id,
+        AuditEventType.ai_generate,
+        user_id=claims.user_id,
+        resource_type="permit",
+        resource_id=permit_id,
         detail={"prompt_key": "permit_brief", "company": permit.company},
         **(extract_request_meta(request) if request else {}),
     )
@@ -506,7 +611,8 @@ async def permit_brief_stream(
     return StreamingResponse(
         stream_ai_response(
             "permit_brief",
-            company=permit.company, permit=permit.permit_type,
+            company=permit.company,
+            permit=permit.permit_type,
             location=permit.location,
             filed=permit.filed_at.strftime("%b %d, %Y"),
             project_type=permit.project_type or "Major project",

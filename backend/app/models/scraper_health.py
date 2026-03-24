@@ -14,8 +14,7 @@ Status values:
 
 from __future__ import annotations
 
-from datetime import datetime
-from typing import Optional
+from datetime import UTC, datetime
 
 from sqlalchemy import DateTime, Float, Index, Integer, String, Text, func
 from sqlalchemy.dialects.postgresql import JSONB
@@ -34,37 +33,32 @@ class ScraperHealth(Base):
 
     # ── Primary Key ───────────────────────────────────────────────────────────
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    scraper_name: Mapped[str] = mapped_column(
-        String(100), nullable=False, unique=True, index=True
-    )
+    scraper_name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True, index=True)
     scraper_category: Mapped[str] = mapped_column(
-        String(50), nullable=False, index=True,
-        comment="filings, legal, regulatory, jobs, market, news, social, geo, lawfirms"
+        String(50),
+        nullable=False,
+        index=True,
+        comment="filings, legal, regulatory, jobs, market, news, social, geo, lawfirms",
     )
 
     # ── Status ────────────────────────────────────────────────────────────────
     status: Mapped[str] = mapped_column(
-        String(20), nullable=False, default="healthy", index=True,
-        comment="healthy | degraded | failing | disabled"
+        String(20),
+        nullable=False,
+        default="healthy",
+        index=True,
+        comment="healthy | degraded | failing | disabled",
     )
 
     # ── Run Timing ────────────────────────────────────────────────────────────
-    last_run_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    last_success_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    last_error_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    last_error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    last_run_duration_ms: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    last_run_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_success_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_error_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    last_run_duration_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     # ── Failure Tracking ──────────────────────────────────────────────────────
-    consecutive_failures: Mapped[int] = mapped_column(
-        Integer, nullable=False, default=0
-    )
+    consecutive_failures: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     total_runs: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     total_failures: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
@@ -72,32 +66,28 @@ class ScraperHealth(Base):
     records_last_run: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     records_today: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     records_total: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    records_today_reset_date: Mapped[Optional[datetime]] = mapped_column(
+    records_today_reset_date: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
 
     # ── Performance Metrics ───────────────────────────────────────────────────
-    avg_run_duration_ms: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-    p95_run_duration_ms: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-    success_rate_7d: Mapped[Optional[float]] = mapped_column(
-        Float, nullable=True,
-        comment="Success rate over last 7 days (0.0–1.0)"
+    avg_run_duration_ms: Mapped[float | None] = mapped_column(Float, nullable=True)
+    p95_run_duration_ms: Mapped[float | None] = mapped_column(Float, nullable=True)
+    success_rate_7d: Mapped[float | None] = mapped_column(
+        Float, nullable=True, comment="Success rate over last 7 days (0.0–1.0)"
     )
 
     # ── Source Metadata ───────────────────────────────────────────────────────
-    source_url: Mapped[Optional[str]] = mapped_column(String(2000), nullable=True)
-    source_reliability_score: Mapped[float] = mapped_column(
-        Float, nullable=False, default=0.8
-    )
-    requires_api_key: Mapped[bool] = mapped_column(
-        Integer, nullable=False, default=0
-    )
-    api_key_env_var: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    source_url: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+    source_reliability_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.8)
+    requires_api_key: Mapped[bool] = mapped_column(Integer, nullable=False, default=0)
+    api_key_env_var: Mapped[str | None] = mapped_column(String(100), nullable=True)
 
     # ── Extra Diagnostics ─────────────────────────────────────────────────────
-    diagnostics: Mapped[Optional[dict]] = mapped_column(
-        JSONB, nullable=True,
-        comment="Last-run diagnostic payload (response codes, parse errors, etc.)"
+    diagnostics: Mapped[dict | None] = mapped_column(
+        JSONB,
+        nullable=True,
+        comment="Last-run diagnostic payload (response codes, parse errors, etc.)",
     )
 
     # ── Timestamps ────────────────────────────────────────────────────────────
@@ -111,9 +101,7 @@ class ScraperHealth(Base):
         onupdate=func.now(),
     )
 
-    __table_args__ = (
-        Index("ix_scraper_health_status_category", "status", "scraper_category"),
-    )
+    __table_args__ = (Index("ix_scraper_health_status_category", "status", "scraper_category"),)
 
     def __repr__(self) -> str:
         return (
@@ -130,9 +118,8 @@ class ScraperHealth(Base):
 
     def record_success(self, records: int, duration_ms: int) -> None:
         """Update health after a successful run."""
-        from datetime import timezone
 
-        now = datetime.now(tz=timezone.utc)
+        now = datetime.now(tz=UTC)
         self.last_run_at = now
         self.last_success_at = now
         self.last_run_duration_ms = duration_ms
@@ -150,9 +137,8 @@ class ScraperHealth(Base):
 
     def record_failure(self, error: str) -> None:
         """Update health after a failed run."""
-        from datetime import timezone
 
-        now = datetime.now(tz=timezone.utc)
+        now = datetime.now(tz=UTC)
         self.last_run_at = now
         self.last_error_at = now
         self.last_error_message = str(error)[:2000]

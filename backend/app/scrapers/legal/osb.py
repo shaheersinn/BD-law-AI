@@ -16,10 +16,14 @@ Signal types:
 
 Rate limit: 0.1 rps (government open data)
 """
+
 from __future__ import annotations
+
 import csv
 import io
+
 import structlog
+
 from app.scrapers.base import BaseScraper, ScraperResult
 from app.scrapers.registry import register
 
@@ -34,6 +38,7 @@ _OSB_STATS_CSV = "https://www.ic.gc.ca/app/scr/bsf-osb/ins/statistics/statistics
 class OSBScraper(BaseScraper):
     source_id = "legal_osb"
     source_name = "OSB (Office of the Superintendent of Bankruptcy)"
+    CATEGORY = "legal"
     signal_types = ["insolvency_corporate_filing", "insolvency_receivership"]
     rate_limit_rps = 0.1
     concurrency = 1
@@ -55,24 +60,30 @@ class OSBScraper(BaseScraper):
                         continue
                     filing_type = row.get("Filing Type", "").strip()
                     is_receivership = "receivership" in filing_type.lower()
-                    signal_type = "insolvency_receivership" if is_receivership else "insolvency_corporate_filing"
+                    signal_type = (
+                        "insolvency_receivership"
+                        if is_receivership
+                        else "insolvency_corporate_filing"
+                    )
 
-                    results.append(ScraperResult(
-                        source_id=self.source_id,
-                        signal_type=signal_type,
-                        raw_company_name=debtor_name,
-                        signal_value={
-                            "filing_type": filing_type,
-                            "filing_date": row.get("Date Filed", ""),
-                            "district": row.get("District", ""),
-                            "trustee": row.get("Trustee Name", ""),
-                            "estate_number": row.get("Estate Number", ""),
-                        },
-                        signal_text=f"Insolvency: {debtor_name} — {filing_type}",
-                        published_at=self._parse_date(row.get("Date Filed", "")),
-                        practice_area_hints=["insolvency", "banking", "employment"],
-                        raw_payload=dict(row),
-                    ))
+                    results.append(
+                        ScraperResult(
+                            source_id=self.source_id,
+                            signal_type=signal_type,
+                            raw_company_name=debtor_name,
+                            signal_value={
+                                "filing_type": filing_type,
+                                "filing_date": row.get("Date Filed", ""),
+                                "district": row.get("District", ""),
+                                "trustee": row.get("Trustee Name", ""),
+                                "estate_number": row.get("Estate Number", ""),
+                            },
+                            signal_text=f"Insolvency: {debtor_name} — {filing_type}",
+                            published_at=self._parse_date(row.get("Date Filed", "")),
+                            practice_area_hints=["insolvency", "banking", "employment"],
+                            raw_payload=dict(row),
+                        )
+                    )
         except Exception as exc:
             log.error("osb_error", error=str(exc))
         log.info("osb_scrape_complete", total=len(results))

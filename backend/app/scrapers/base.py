@@ -15,6 +15,7 @@ Architecture decisions (from pre-phase research):
 Signal flow:
   scrape() → list[ScraperResult] → store_signals() → PostgreSQL + MongoDB
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -22,7 +23,7 @@ import random
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import httpx
@@ -50,7 +51,7 @@ _USER_AGENTS: list[str] = [
 
 
 def _random_ua() -> str:
-    return random.choice(_USER_AGENTS)
+    return random.choice(_USER_AGENTS)  # nosec B311
 
 
 def _browser_headers(extra: dict[str, str] | None = None) -> dict[str, str]:
@@ -76,6 +77,7 @@ class ScraperResult:
 
     Returned by scraper.scrape() → stored to PostgreSQL + MongoDB.
     """
+
     source_id: str
     signal_type: str
     raw_company_name: str | None = None
@@ -90,11 +92,16 @@ class ScraperResult:
     is_negative_label: bool = False
 
 
-class CircuitBreakerOpen(Exception):
+# Backward-compatibility aliases
+SignalData = ScraperResult
+RawSignal = ScraperResult
+
+
+class CircuitBreakerOpen(Exception):  # noqa: N818 (intentional non-Error suffix)
     """Raised when circuit breaker is in OPEN state."""
 
 
-class SourceUnavailable(Exception):
+class SourceUnavailable(Exception):  # noqa: N818 (intentional non-Error suffix)
     """Raised when a source is permanently unavailable (404, auth failure, etc.)."""
 
 
@@ -133,16 +140,19 @@ class BaseScraper(ABC):
     source_name: str = ""
     signal_types: list[str] = []
 
+    # ── Subclasses SHOULD set this ──────────────────────────────────────────────
+    CATEGORY: str = ""  # e.g. "corporate", "legal", "regulatory", "jobs", "market", "news", "social", "geo", "lawblog"
+
     # ── Subclasses MAY override these ──────────────────────────────────────────
-    rate_limit_rps: float = 0.5          # requests per second
-    concurrency: int = 3                 # max concurrent requests
-    retry_attempts: int = 3             # max retry attempts
-    retry_min_wait: float = 2.0         # min wait between retries (seconds)
-    retry_max_wait: float = 60.0        # max wait between retries (seconds)
-    timeout_seconds: float = 30.0       # request timeout
-    ttl_seconds: int = 3600             # cache TTL (1 hour default)
-    requires_auth: bool = False         # True if API key required
-    requires_playwright: bool = False   # True if JS rendering needed
+    rate_limit_rps: float = 0.5  # requests per second
+    concurrency: int = 3  # max concurrent requests
+    retry_attempts: int = 3  # max retry attempts
+    retry_min_wait: float = 2.0  # min wait between retries (seconds)
+    retry_max_wait: float = 60.0  # max wait between retries (seconds)
+    timeout_seconds: float = 30.0  # request timeout
+    ttl_seconds: int = 3600  # cache TTL (1 hour default)
+    requires_auth: bool = False  # True if API key required
+    requires_playwright: bool = False  # True if JS rendering needed
 
     def __init__(self) -> None:
         if not self.source_id:
@@ -156,7 +166,7 @@ class BaseScraper(ABC):
         self._circuit_open = False
         self._circuit_failures = 0
         self._circuit_last_failure: float = 0.0
-        self._circuit_threshold = 5       # open after N consecutive failures
+        self._circuit_threshold = 5  # open after N consecutive failures
         self._circuit_recovery_timeout = 300.0  # 5 min recovery window
 
     # ── Public interface ────────────────────────────────────────────────────────
@@ -264,9 +274,7 @@ class BaseScraper(ABC):
                         max=self.retry_max_wait,
                         jitter=self.retry_min_wait,
                     ),
-                    retry=retry_if_exception_type(
-                        (httpx.TransportError, httpx.TimeoutException)
-                    ),
+                    retry=retry_if_exception_type((httpx.TransportError, httpx.TimeoutException)),
                     reraise=True,
                 ):
                     with attempt:
@@ -281,7 +289,9 @@ class BaseScraper(ABC):
 
                         # Retry on server errors and rate limiting
                         if response.status_code in (429, 500, 502, 503, 504):
-                            retry_after = int(response.headers.get("Retry-After", self.retry_min_wait * 2))
+                            retry_after = int(
+                                response.headers.get("Retry-After", self.retry_min_wait * 2)
+                            )
                             self._log.warning(
                                 "http_retry",
                                 url=url,
@@ -296,6 +306,7 @@ class BaseScraper(ABC):
             except RetryError as exc:
                 self._log.error("http_retry_exhausted", url=url, error=str(exc))
                 raise
+        raise SourceUnavailable(url)  # unreachable — satisfies mypy
 
     async def post(
         self,
@@ -346,7 +357,7 @@ class BaseScraper(ABC):
             sleep_s = 1.0 / self.rate_limit_rps
             # Add ±10% jitter to avoid synchronized requests
             jitter = sleep_s * 0.1
-            await asyncio.sleep(sleep_s + random.uniform(-jitter, jitter))
+            await asyncio.sleep(sleep_s + random.uniform(-jitter, jitter))  # nosec B311
 
     # ── Circuit breaker ──────────────────────────────────────────────────────────
 
@@ -365,7 +376,47 @@ class BaseScraper(ABC):
 
     @staticmethod
     def _now_utc() -> datetime:
-        return datetime.now(tz=timezone.utc)
+        return datetime.now(tz=UTC)
+
+    def parse_date(self, date_str: str | None) -> datetime | None:
+        """Public alias for _parse_date — used by older-style scrapers."""
+        return self._parse_date(date_str)
+
+    async def get_rss(self, url: str) -> dict[str, Any]:
+        """
+        Fetch and parse an RSS/Atom feed. Returns feedparser-style dict.
+        Falls back to an empty dict on any error.
+        """
+        try:
+            resp = await self.get(url)
+            if resp.status_code != 200:
+                return {}
+            try:
+                import feedparser  # optional dependency
+
+                return feedparser.parse(resp.text)  # type: ignore[no-any-return]
+            except ImportError:
+                # feedparser not installed — parse minimally
+                import xml.etree.ElementTree as ET  # noqa: PLC0415  # nosec B405
+
+                root = ET.fromstring(resp.text)  # nosec B314 — trusted government/news RSS source
+                entries: list[dict[str, Any]] = []
+                ns = {"atom": "http://www.w3.org/2005/Atom"}
+                for item in root.findall(".//item") or root.findall(".//atom:entry", ns):
+                    title_el = item.find("title") or item.find("atom:title", ns)
+                    link_el = item.find("link") or item.find("atom:link", ns)
+                    entries.append(
+                        {
+                            "title": title_el.text if title_el is not None else "",
+                            "link": (link_el.text or link_el.get("href", ""))
+                            if link_el is not None
+                            else "",
+                        }
+                    )
+                return {"entries": entries}
+        except Exception as exc:
+            self._log.warning("rss_fetch_failed", url=url, error=str(exc))
+            return {}
 
     @staticmethod
     def _parse_date(date_str: str | None) -> datetime | None:
@@ -383,10 +434,53 @@ class BaseScraper(ABC):
         ]
         for fmt in formats:
             try:
-                return datetime.strptime(date_str.strip(), fmt).replace(tzinfo=timezone.utc)
+                return datetime.strptime(date_str.strip(), fmt).replace(tzinfo=UTC)
             except ValueError:
                 continue
         return None
+
+    # ── Legacy helper methods (used by older scrapers) ──────────────────────────
+
+    async def _get(self, url: str, **kwargs: Any) -> httpx.Response:
+        """Alias for get() — used by older-style scrapers."""
+        return await self.get(url, **kwargs)
+
+    async def get_soup(self, url: str, **kwargs: Any) -> Any:
+        """
+        Fetch URL and return BeautifulSoup object (or None on failure).
+        Requires beautifulsoup4 + lxml installed.
+        """
+        try:
+            from bs4 import BeautifulSoup  # noqa: PLC0415
+
+            resp = await self.get(url, **kwargs)
+            if resp.status_code != 200:
+                return None
+            return BeautifulSoup(resp.text, "lxml")
+        except Exception as exc:
+            self._log.warning("get_soup_failed", url=url, error=str(exc))
+            return None
+
+    async def get_json(self, url: str, **kwargs: Any) -> Any:
+        """Fetch URL and return parsed JSON (or None on failure)."""
+        try:
+            resp = await self.get(url, **kwargs)
+            if resp.status_code != 200:
+                return None
+            return resp.json()
+        except Exception as exc:
+            self._log.warning("get_json_failed", url=url, error=str(exc))
+            return None
+
+    @staticmethod
+    def safe_text(element: Any) -> str:
+        """Extract stripped text from a BeautifulSoup element. Returns '' if None."""
+        if element is None:
+            return ""
+        text = getattr(element, "get_text", None)
+        if callable(text):
+            return str(text(strip=True))
+        return str(element).strip()
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__} source_id={self.source_id!r}>"

@@ -8,8 +8,7 @@ app/services/notification_service.py — Delivers alerts via Slack + email.
 # ─────────────────────────────────────────────────────────────────────────────
 
 import logging
-from datetime import datetime, timedelta, timezone
-from decimal import Decimal
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -22,7 +21,7 @@ log = logging.getLogger(__name__)
 
 async def extract_client_features(session: AsyncSession, client: Client) -> ClientFeatures:
     """Build a ClientFeatures dataclass from current DB records for one client."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     year_ago = now - timedelta(days=365)
     two_years_ago = now - timedelta(days=730)
 
@@ -31,7 +30,7 @@ async def extract_client_features(session: AsyncSession, client: Client) -> Clie
         select(
             func.sum(BillingRecord.amount_billed).label("billed"),
             func.sum(BillingRecord.write_off_amount).label("writeoffs"),
-            func.count(BillingRecord.id).filter(BillingRecord.has_dispute == True).label("disputes"),
+            func.count(BillingRecord.id).filter(BillingRecord.has_dispute).label("disputes"),
         ).where(
             BillingRecord.client_id == client.id,
             BillingRecord.bill_date >= year_ago.date(),
@@ -59,6 +58,7 @@ async def extract_client_features(session: AsyncSession, client: Client) -> Clie
 
     # Matter stats
     from app.models.client import Matter
+
     matters_result = await session.execute(
         select(Matter).where(
             Matter.client_id == client.id,
@@ -75,9 +75,7 @@ async def extract_client_features(session: AsyncSession, client: Client) -> Clie
         select(func.max(Matter.opened_at)).where(Matter.client_id == client.id)
     )
     last_matter_date = last_matter_result.scalar()
-    days_since_matter = (
-        (now.date() - last_matter_date).days if last_matter_date else 365
-    )
+    days_since_matter = (now.date() - last_matter_date).days if last_matter_date else 365
 
     # Write-off percentage
     writeoff_pct = write_off_total / total_billed if total_billed > 0 else 0.0
@@ -100,31 +98,31 @@ async def extract_client_features(session: AsyncSession, client: Client) -> Clie
 # Notification service
 # ─────────────────────────────────────────────────────────────────────────────
 
-import httpx
-from app.config import get_settings
+import httpx  # noqa: E402
+
+from app.config import get_settings  # noqa: E402
 
 settings = get_settings()
 
 # Practice area → partner routing (update with real partner data)
 PRACTICE_ROUTING: dict[str, list[str]] = {
-    "Corporate / M&A":            ["S. Chen", "M. Webb"],
-    "Litigation":                  ["P. Rodrigues", "D. Park"],
-    "Securities":                  ["S. Chen", "J. Okafor"],
-    "Regulatory":                  ["M. Webb", "J. Okafor"],
-    "Restructuring / Insolvency":  ["D. Park", "P. Rodrigues"],
-    "Employment & Labour":         ["M. Webb"],
-    "Privacy & Cybersecurity":     ["D. Park"],
-    "Environmental":               ["J. Okafor"],
-    "Banking & Finance":           ["S. Chen", "J. Okafor"],
-    "Competition":                 ["M. Webb"],
-    "Real Estate & Construction":  ["P. Rodrigues"],
-    "Corporate / Governance":      ["S. Chen"],
-    "IP":                          ["D. Park"],
+    "Corporate / M&A": ["S. Chen", "M. Webb"],
+    "Litigation": ["P. Rodrigues", "D. Park"],
+    "Securities": ["S. Chen", "J. Okafor"],
+    "Regulatory": ["M. Webb", "J. Okafor"],
+    "Restructuring / Insolvency": ["D. Park", "P. Rodrigues"],
+    "Employment & Labour": ["M. Webb"],
+    "Privacy & Cybersecurity": ["D. Park"],
+    "Environmental": ["J. Okafor"],
+    "Banking & Finance": ["S. Chen", "J. Okafor"],
+    "Competition": ["M. Webb"],
+    "Real Estate & Construction": ["P. Rodrigues"],
+    "Corporate / Governance": ["S. Chen"],
+    "IP": ["D. Park"],
 }
 
 
 class NotificationService:
-
     async def send_alert(self, alert, client=None) -> None:
         partners = PRACTICE_ROUTING.get(alert.practice_area or "", [])[:2]
         if not partners:

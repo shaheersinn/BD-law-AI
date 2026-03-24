@@ -31,15 +31,18 @@ def _make_stub(task_name: str) -> Task:  # type: ignore[type-arg]
     Create a stub task that logs its invocation.
     Used in Phase 0 until real implementations are built.
     """
+
     @celery_app.task(name=task_name, bind=True, max_retries=3)  # type: ignore[misc]
     def stub_task(self: Task) -> dict:  # type: ignore[type-arg]
-        log.info("Task invoked (stub — implement in Phase 1+)", task=task_name)
+        log.info("Task invoked (stub — implement in Phase 1+)", task=task_name)  # type: ignore[call-arg]
         return {"status": "stub", "task": task_name}
+
     stub_task.__name__ = task_name.split(".")[-1]
     return stub_task
 
 
 # ── Scraper Tasks (Phase 1) ────────────────────────────────────────────────────
+
 
 @celery_app.task(bind=True, max_retries=3, name="app.tasks._impl.scrape_sedar")
 def scrape_sedar(self: Task) -> dict:  # type: ignore[type-arg]
@@ -113,6 +116,7 @@ def scrape_google_trends(self: Task) -> dict:  # type: ignore[type-arg]
 
 # ── Feature Engineering Tasks (Phase 2) ───────────────────────────────────────
 
+
 @celery_app.task(bind=True, max_retries=3, name="app.tasks._impl.extract_features_all")
 def extract_features_all(self: Task) -> dict:  # type: ignore[type-arg]
     """Extract continuous feature vectors for all watchlist companies."""
@@ -129,6 +133,7 @@ def rebuild_feature_vectors(self: Task) -> dict:  # type: ignore[type-arg]
 
 # ── Scoring Tasks (Phase 6) ────────────────────────────────────────────────────
 
+
 @celery_app.task(bind=True, max_retries=3, name="app.tasks._impl.run_scoring_all_companies")
 def run_scoring_all_companies(self: Task) -> dict:  # type: ignore[type-arg]
     """Run 34-engine scoring for all watchlist companies."""
@@ -139,7 +144,7 @@ def run_scoring_all_companies(self: Task) -> dict:  # type: ignore[type-arg]
 @celery_app.task(bind=True, max_retries=3, name="app.tasks._impl.score_company")
 def score_company(self: Task, company_id: str) -> dict:  # type: ignore[type-arg]
     """Run 34-engine scoring for a single company (on-demand)."""
-    log.info("score_company invoked (stub — implement in Phase 6)", company_id=company_id)
+    log.info("score_company invoked (stub — implement in Phase 6)", company_id=company_id)  # type: ignore[call-arg]
     return {"status": "stub", "company_id": company_id}
 
 
@@ -151,6 +156,7 @@ def retrain_all_models(self: Task) -> dict:  # type: ignore[type-arg]
 
 
 # ── Agent Tasks (Phase 6+) ─────────────────────────────────────────────────────
+
 
 @celery_app.task(bind=True, max_retries=3, name="app.tasks._impl.agent_health_supervisor")
 def agent_health_supervisor(self: Task) -> dict:  # type: ignore[type-arg]

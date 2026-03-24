@@ -1,16 +1,21 @@
 """app/scrapers/filings/sedi.py — SEDI insider trading scraper."""
+
 from __future__ import annotations
+
 from app.scrapers.base import BaseScraper, SignalData
 
+
 class SediScraper(BaseScraper):
-    NAME = "sedi_insider_trading"
-    CATEGORY = "filings"
+    source_id = "corporate_sedi"
+    source_name = "SEDI Insider Trading"
+    CATEGORY = "corporate"
+    signal_types = ["insider_transaction"]
     SOURCE_URL = "https://www.sedi.ca"
-    RATE_LIMIT_RPS = 0.5
-    MAX_CONCURRENT = 1
+    rate_limit_rps = 0.5
+    concurrency = 1
     SOURCE_RELIABILITY = 0.95
 
-    async def run(self) -> list[SignalData]:
+    async def scrape(self) -> list[SignalData]:
         signals: list[SignalData] = []
         # SEDI has CAPTCHA protection — use search endpoint for bulk insider reports
         # Focus on Form 55-102F4 (insider reporting) with large transactions
@@ -38,16 +43,22 @@ class SediScraper(BaseScraper):
             if "disposition" in transaction_type.lower() or "sell" in transaction_type.lower():
                 strength = 0.70
                 practice_areas.insert(0, "ma_corporate")
-            signals.append(SignalData(
-                scraper_name=self.NAME,
-                signal_type="insider_transaction",
-                raw_entity_name=company_name,
-                title=f"Insider {transaction_type}: {company_name} — {insider_name}",
-                summary=f"SEDI insider trade: {insider_name} {transaction_type} {value_str} of {company_name} on {date_str}",
-                source_url=self.SOURCE_URL,
-                published_at=self.parse_date(date_str),
-                practice_areas=practice_areas,
-                signal_strength=strength,
-                metadata={"transaction_type": transaction_type, "insider": insider_name, "value": value_str},
-            ))
+            signals.append(
+                SignalData(
+                    source_id=self.source_id,
+                    signal_type="insider_transaction",
+                    raw_company_name=company_name,
+                    signal_text=f"SEDI insider trade: {insider_name} {transaction_type} {value_str} of {company_name} on {date_str}",
+                    source_url=self.SOURCE_URL,
+                    published_at=self.parse_date(date_str),
+                    practice_area_hints=practice_areas,
+                    confidence_score=strength,
+                    signal_value={
+                        "transaction_type": transaction_type,
+                        "insider": insider_name,
+                        "value": value_str,
+                        "title": f"Insider {transaction_type}: {company_name} — {insider_name}",
+                    },
+                )
+            )
         return signals

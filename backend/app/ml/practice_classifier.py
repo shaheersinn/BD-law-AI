@@ -14,14 +14,12 @@ import joblib
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.metrics import f1_score
 from sklearn.model_selection import cross_val_score
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.preprocessing import MultiLabelBinarizer
 
 from app.config import get_settings
 from app.ml.convergence import (
-    PRACTICE_AREA_VOTES,
     ScoredSignal,
     classify_practice_area,
 )
@@ -33,14 +31,31 @@ MODEL_PATH = Path(settings.models_dir) / "pa_classifier.pkl"
 MLB_PATH = Path(settings.models_dir) / "pa_mlb.pkl"
 
 SIGNAL_FEATURE_COLS = [
-    "sedar_material_change", "sedar_confidentiality", "sedar_going_concern",
-    "sedar_director_resign", "edgar_conf_treatment", "edgar_sc13d",
-    "canlii_defendant", "canlii_plaintiff", "canlii_ccaa",
-    "osc_enforcement", "competition_investigation", "fintrac_noncompliance",
-    "job_gc_hire", "job_cco_urgent", "job_privacy_counsel", "job_ma_counsel",
-    "jet_baystreet_2x", "satellite_parking_drop", "permit_environmental",
-    "news_lawsuit", "news_investigation", "news_breach", "news_restructuring",
-    "linkedin_gc_spike", "linkedin_exec_departure",
+    "sedar_material_change",
+    "sedar_confidentiality",
+    "sedar_going_concern",
+    "sedar_director_resign",
+    "edgar_conf_treatment",
+    "edgar_sc13d",
+    "canlii_defendant",
+    "canlii_plaintiff",
+    "canlii_ccaa",
+    "osc_enforcement",
+    "competition_investigation",
+    "fintrac_noncompliance",
+    "job_gc_hire",
+    "job_cco_urgent",
+    "job_privacy_counsel",
+    "job_ma_counsel",
+    "jet_baystreet_2x",
+    "satellite_parking_drop",
+    "permit_environmental",
+    "news_lawsuit",
+    "news_investigation",
+    "news_breach",
+    "news_restructuring",
+    "linkedin_gc_spike",
+    "linkedin_exec_departure",
 ]
 
 
@@ -52,8 +67,8 @@ class PracticeAreaClassifier:
     _instance: Optional["PracticeAreaClassifier"] = None
 
     def __init__(self) -> None:
-        self._model: Optional[OneVsRestClassifier] = None
-        self._mlb: Optional[MultiLabelBinarizer] = None
+        self._model: OneVsRestClassifier | None = None
+        self._mlb: MultiLabelBinarizer | None = None
 
     @classmethod
     def get(cls) -> "PracticeAreaClassifier":
@@ -67,9 +82,7 @@ class PracticeAreaClassifier:
             self._mlb = joblib.load(MLB_PATH)
             log.info("PA classifier loaded from %s", MODEL_PATH)
 
-    def predict(
-        self, signals: list[ScoredSignal]
-    ) -> tuple[str, float, list[str]]:
+    def predict(self, signals: list[ScoredSignal]) -> tuple[str, float, list[str]]:
         """
         Returns (primary_pa, confidence, all_predicted_pas).
         Tries trained model first, falls back to weighted vote.
@@ -81,9 +94,7 @@ class PracticeAreaClassifier:
             try:
                 features = _signals_to_features(signals)
                 probs = self._model.predict_proba(features)
-                predicted = self._mlb.inverse_transform(
-                    (probs >= 0.40).astype(int)
-                )
+                predicted = self._mlb.inverse_transform((probs >= 0.40).astype(int))
                 all_pas = list(predicted[0]) if predicted else []
 
                 # Confidence = max probability across predicted classes
@@ -120,9 +131,8 @@ def train(csv_path: str) -> dict:
 
     # Parse stringified lists like "['Corporate / M&A', 'Securities']"
     import ast
-    y_raw = df["practice_areas"].apply(
-        lambda v: ast.literal_eval(v) if isinstance(v, str) else v
-    )
+
+    y_raw = df["practice_areas"].apply(lambda v: ast.literal_eval(v) if isinstance(v, str) else v)
 
     mlb = MultiLabelBinarizer()
     y = mlb.fit_transform(y_raw)

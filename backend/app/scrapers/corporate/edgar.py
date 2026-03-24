@@ -18,10 +18,13 @@ Auth: None required (public API)
 
 EDGAR full-text search: https://efts.sec.gov/LATEST/search-index?q=...&dateRange=custom&startdt=...
 """
+
 from __future__ import annotations
-from datetime import datetime, timezone, timedelta
-from typing import Any
+
+from datetime import UTC, datetime, timedelta
+
 import structlog
+
 from app.scrapers.base import BaseScraper, ScraperResult
 from app.scrapers.registry import register
 
@@ -59,7 +62,12 @@ _PRACTICE_MAP = {
 class EDGARScraper(BaseScraper):
     source_id = "corporate_edgar"
     source_name = "SEC EDGAR"
-    signal_types = ["filing_annual", "filing_material_change", "filing_activist_shareholder", "filing_tender_offer"]
+    signal_types = [
+        "filing_annual",
+        "filing_material_change",
+        "filing_activist_shareholder",
+        "filing_tender_offer",
+    ]
     rate_limit_rps = 0.1
     concurrency = 2
     retry_attempts = 4
@@ -97,8 +105,8 @@ class EDGARScraper(BaseScraper):
 
     async def _search_edgar(self, form_types: list[str], days_back: int = 7) -> list[ScraperResult]:
         results: list[ScraperResult] = []
-        start_dt = (datetime.now(tz=timezone.utc) - timedelta(days=days_back)).strftime("%Y-%m-%d")
-        end_dt = datetime.now(tz=timezone.utc).strftime("%Y-%m-%d")
+        start_dt = (datetime.now(tz=UTC) - timedelta(days=days_back)).strftime("%Y-%m-%d")
+        end_dt = datetime.now(tz=UTC).strftime("%Y-%m-%d")
 
         for form_type in form_types:
             try:
@@ -133,24 +141,27 @@ class EDGARScraper(BaseScraper):
                     signal_type = _FILING_MAP.get(form_type, "filing_material_change")
                     hints = _PRACTICE_MAP.get(form_type, ["securities"])
 
-                    results.append(ScraperResult(
-                        source_id=self.source_id,
-                        signal_type=signal_type,
-                        raw_company_name=src.get("entity_name") or src.get("display_names", [None])[0],
-                        raw_company_id=src.get("entity_id"),
-                        source_url=f"https://www.sec.gov{src.get('file_date', '')}",
-                        signal_value={
-                            "form_type": form_type,
-                            "cik": src.get("entity_id"),
-                            "file_date": src.get("file_date"),
-                            "period_of_report": src.get("period_of_report"),
-                            "accession_no": src.get("accession_no"),
-                        },
-                        signal_text=f"{src.get('entity_name')} — {form_type} filed {src.get('file_date')}",
-                        published_at=self._parse_date(src.get("file_date")),
-                        practice_area_hints=hints,
-                        raw_payload=src,
-                    ))
+                    results.append(
+                        ScraperResult(
+                            source_id=self.source_id,
+                            signal_type=signal_type,
+                            raw_company_name=src.get("entity_name")
+                            or src.get("display_names", [None])[0],
+                            raw_company_id=src.get("entity_id"),
+                            source_url=f"https://www.sec.gov{src.get('file_date', '')}",
+                            signal_value={
+                                "form_type": form_type,
+                                "cik": src.get("entity_id"),
+                                "file_date": src.get("file_date"),
+                                "period_of_report": src.get("period_of_report"),
+                                "accession_no": src.get("accession_no"),
+                            },
+                            signal_text=f"{src.get('entity_name')} — {form_type} filed {src.get('file_date')}",
+                            published_at=self._parse_date(src.get("file_date")),
+                            practice_area_hints=hints,
+                            raw_payload=src,
+                        )
+                    )
 
                 await self._rate_limit_sleep()
 

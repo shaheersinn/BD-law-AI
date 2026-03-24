@@ -17,7 +17,7 @@ Security notes:
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Literal
 
 from jose import JWTError, jwt
@@ -39,17 +39,19 @@ TokenType = Literal["access", "refresh"]
 
 # ── Password Utilities ─────────────────────────────────────────────────────────
 
+
 def hash_password(password: str) -> str:
     """Hash a plaintext password using bcrypt."""
-    return pwd_context.hash(password)
+    return pwd_context.hash(password)  # type: ignore[no-any-return]
 
 
 def verify_password(plaintext: str, hashed: str) -> bool:
     """Verify a plaintext password against a stored hash."""
-    return pwd_context.verify(plaintext, hashed)
+    return pwd_context.verify(plaintext, hashed)  # type: ignore[no-any-return]
 
 
 # ── JWT Token Utilities ────────────────────────────────────────────────────────
+
 
 def create_access_token(user_id: int, role: str) -> str:
     """
@@ -62,7 +64,7 @@ def create_access_token(user_id: int, role: str) -> str:
       - exp: expiry timestamp
       - iat: issued-at timestamp
     """
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     expire = now + timedelta(minutes=settings.access_token_expire_minutes)
 
     payload = {
@@ -72,7 +74,7 @@ def create_access_token(user_id: int, role: str) -> str:
         "iat": now,
         "exp": expire,
     }
-    return jwt.encode(payload, settings.secret_key, algorithm=settings.algorithm)
+    return jwt.encode(payload, settings.secret_key, algorithm=settings.algorithm)  # type: ignore[no-any-return]
 
 
 def create_refresh_token(user_id: int) -> str:
@@ -82,7 +84,7 @@ def create_refresh_token(user_id: int) -> str:
     Refresh tokens have a longer expiry and carry fewer claims.
     They are stored hashed in the database to prevent theft.
     """
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     expire = now + timedelta(days=settings.refresh_token_expire_days)
 
     payload = {
@@ -91,7 +93,7 @@ def create_refresh_token(user_id: int) -> str:
         "iat": now,
         "exp": expire,
     }
-    return jwt.encode(payload, settings.secret_key, algorithm=settings.algorithm)
+    return jwt.encode(payload, settings.secret_key, algorithm=settings.algorithm)  # type: ignore[no-any-return]
 
 
 def decode_token(token: str, expected_type: TokenType) -> dict:  # type: ignore[type-arg]
@@ -117,16 +119,15 @@ def decode_token(token: str, expected_type: TokenType) -> dict:  # type: ignore[
     if payload.get("type") != expected_type:
         raise JWTError(f"Expected {expected_type} token, got {payload.get('type')}")
 
-    return payload
+    return payload  # type: ignore[no-any-return]
 
 
 # ── User Authentication ────────────────────────────────────────────────────────
 
+
 async def get_user_by_email(db: AsyncSession, email: str) -> User | None:
     """Fetch user by email address."""
-    result = await db.execute(
-        select(User).where(User.email == email.lower().strip())
-    )
+    result = await db.execute(select(User).where(User.email == email.lower().strip()))
     return result.scalar_one_or_none()
 
 
@@ -169,7 +170,7 @@ async def authenticate_user(
         user.failed_login_attempts += 1
 
         if user.failed_login_attempts >= settings.max_login_attempts:
-            user.locked_until = datetime.now(timezone.utc) + timedelta(
+            user.locked_until = datetime.now(UTC) + timedelta(
                 minutes=settings.lockout_duration_minutes
             )
 
@@ -179,7 +180,7 @@ async def authenticate_user(
     # Successful login — reset security counters
     user.failed_login_attempts = 0
     user.locked_until = None
-    user.last_login_at = datetime.now(timezone.utc)
+    user.last_login_at = datetime.now(UTC)
     await db.commit()
 
     return user

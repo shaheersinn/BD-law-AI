@@ -9,7 +9,6 @@ Inference: ChurnModel().score(client_features)
 """
 
 import logging
-import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
@@ -18,7 +17,7 @@ import joblib
 import numpy as np
 import pandas as pd
 from sklearn.calibration import CalibratedClassifierCV
-from sklearn.metrics import classification_report, precision_score, recall_score
+from sklearn.metrics import classification_report, precision_score
 from sklearn.model_selection import StratifiedKFold, train_test_split
 from xgboost import XGBClassifier
 
@@ -32,17 +31,17 @@ MODEL_PATH = Path(settings.models_dir) / "churn_model.pkl"
 # Feature columns — must match what the API extracts from billing data
 FEATURE_COLS = [
     "total_billed_this_year",
-    "yoy_billing_change_pct",      # % vs prior year — negative is bad
+    "yoy_billing_change_pct",  # % vs prior year — negative is bad
     "matters_opened_this_year",
     "days_since_last_matter",
     "disputes_this_year",
-    "writeoff_pct",                 # write-offs / billed
-    "gc_changed_this_year",         # 0/1
+    "writeoff_pct",  # write-offs / billed
+    "gc_changed_this_year",  # 0/1
     "days_since_last_contact",
     "practice_area_count",
-    "reply_latency_days",           # avg email reply lag
-    "billing_trend_3m",             # 3-month billing slope (positive/negative)
-    "matter_completion_rate",       # closed / opened
+    "reply_latency_days",  # avg email reply lag
+    "billing_trend_3m",  # 3-month billing slope (positive/negative)
+    "matter_completion_rate",  # closed / opened
 ]
 
 
@@ -62,20 +61,24 @@ class ClientFeatures:
     matter_completion_rate: float = 1.0
 
     def to_array(self) -> np.ndarray:
-        return np.array([[
-            self.total_billed_this_year,
-            self.yoy_billing_change_pct,
-            self.matters_opened_this_year,
-            self.days_since_last_matter,
-            self.disputes_this_year,
-            self.writeoff_pct,
-            self.gc_changed_this_year,
-            self.days_since_last_contact,
-            self.practice_area_count,
-            self.reply_latency_days,
-            self.billing_trend_3m,
-            self.matter_completion_rate,
-        ]])
+        return np.array(
+            [
+                [
+                    self.total_billed_this_year,
+                    self.yoy_billing_change_pct,
+                    self.matters_opened_this_year,
+                    self.days_since_last_matter,
+                    self.disputes_this_year,
+                    self.writeoff_pct,
+                    self.gc_changed_this_year,
+                    self.days_since_last_contact,
+                    self.practice_area_count,
+                    self.reply_latency_days,
+                    self.billing_trend_3m,
+                    self.matter_completion_rate,
+                ]
+            ]
+        )
 
 
 class ChurnModel:
@@ -84,7 +87,7 @@ class ChurnModel:
     _instance: Optional["ChurnModel"] = None
 
     def __init__(self) -> None:
-        self._model: Optional[CalibratedClassifierCV] = None
+        self._model: CalibratedClassifierCV | None = None
 
     @classmethod
     def get(cls) -> "ChurnModel":
@@ -154,7 +157,8 @@ def _heuristic_churn_score(f: ClientFeatures) -> int:
 
 # ── Training ───────────────────────────────────────────────────────────────────
 
-def train(csv_path: str, output_path: Optional[Path] = None) -> dict:
+
+def train(csv_path: str, output_path: Path | None = None) -> dict:
     """
     Train a calibrated XGBoost churn classifier.
 

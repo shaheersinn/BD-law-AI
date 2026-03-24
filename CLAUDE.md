@@ -23,7 +23,7 @@ Built for BigLaw BD teams. Zero external LLM dependency in production.
 |-------|--------|-----------|
 | 0 — Scaffold | ✅ COMPLETE | March 2026 |
 | 1 — Scrapers (90+) | ✅ COMPLETE | March 2026 |
-| 1B — Scraper Audit | ⏳ NEXT | — |
+| 1B — Scraper Audit | ✅ COMPLETE | March 2026 |
 | 1C — Scraper Performance | ⏳ PENDING | — |
 | 2 — Feature Engineering | ⏳ PENDING | — |
 | 3 — Ground Truth | ⏳ PENDING | — |
@@ -305,5 +305,5 @@ All implemented as Celery tasks in app/tasks/_impl.py (stubs in Phase 0, impleme
 
 ---
 
-*Last updated: Phase 0 — March 2026*
-*Next update: Phase 1 completion*
+*Last updated: Phase 1B — March 2026*
+*Next update: Phase 1C completion*

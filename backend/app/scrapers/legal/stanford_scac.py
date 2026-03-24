@@ -1,6 +1,9 @@
 """app/scrapers/legal/stanford_scac.py — Stanford Securities Class Action Clearinghouse."""
+
 from __future__ import annotations
+
 from app.scrapers.base import BaseScraper, SignalData
+
 
 class StanfordScacScraper(BaseScraper):
     NAME = "stanford_scac"
@@ -30,14 +33,18 @@ class StanfordScacScraper(BaseScraper):
                 link = f"{self.SOURCE_URL}{link}"
             if not company:
                 continue
-            signals.append(SignalData(
-                scraper_name=self.NAME, signal_type="class_action_filed",
-                raw_entity_name=company,
-                title=f"Securities class action: {company}",
-                summary=f"Securities class action filed against {company} ({exchange})",
-                source_url=link, published_at=self.parse_date(date_str),
-                practice_areas=["class_actions", "securities_capital_markets", "litigation"],
-                signal_strength=0.90,
-                metadata={"exchange": exchange, "source": "Stanford SCAC"},
-            ))
+            signals.append(
+                SignalData(
+                    scraper_name=self.NAME,
+                    signal_type="class_action_filed",
+                    raw_entity_name=company,
+                    title=f"Securities class action: {company}",
+                    summary=f"Securities class action filed against {company} ({exchange})",
+                    source_url=link,
+                    published_at=self.parse_date(date_str),
+                    practice_areas=["class_actions", "securities_capital_markets", "litigation"],
+                    signal_strength=0.90,
+                    metadata={"exchange": exchange, "source": "Stanford SCAC"},
+                )
+            )
         return signals

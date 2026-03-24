@@ -55,8 +55,8 @@ async def require_auth(
         if user_id_str is None:
             raise credentials_exception
         user_id = int(user_id_str)
-    except (JWTError, ValueError):
-        raise credentials_exception
+    except (JWTError, ValueError) as exc:
+        raise credentials_exception from exc
 
     user = await get_user_by_id(db, user_id)
     if user is None or not user.is_active:

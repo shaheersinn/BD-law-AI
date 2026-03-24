@@ -3,7 +3,6 @@ app/routes/clients.py — Client endpoints with caching, auth, and streaming AI.
 """
 
 import logging
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
@@ -11,12 +10,12 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.dependencies import require_auth, require_partner, require_write
+from app.auth.dependencies import require_auth, require_partner
 from app.auth.service import TokenClaims
-from app.cache.client import TTL_AI, TTL_LONG, TTL_MEDIUM, cache
+from app.cache.client import TTL_LONG, cache
 from app.database import get_db
 from app.middleware.rate_limiter import enforce_rate_limit
-from app.models import Client, ChurnSignal, RiskLevel
+from app.models import ChurnSignal, Client, RiskLevel
 from app.services.anthropic_service import ai
 from app.services.audit_log import AuditEventType, extract_request_meta, log_event
 from app.services.streaming import sse_headers, stream_ai_response
@@ -30,24 +29,24 @@ class ClientSummary(BaseModel):
     name: str
     industry: str
     region: str
-    partner_name: Optional[str]
+    partner_name: str | None
     practice_groups: list[str]
     churn_score: int
     risk_level: str
-    wallet_share_pct: Optional[int]
+    wallet_share_pct: int | None
     days_since_last_contact: int
-    annual_revenue: Optional[float]
-    estimated_annual_spend: Optional[float]
+    annual_revenue: float | None
+    estimated_annual_spend: float | None
     model_config = {"from_attributes": True}
 
 
 class UpdateClientRequest(BaseModel):
-    partner_name: Optional[str] = None
-    gc_name: Optional[str] = None
-    gc_email: Optional[str] = None
-    wallet_share_pct: Optional[int] = Field(default=None, ge=0, le=100)
-    days_since_last_contact: Optional[int] = Field(default=None, ge=0)
-    estimated_annual_spend: Optional[float] = Field(default=None, ge=0)
+    partner_name: str | None = None
+    gc_name: str | None = None
+    gc_email: str | None = None
+    wallet_share_pct: int | None = Field(default=None, ge=0, le=100)
+    days_since_last_contact: int | None = Field(default=None, ge=0)
+    estimated_annual_spend: float | None = Field(default=None, ge=0)
 
 
 class AddSignalRequest(BaseModel):
@@ -57,24 +56,26 @@ class AddSignalRequest(BaseModel):
 
 @router.get("/", response_model=list[ClientSummary])
 async def list_clients(
-    risk: Optional[str] = Query(default=None),
+    risk: str | None = Query(default=None),
     min_churn: int = Query(default=0, ge=0, le=100),
-    partner: Optional[str] = Query(default=None),
+    partner: str | None = Query(default=None),
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=50, ge=1, le=200),
     db: AsyncSession = Depends(get_db),
     claims: TokenClaims = Depends(require_auth),
 ):
     q = (
-        select(Client).where(Client.is_active == True)
+        select(Client)
+        .where(Client.is_active)
         .order_by(Client.churn_score.desc())
-        .offset(skip).limit(limit)
+        .offset(skip)
+        .limit(limit)
     )
     if risk:
         try:
             q = q.where(Client.risk_level == RiskLevel(risk))
-        except ValueError:
-            raise HTTPException(status_code=400, detail=f"Invalid risk level: {risk}")
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=f"Invalid risk level: {risk}") from exc
     if min_churn:
         q = q.where(Client.churn_score >= min_churn)
     if partner:
@@ -95,13 +96,17 @@ async def churn_scores(
         return cached
 
     result = await db.execute(
-        select(Client).where(Client.is_active == True).order_by(Client.churn_score.desc())
+        select(Client).where(Client.is_active).order_by(Client.churn_score.desc())
     )
     data = [
         {
-            "id": c.id, "name": c.name, "churn_score": c.churn_score,
+            "id": c.id,
+            "name": c.name,
+            "churn_score": c.churn_score,
             "risk_level": c.risk_level.value if c.risk_level else "low",
-            "partner_name": c.partner_name, "industry": c.industry, "region": c.region,
+            "partner_name": c.partner_name,
+            "industry": c.industry,
+            "region": c.region,
             "annual_revenue": float(c.annual_revenue or 0),
             "days_since_last_contact": c.days_since_last_contact,
             "practice_groups": c.practice_groups or [],
@@ -151,8 +156,10 @@ async def update_client(
     await cache.delete(cache.client_key(client_id))
     await cache.delete("clients:v1:churn_scores")
     await log_event(
-        AuditEventType.data_export, user_id=claims.user_id,
-        resource_type="client", resource_id=client_id,
+        AuditEventType.data_export,
+        user_id=claims.user_id,
+        resource_type="client",
+        resource_id=client_id,
         detail={"action": "update", "fields": list(updated.keys())},
         **(extract_request_meta(request) if request else {}),
     )
@@ -161,7 +168,8 @@ async def update_client(
 
 @router.post("/{client_id}/signals", status_code=201)
 async def add_signal(
-    client_id: int, req: AddSignalRequest,
+    client_id: int,
+    req: AddSignalRequest,
     db: AsyncSession = Depends(get_db),
     claims: TokenClaims = Depends(require_partner),
 ):
@@ -192,10 +200,15 @@ async def churn_brief(
     client = result.scalars().first()
     if not client:
         raise HTTPException(status_code=404, detail="Client not found")
-    signals_text = "\n".join(f"- {s.signal_text}" for s in (client.churn_signals or [])) or "- No specific signals detected yet"
+    signals_text = (
+        "\n".join(f"- {s.signal_text}" for s in (client.churn_signals or []))
+        or "- No specific signals detected yet"
+    )
     brief = await ai.generate(
         "churn_brief",
-        name=client.name, industry=client.industry, score=client.churn_score,
+        name=client.name,
+        industry=client.industry,
+        score=client.churn_score,
         risk=client.risk_level.value.upper() if client.risk_level else "MEDIUM",
         partner=client.partner_name or "Relationship Partner",
         revenue=f"${float(client.annual_revenue or 0):,.0f}",
@@ -206,8 +219,10 @@ async def churn_brief(
     data = {"brief": brief, "client_id": client_id, "cached": False}
     await cache.set(cache_key, data, ttl=6 * 3600)
     await log_event(
-        AuditEventType.ai_generate, user_id=claims.user_id,
-        resource_type="client", resource_id=client_id,
+        AuditEventType.ai_generate,
+        user_id=claims.user_id,
+        resource_type="client",
+        resource_id=client_id,
         detail={"prompt_key": "churn_brief", "client_name": client.name},
         **(extract_request_meta(request) if request else {}),
     )
@@ -226,11 +241,15 @@ async def churn_brief_stream(
     client = result.scalars().first()
     if not client:
         raise HTTPException(status_code=404, detail="Client not found")
-    signals_text = "\n".join(f"- {s.signal_text}" for s in (client.churn_signals or [])) or "- No signals"
+    signals_text = (
+        "\n".join(f"- {s.signal_text}" for s in (client.churn_signals or [])) or "- No signals"
+    )
     return StreamingResponse(
         stream_ai_response(
             "churn_brief",
-            name=client.name, industry=client.industry, score=client.churn_score,
+            name=client.name,
+            industry=client.industry,
+            score=client.churn_score,
             risk=client.risk_level.value.upper() if client.risk_level else "MEDIUM",
             partner=client.partner_name or "Relationship Partner",
             revenue=f"${float(client.annual_revenue or 0):,.0f}",

@@ -24,10 +24,11 @@ Auth: None required (public filings)
 SEDAR+ has no official API. We scrape the EFTS full-text search endpoint
 which has been used by researchers for years.
 """
+
 from __future__ import annotations
-import json
+
 import re
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import structlog
@@ -93,7 +94,7 @@ class SEDARScraper(BaseScraper):
           4. Return ScraperResult for each filing
         """
         results: list[ScraperResult] = []
-        cutoff = datetime.now(tz=timezone.utc) - timedelta(days=7)
+        datetime.now(tz=UTC) - timedelta(days=7)
 
         try:
             # Search for material change reports (highest legal signal value)
@@ -137,8 +138,8 @@ class SEDARScraper(BaseScraper):
     ) -> list[ScraperResult]:
         """Search EFTS for filings matching query + type in recent days."""
         results: list[ScraperResult] = []
-        start_date = (datetime.now(tz=timezone.utc) - timedelta(days=days_back)).strftime("%Y-%m-%d")
-        end_date = datetime.now(tz=timezone.utc).strftime("%Y-%m-%d")
+        start_date = (datetime.now(tz=UTC) - timedelta(days=days_back)).strftime("%Y-%m-%d")
+        end_date = datetime.now(tz=UTC).strftime("%Y-%m-%d")
 
         params = {
             "target": "EFTSPublicSearchServlet",
@@ -163,25 +164,29 @@ class SEDARScraper(BaseScraper):
 
             for filing in filings:
                 signal_type = _TARGET_FILING_TYPES.get(filing_type, "filing_material_change")
-                hints = self._extract_practice_hints(filing.get("title", "") + " " + filing.get("description", ""))
+                hints = self._extract_practice_hints(
+                    filing.get("title", "") + " " + filing.get("description", "")
+                )
 
-                results.append(ScraperResult(
-                    source_id=self.source_id,
-                    signal_type=signal_type,
-                    raw_company_name=filing.get("company_name"),
-                    raw_company_id=filing.get("sedar_id"),
-                    source_url=filing.get("url"),
-                    signal_value={
-                        "filing_type": filing_type,
-                        "filing_date": filing.get("filing_date"),
-                        "sedar_id": filing.get("sedar_id"),
-                        "document_id": filing.get("doc_id"),
-                    },
-                    signal_text=f"{filing.get('company_name')} — {filing_type}: {filing.get('title', '')}",
-                    published_at=self._parse_date(filing.get("filing_date")),
-                    practice_area_hints=hints,
-                    raw_payload=filing,
-                ))
+                results.append(
+                    ScraperResult(
+                        source_id=self.source_id,
+                        signal_type=signal_type,
+                        raw_company_name=filing.get("company_name"),
+                        raw_company_id=filing.get("sedar_id"),
+                        source_url=filing.get("url"),
+                        signal_value={
+                            "filing_type": filing_type,
+                            "filing_date": filing.get("filing_date"),
+                            "sedar_id": filing.get("sedar_id"),
+                            "document_id": filing.get("doc_id"),
+                        },
+                        signal_text=f"{filing.get('company_name')} — {filing_type}: {filing.get('title', '')}",
+                        published_at=self._parse_date(filing.get("filing_date")),
+                        practice_area_hints=hints,
+                        raw_payload=filing,
+                    )
+                )
 
         except Exception as exc:
             log.error("sedar_efts_search_failed", query=query, error=str(exc))
@@ -223,7 +228,9 @@ class SEDARScraper(BaseScraper):
 
     async def health_check(self) -> bool:
         try:
-            response = await self.get(_EFTS_BASE, params={"target": "EFTSPublicSearchServlet", "lang": "EN"})
+            response = await self.get(
+                _EFTS_BASE, params={"target": "EFTSPublicSearchServlet", "lang": "EN"}
+            )
             return response.status_code in (200, 302)
         except Exception:
             return False

@@ -26,8 +26,7 @@ Budget strategy:
 from __future__ import annotations
 
 import logging
-from datetime import date, datetime, timezone
-from typing import Optional
+from datetime import UTC, date, datetime
 
 log = logging.getLogger(__name__)
 
@@ -91,10 +90,11 @@ class ApiBudgetManager:
         self._redis_available = False
         self.log = logging.getLogger("oracle.scrapers.budget_manager")
 
-    async def _get_redis(self) -> Optional[object]:
+    async def _get_redis(self) -> object | None:
         """Get Redis client. Returns None if unavailable."""
         try:
             from app.cache.client import get_redis
+
             return await get_redis()
         except Exception:
             return None
@@ -104,7 +104,7 @@ class ApiBudgetManager:
         return f"oracle:budget:daily:{source}:{today}"
 
     def _monthly_key(self, source: str) -> str:
-        now = datetime.now(tz=timezone.utc)
+        now = datetime.now(tz=UTC)
         return f"oracle:budget:monthly:{source}:{now.year}:{now.month:02d}"
 
     async def check_budget(self, source: str, amount: int = 1) -> bool:
@@ -126,7 +126,9 @@ class ApiBudgetManager:
             if daily_used + amount > config["daily_limit"]:
                 self.log.warning(
                     "Budget: %s daily limit reached (%d/%d)",
-                    source, daily_used, config["daily_limit"],
+                    source,
+                    daily_used,
+                    config["daily_limit"],
                 )
                 return False
 
@@ -136,7 +138,9 @@ class ApiBudgetManager:
             if monthly_used + amount > config["monthly_limit"]:
                 self.log.warning(
                     "Budget: %s monthly limit reached (%d/%d)",
-                    source, monthly_used, config["monthly_limit"],
+                    source,
+                    monthly_used,
+                    config["monthly_limit"],
                 )
                 return False
 
@@ -156,7 +160,7 @@ class ApiBudgetManager:
                 await redis.incrby(monthly_key, amount)  # type: ignore
                 await redis.expire(monthly_key, 86400 * 35)  # 35 day TTL
                 return
-            except Exception:
+            except Exception:  # nosec B110
                 pass
 
         # Fallback: in-memory
@@ -182,29 +186,27 @@ class ApiBudgetManager:
             "monthly_used": monthly_used,
             "monthly_limit": config.get("monthly_limit"),
             "daily_remaining": (
-                config["daily_limit"] - daily_used
-                if config.get("daily_limit") else None
+                config["daily_limit"] - daily_used if config.get("daily_limit") else None
             ),
             "monthly_remaining": (
-                config["monthly_limit"] - monthly_used
-                if config.get("monthly_limit") else None
+                config["monthly_limit"] - monthly_used if config.get("monthly_limit") else None
             ),
         }
 
-    async def _get_count(self, redis: Optional[object], key: str) -> int:
+    async def _get_count(self, redis: object | None, key: str) -> int:
         """Get counter value from Redis or memory."""
         if redis is not None:
             try:
                 val = await redis.get(key)  # type: ignore
                 return int(val) if val else 0
-            except Exception:
+            except Exception:  # nosec B110
                 pass
         return self._memory.get(key, 0)
 
 
 # ── Singleton ─────────────────────────────────────────────────────────────────
 
-_budget_manager: Optional[ApiBudgetManager] = None
+_budget_manager: ApiBudgetManager | None = None
 
 
 def get_budget_manager() -> ApiBudgetManager:

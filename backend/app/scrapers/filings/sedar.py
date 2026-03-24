@@ -27,9 +27,6 @@ Signals produced:
 from __future__ import annotations
 
 import logging
-import re
-from datetime import datetime, timezone
-from typing import Optional
 
 from app.scrapers.base import BaseScraper, SignalData
 
@@ -55,24 +52,58 @@ HIGH_SIGNAL_FILING_TYPES = {
 # Keywords in filing titles that suggest specific legal issues
 TITLE_SIGNAL_KEYWORDS = {
     "litigation": [
-        "litigation", "lawsuit", "legal proceeding", "court action", "claim",
-        "arbitration", "dispute", "settlement", "judgement", "judgment",
+        "litigation",
+        "lawsuit",
+        "legal proceeding",
+        "court action",
+        "claim",
+        "arbitration",
+        "dispute",
+        "settlement",
+        "judgement",
+        "judgment",
     ],
     "insolvency_restructuring": [
-        "ccaa", "receivership", "insolvency", "restructuring", "creditor",
-        "monitor", "going concern", "bankruptcy",
+        "ccaa",
+        "receivership",
+        "insolvency",
+        "restructuring",
+        "creditor",
+        "monitor",
+        "going concern",
+        "bankruptcy",
     ],
     "regulatory_compliance": [
-        "cease trade", "regulatory", "compliance", "investigation", "inquiry",
-        "enforcement", "sanction", "fine", "penalty", "violation",
+        "cease trade",
+        "regulatory",
+        "compliance",
+        "investigation",
+        "inquiry",
+        "enforcement",
+        "sanction",
+        "fine",
+        "penalty",
+        "violation",
     ],
     "environmental_indigenous_energy": [
-        "environmental", "indigenous", "first nation", "impact assessment",
-        "climate", "esg", "carbon", "remediation",
+        "environmental",
+        "indigenous",
+        "first nation",
+        "impact assessment",
+        "climate",
+        "esg",
+        "carbon",
+        "remediation",
     ],
     "ma_corporate": [
-        "acquisition", "merger", "arrangement", "amalgamation", "takeover",
-        "transaction", "going private", "privatization",
+        "acquisition",
+        "merger",
+        "arrangement",
+        "amalgamation",
+        "takeover",
+        "transaction",
+        "going private",
+        "privatization",
     ],
 }
 
@@ -91,18 +122,20 @@ class SedarScraper(BaseScraper):
     NOT a bulk crawler. Only queries companies already in our company table.
     """
 
-    NAME = "sedar_filings"
-    CATEGORY = "filings"
+    source_id = "corporate_sedar"
+    source_name = "SEDAR+ Filings"
+    CATEGORY = "corporate"
+    signal_types = ["corporate_filing"]
     SOURCE_URL = "https://www.sedarplus.ca"
-    RATE_LIMIT_RPS = 0.33   # 1 request per 3 seconds — very conservative
-    MAX_CONCURRENT = 1       # Single-threaded — no parallel SEDAR requests
+    rate_limit_rps = 0.33  # 1 request per 3 seconds — very conservative
+    concurrency = 1  # Single-threaded — no parallel SEDAR requests
     SOURCE_RELIABILITY = 1.0  # Primary Canadian securities regulator source
     MAX_RETRIES = 2
 
     # SEDAR+ search endpoint
     _SEARCH_URL = "https://www.sedarplus.ca/csa-party/records/search.html"
 
-    async def run(self) -> list[SignalData]:
+    async def scrape(self) -> list[SignalData]:
         """
         Scrape recent SEDAR+ filings for watchlist companies.
         Returns list of SignalData objects for high-signal filings.
@@ -125,7 +158,8 @@ class SedarScraper(BaseScraper):
             except Exception as exc:
                 self.log.error(
                     "SEDAR: error scraping %s: %s",
-                    company.get("name", "unknown"), exc,
+                    company.get("name", "unknown"),
+                    exc,
                 )
 
         self.log.info("SEDAR: %d signals from %d companies", len(signals), len(companies))
@@ -164,7 +198,7 @@ class SedarScraper(BaseScraper):
 
         return signals
 
-    def _parse_filing_row(self, row: object, company_name: str) -> Optional[SignalData]:
+    def _parse_filing_row(self, row: object, company_name: str) -> SignalData | None:
         """Parse a single filing table row into a SignalData."""
         from bs4 import Tag
 
@@ -215,28 +249,31 @@ class SedarScraper(BaseScraper):
             strength = 0.8
 
         return SignalData(
-            scraper_name=self.NAME,
+            source_id=self.source_id,
             signal_type="corporate_filing",
-            raw_entity_name=issuer_name,
-            title=f"{filing_type} — {issuer_name}",
-            summary=f"SEDAR+ filing: {filing_type} by {issuer_name} on {filing_date_str}",
-            source_url=filing_url if filing_url.startswith("http") else f"{self.SOURCE_URL}{filing_url}",
+            raw_company_name=issuer_name,
+            signal_text=f"SEDAR+ filing: {filing_type} by {issuer_name} on {filing_date_str}",
+            source_url=filing_url
+            if filing_url.startswith("http")
+            else f"{self.SOURCE_URL}{filing_url}",
             published_at=published_at,
-            practice_areas=practice_areas,
-            signal_strength=strength,
-            metadata={
+            practice_area_hints=practice_areas,
+            confidence_score=strength,
+            signal_value={
                 "filing_type": filing_type,
                 "issuer_name": issuer_name,
                 "sedar_matched_company": company_name,
+                "title": f"{filing_type} — {issuer_name}",
             },
         )
 
     async def _load_watchlist_companies(self, max_companies: int = 50) -> list[dict]:
         """Load high-priority companies from PostgreSQL."""
         try:
+            from sqlalchemy import select
+
             from app.database import AsyncSessionLocal
             from app.models.company import Company
-            from sqlalchemy import select
 
             async with AsyncSessionLocal() as db:
                 result = await db.execute(
@@ -247,7 +284,7 @@ class SedarScraper(BaseScraper):
                         Company.ticker,
                         Company.watchlist_priority,
                     )
-                    .where(Company.is_active == True)
+                    .where(Company.is_active)
                     .where(Company.sedar_id.isnot(None))
                     .order_by(Company.watchlist_priority.asc(), Company.name.asc())
                     .limit(max_companies)
