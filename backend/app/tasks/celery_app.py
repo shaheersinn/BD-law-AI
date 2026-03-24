@@ -103,6 +103,9 @@ celery_app.conf.task_routes = {
     # ORACLE agents → agents queue
     "app.tasks._impl.agent_*": {"queue": "agents"},
     "app.tasks._impl.run_agent_*": {"queue": "agents"},
+    # Ground truth agents → agents queue
+    "app.tasks._impl.run_retrospective_labeler": {"queue": "agents"},
+    "app.tasks._impl.run_negative_sampler": {"queue": "agents"},
 }
 
 # ── Beat Schedule ──────────────────────────────────────────────────────────────
@@ -216,5 +219,18 @@ celery_app.conf.beat_schedule = {
         "task": "scrapers.canary_check",
         "schedule": crontab(minute="*/30"),
         "options": {"queue": "default"},
+    },
+    # ── Phase 3: Ground Truth ──────────────────────────────────────────────────
+    # Agent 016: Retrospective Labeler — daily at 2am UTC
+    "run-retrospective-labeler": {
+        "task": "app.tasks._impl.run_retrospective_labeler",
+        "schedule": crontab(minute=0, hour=2),
+        "options": {"queue": "agents"},
+    },
+    # Agent 017: Negative Sampler — daily at 3am UTC
+    "run-negative-sampler": {
+        "task": "app.tasks._impl.run_negative_sampler",
+        "schedule": crontab(minute=0, hour=3),
+        "options": {"queue": "agents"},
     },
 }

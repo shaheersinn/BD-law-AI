@@ -237,6 +237,11 @@ from app.routes.scrapers import router as scrapers_router  # noqa: E402
 
 app.include_router(scrapers_router, prefix=PREFIX)
 
+# Phase 3 — Ground Truth Pipeline
+from app.routes.ground_truth import router as ground_truth_router  # noqa: E402
+
+app.include_router(ground_truth_router, prefix=PREFIX)
+
 # Phase 1+ routers — stubs registered now, implemented in later phases
 # These are imported conditionally to avoid import errors during Phase 0
 # Uncomment as each phase is implemented:

@@ -17,13 +17,29 @@ All tasks follow these conventions:
 
 from __future__ import annotations
 
+import asyncio
 import logging
+from concurrent.futures import ThreadPoolExecutor
+from typing import Any
 
 from celery import Task
 
 from app.tasks.celery_app import celery_app
 
 log = logging.getLogger(__name__)
+
+
+def _run_async(coro: Any) -> Any:  # type: ignore[misc]
+    """Run an async coroutine from a sync Celery task."""
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(asyncio.run, coro)
+                return future.result(timeout=300)
+        return loop.run_until_complete(coro)
+    except RuntimeError:
+        return asyncio.run(coro)
 
 
 def _make_stub(task_name: str) -> Task:  # type: ignore[type-arg]
@@ -153,6 +169,71 @@ def retrain_all_models(self: Task) -> dict:  # type: ignore[type-arg]
     """Weekly retraining of all ML models on accumulated label data."""
     log.info("retrain_all_models invoked (stub — implement in Phase 6)")
     return {"status": "stub", "phase": "training"}
+
+
+# ── Ground Truth Tasks (Phase 3) ──────────────────────────────────────────────
+
+
+@celery_app.task(
+    bind=True,
+    max_retries=1,
+    name="app.tasks._impl.run_retrospective_labeler",
+    soft_time_limit=1800,
+    time_limit=2100,
+)
+def run_retrospective_labeler(self: Task) -> dict:  # type: ignore[type-arg]
+    """Agent 016: Retrospective Labeler — assigns positive ground truth labels."""
+
+    async def _impl() -> dict[str, Any]:
+        from app.database import AsyncSessionLocal
+        from app.ground_truth.pipeline import GroundTruthPipeline
+
+        pipeline = GroundTruthPipeline()
+        async with AsyncSessionLocal() as db:
+            run = await pipeline._create_run(  # noqa: SLF001
+                db=db,
+                run_type="retrospective",
+                config={},
+                now=__import__("datetime").datetime.now(__import__("datetime").timezone.utc),
+            )
+            return await pipeline.run_retrospective(run_id=run.id, db=db)
+
+    try:
+        return _run_async(_impl())
+    except Exception as exc:  # noqa: BLE001
+        log.error("run_retrospective_labeler failed", error=str(exc))
+        raise self.retry(exc=exc, countdown=2**self.request.retries) from exc
+
+
+@celery_app.task(
+    bind=True,
+    max_retries=1,
+    name="app.tasks._impl.run_negative_sampler",
+    soft_time_limit=1800,
+    time_limit=2100,
+)
+def run_negative_sampler(self: Task) -> dict:  # type: ignore[type-arg]
+    """Agent 017: Negative Sampler — assigns negative ground truth labels."""
+
+    async def _impl() -> dict[str, Any]:
+        from app.database import AsyncSessionLocal
+        from app.ground_truth.pipeline import GroundTruthPipeline
+
+        pipeline = GroundTruthPipeline()
+        async with AsyncSessionLocal() as db:
+            run = await pipeline._create_run(  # noqa: SLF001
+                db=db,
+                run_type="negative_sampling",
+                config={},
+                now=__import__("datetime").datetime.now(__import__("datetime").timezone.utc),
+            )
+            return await pipeline.run_negative_sampling(run_id=run.id, db=db)
+
+    try:
+        return _run_async(_impl())
+    except Exception as exc:  # noqa: BLE001
+        log.error("run_negative_sampler failed", error=str(exc))
+        raise self.retry(exc=exc, countdown=2**self.request.retries) from exc
 
 
 # ── Agent Tasks (Phase 6+) ─────────────────────────────────────────────────────
