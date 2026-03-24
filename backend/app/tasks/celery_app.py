@@ -210,4 +210,11 @@ celery_app.conf.beat_schedule = {
         "schedule": crontab(minute=0, hour=4, day_of_month=1),
         "options": {"queue": "agents"},
     },
+    # ── Phase 1B: Canary System (Agent 008) ───────────────────────────────────
+    # Synthetic end-to-end pipeline verification — every 30 minutes
+    "scraper-canary": {
+        "task": "scrapers.canary_check",
+        "schedule": crontab(minute="*/30"),
+        "options": {"queue": "default"},
+    },
 }

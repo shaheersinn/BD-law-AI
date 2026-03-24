@@ -55,8 +55,8 @@ def normalise(name: str) -> str:
     if not name:
         return ""
     n = _LEGAL_SUFFIXES.sub("", name)
-    n = _DOTS.sub("", n)        # Remove dots (handles abbreviations: A.B.C. → ABC)
-    n = _PUNCT.sub(" ", n)      # Replace remaining punctuation with spaces
+    n = _DOTS.sub("", n)  # Remove dots (handles abbreviations: A.B.C. → ABC)
+    n = _PUNCT.sub(" ", n)  # Replace remaining punctuation with spaces
     n = _WHITESPACE.sub(" ", n).strip().lower()
     return n
 

@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import asyncio
 import time
+from datetime import UTC
 from typing import Any
 
 import structlog
@@ -343,3 +344,57 @@ def run_single_scraper(source_id: str) -> dict[str, Any]:
         return {"source_id": source_id, "scraped": len(results), "saved": saved}
 
     return _run_async(_run())  # type: ignore[no-any-return]
+
+
+# ── Canary System ─────────────────────────────────────────────────────────────
+
+
+@celery_app.task(
+    name="scrapers.canary_check",
+    queue="default",
+    max_retries=1,
+    soft_time_limit=120,
+    time_limit=150,
+)
+def run_canary_check() -> dict[str, Any]:
+    """
+    Synthetic end-to-end pipeline verification (Agent 008 — Canary).
+
+    Creates a synthetic ScraperResult, validates it with quality_validator,
+    and attempts to persist it. If any step fails, logs a CRITICAL alert.
+
+    Scheduled every 30 minutes via RedBeat.
+    """
+
+    async def _canary() -> dict[str, Any]:
+        from datetime import datetime  # noqa: PLC0415
+
+        from app.scrapers.base import ScraperResult  # noqa: PLC0415
+        from app.scrapers.quality_validator import validate_signal  # noqa: PLC0415
+
+        canary = ScraperResult(
+            source_id="canary",
+            signal_type="canary_heartbeat",
+            signal_text=f"CANARY-{datetime.now(tz=UTC).isoformat()}",
+            confidence_score=1.0,
+            practice_area_hints=["litigation"],
+            signal_value={"canary": True, "ts": datetime.now(tz=UTC).isoformat()},
+            is_negative_label=False,
+        )
+
+        # Step 1: Validate synthetic signal
+        vr = validate_signal(canary)
+        if not vr.valid:
+            log.critical("canary_validation_failed", errors=vr.errors)
+            return {"status": "FAIL", "stage": "validation", "errors": vr.errors}
+
+        # Step 2: Persist (dedup means it may not save every time — that's OK)
+        async with AsyncSessionLocal() as db:
+            motor = get_motor_client()
+            mongo_db = motor["oracle_signals"] if motor else None
+            saved = await persist_signals([canary], db, mongo_db)
+
+        log.info("canary_ok", saved=saved, validated=True)
+        return {"status": "OK", "saved": saved, "validated": True}
+
+    return _run_async(_canary())  # type: ignore[no-any-return]
