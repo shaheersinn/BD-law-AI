@@ -26,8 +26,8 @@ Built for BigLaw BD teams. Zero external LLM dependency in production.
 | 1B — Scraper Audit | ✅ COMPLETE | March 2026 |
 | 1C — Scraper Performance | ⏳ PENDING | — |
 | 2 — Feature Engineering | ⏳ PENDING | — |
-| 3 — Ground Truth | ⏳ PENDING | — |
-| 4 — LLM Training (Groq only) | ⏳ PENDING | — |
+| 3 — Ground Truth | ✅ COMPLETE | March 2026 |
+| 4 — LLM Training (Groq only) | ⏳ NEXT | — |
 | 5 — Live Feeds | ⏳ PENDING | — |
 | 6 — ML Training + 10 Enhancements | ⏳ PENDING | — |
 | 7 — Scoring API | ⏳ PENDING | — |
@@ -305,5 +305,5 @@ All implemented as Celery tasks in app/tasks/_impl.py (stubs in Phase 0, impleme
 
 ---
 
-*Last updated: Phase 1B — March 2026*
+*Last updated: Phase 3 — March 2026*
 *Next update: Phase 1C completion*
