@@ -14,11 +14,15 @@ Signal types:
 
 Rate limit: 0.2 rps (government site — be respectful)
 """
+
 from __future__ import annotations
-from datetime import datetime, timezone, timedelta
+
+from datetime import UTC, datetime, timedelta
 from typing import Any
+
 import structlog
 from bs4 import BeautifulSoup
+
 from app.scrapers.base import BaseScraper, ScraperResult
 from app.scrapers.registry import register
 
@@ -42,8 +46,8 @@ class SEDIScraper(BaseScraper):
     async def scrape(self) -> list[ScraperResult]:
         results: list[ScraperResult] = []
         try:
-            start_date = (datetime.now(tz=timezone.utc) - timedelta(days=7)).strftime("%Y/%m/%d")
-            end_date = datetime.now(tz=timezone.utc).strftime("%Y/%m/%d")
+            start_date = (datetime.now(tz=UTC) - timedelta(days=7)).strftime("%Y/%m/%d")
+            end_date = datetime.now(tz=UTC).strftime("%Y/%m/%d")
 
             params = {
                 "transactionFromDate": start_date,
@@ -61,7 +65,10 @@ class SEDIScraper(BaseScraper):
 
             # Identify cluster selling: same company, multiple insiders, same week
             from collections import Counter
-            company_counts = Counter(t["company_name"] for t in transactions if t.get("company_name"))
+
+            company_counts = Counter(
+                t["company_name"] for t in transactions if t.get("company_name")
+            )
 
             for tx in transactions:
                 company = tx.get("company_name")
@@ -76,27 +83,29 @@ class SEDIScraper(BaseScraper):
                 if value < 100000 and not is_cluster:
                     continue
 
-                results.append(ScraperResult(
-                    source_id=self.source_id,
-                    signal_type=signal_type,
-                    raw_company_name=company,
-                    source_url=tx.get("url"),
-                    signal_value={
-                        "insider_name": tx.get("insider_name"),
-                        "insider_role": tx.get("role"),
-                        "transaction_date": tx.get("date"),
-                        "security_type": tx.get("security_type"),
-                        "quantity": tx.get("quantity"),
-                        "price": tx.get("price"),
-                        "value_cad": value,
-                        "is_cluster": is_cluster,
-                        "cluster_count": company_counts.get(company, 1),
-                    },
-                    signal_text=f"Insider sale: {tx.get('insider_name')} at {company} — ${value:,.0f}",
-                    published_at=self._parse_date(tx.get("date")),
-                    practice_area_hints=["securities", "governance"],
-                    raw_payload=tx,
-                ))
+                results.append(
+                    ScraperResult(
+                        source_id=self.source_id,
+                        signal_type=signal_type,
+                        raw_company_name=company,
+                        source_url=tx.get("url"),
+                        signal_value={
+                            "insider_name": tx.get("insider_name"),
+                            "insider_role": tx.get("role"),
+                            "transaction_date": tx.get("date"),
+                            "security_type": tx.get("security_type"),
+                            "quantity": tx.get("quantity"),
+                            "price": tx.get("price"),
+                            "value_cad": value,
+                            "is_cluster": is_cluster,
+                            "cluster_count": company_counts.get(company, 1),
+                        },
+                        signal_text=f"Insider sale: {tx.get('insider_name')} at {company} — ${value:,.0f}",
+                        published_at=self._parse_date(tx.get("date")),
+                        practice_area_hints=["securities", "governance"],
+                        raw_payload=tx,
+                    )
+                )
 
             log.info("sedi_scrape_complete", total=len(results))
         except Exception as exc:

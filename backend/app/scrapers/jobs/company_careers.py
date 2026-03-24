@@ -1,5 +1,7 @@
 """app/scrapers/jobs/company_careers.py — Direct company career page monitoring."""
+
 from __future__ import annotations
+
 from app.scrapers.base import BaseScraper, SignalData
 
 # Target companies with career page URLs for direct monitoring
@@ -12,16 +14,19 @@ CAREER_PAGES = {
     "Brookfield": "https://brk.wd1.myworkdayjobs.com/External/jobs?q=legal",
 }
 
+
 class CompanyCareersScraper(BaseScraper):
-    NAME = "company_careers"
+    source_id = "jobs_company_careers"
+    source_name = "Company Careers"
     CATEGORY = "jobs"
+    signal_types = ["job_posting"]
     SOURCE_URL = "https://careers.oracle-bd.internal"
-    RATE_LIMIT_RPS = 0.2
-    MAX_CONCURRENT = 1
+    rate_limit_rps = 0.2
+    concurrency = 1
     SOURCE_RELIABILITY = 0.80
 
-    async def run(self) -> list[SignalData]:
-        signals = []
+    async def scrape(self) -> list[SignalData]:
+        signals: list[SignalData] = []
         for company_name, career_url in CAREER_PAGES.items():
             try:
                 soup = await self.get_soup(career_url)
@@ -32,15 +37,22 @@ class CompanyCareersScraper(BaseScraper):
                     title = self.safe_text(job.find("a") or job.find("h3") or job)
                     if not title or len(title) < 5:
                         continue
-                    signals.append(SignalData(
-                        scraper_name=self.NAME, signal_type="job_posting",
-                        raw_entity_name=company_name, title=f"Career: {title} at {company_name}",
-                        summary=f"Legal job posting on {company_name} careers page: {title}",
-                        source_url=career_url,
-                        practice_areas=["employment_labour", "regulatory_compliance"],
-                        signal_strength=0.70,
-                        metadata={"company": company_name, "source": "direct_careers"},
-                    ))
+                    signals.append(
+                        SignalData(
+                            source_id=self.source_id,
+                            signal_type="job_posting",
+                            raw_company_name=company_name,
+                            signal_text=f"Legal job posting on {company_name} careers page: {title}",
+                            source_url=career_url,
+                            practice_area_hints=["employment_labour", "regulatory_compliance"],
+                            confidence_score=0.70,
+                            signal_value={
+                                "company": company_name,
+                                "source": "direct_careers",
+                                "title": f"Career: {title} at {company_name}",
+                            },
+                        )
+                    )
             except Exception as exc:
                 self.log.debug("Careers: error on %s: %s", company_name, exc)
         return signals

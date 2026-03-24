@@ -1,16 +1,30 @@
 """
 app/models/company.py — Company entity + Signal + ScraperHealth ORM models.
 """
+
 from __future__ import annotations
+
 import enum
 from datetime import datetime
-from sqlalchemy import (Boolean, DateTime, Enum, Float, ForeignKey, Index,
-    Integer, String, Text, func)
+
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    Enum,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    func,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from app.database import Base
 
 
-class CompanyStatus(str, enum.Enum):
+class CompanyStatus(enum.StrEnum):
     active = "active"
     inactive = "inactive"
     acquired = "acquired"
@@ -46,7 +60,9 @@ class Company(Base):
     market_cap_cad: Mapped[float | None] = mapped_column(Float, nullable=True)
     revenue_cad: Mapped[float | None] = mapped_column(Float, nullable=True)
     fiscal_year_end: Mapped[str | None] = mapped_column(String(10), nullable=True)
-    status: Mapped[CompanyStatus] = mapped_column(Enum(CompanyStatus), nullable=False, default=CompanyStatus.active)
+    status: Mapped[CompanyStatus] = mapped_column(
+        Enum(CompanyStatus), nullable=False, default=CompanyStatus.active
+    )
     is_publicly_listed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     is_crown_corporation: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     is_foreign_private_issuer: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
@@ -54,8 +70,12 @@ class Company(Base):
     last_scraped_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     scrape_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     signal_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, server_default=func.now(), onupdate=func.now()
+    )
     aliases: Mapped[list[CompanyAlias]] = relationship("CompanyAlias", back_populates="company")
     signals: Mapped[list[SignalRecord]] = relationship("SignalRecord", back_populates="company")
     __table_args__ = (Index("ix_companies_ticker_exchange", "ticker", "exchange"),)
@@ -70,14 +90,18 @@ class CompanyAlias(Base):
     alias_type: Mapped[str] = mapped_column(String(50), nullable=False, default="name")
     source: Mapped[str | None] = mapped_column(String(100), nullable=True)
     confidence: Mapped[float] = mapped_column(Float, nullable=False, default=1.0)
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, server_default=func.now()
+    )
     company: Mapped[Company] = relationship("Company", back_populates="aliases")
 
 
 class SignalRecord(Base):
     __tablename__ = "signal_records"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    company_id: Mapped[int | None] = mapped_column(ForeignKey("companies.id"), nullable=True, index=True)
+    company_id: Mapped[int | None] = mapped_column(
+        ForeignKey("companies.id"), nullable=True, index=True
+    )
     source_id: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
     source_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     signal_type: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
@@ -91,7 +115,9 @@ class SignalRecord(Base):
     is_processed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, index=True)
     is_negative_label: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     published_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True, index=True)
-    scraped_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now(), index=True)
+    scraped_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, server_default=func.now(), index=True
+    )
     ttl_expires_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     practice_area_hints: Mapped[str | None] = mapped_column(Text, nullable=True)
     company: Mapped[Company | None] = relationship("Company", back_populates="signals")
@@ -122,5 +148,9 @@ class ScraperHealth(Base):
     is_rate_limited: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     circuit_breaker_state: Mapped[str] = mapped_column(String(20), nullable=False, default="closed")
     reliability_score: Mapped[float] = mapped_column(Float, nullable=False, default=1.0)
-    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now(), onupdate=func.now())
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False, server_default=func.now(), onupdate=func.now()
+    )

@@ -21,9 +21,9 @@ import numpy as np
 import pandas as pd
 from imblearn.over_sampling import SMOTE
 from lightgbm import LGBMClassifier
-from sklearn.calibration import CalibratedClassifierCV, calibration_curve
+from sklearn.calibration import CalibratedClassifierCV
 from sklearn.metrics import average_precision_score, precision_recall_curve
-from sklearn.model_selection import StratifiedKFold, train_test_split
+from sklearn.model_selection import StratifiedKFold
 
 from app.config import get_settings
 
@@ -43,18 +43,18 @@ FEATURE_COLS = [
     "news_mention_velocity",
     # Job postings
     "legal_job_postings_90d",
-    "cco_job_posted",         # binary
-    "gc_job_posted",           # binary
+    "cco_job_posted",  # binary
+    "gc_job_posted",  # binary
     # People / LinkedIn
-    "gc_linkedin_spike",       # activity multiplier vs baseline
+    "gc_linkedin_spike",  # activity multiplier vs baseline
     "exec_departures_90d",
     # Physical
     "jet_baystreet_trips_90d",
-    "has_permit_filing",       # binary
+    "has_permit_filing",  # binary
     # Industry baseline
-    "industry_mandate_rate",   # historical: what % of companies in this sector got mandated
+    "industry_mandate_rate",  # historical: what % of companies in this sector got mandated
     # Time
-    "quarter",                 # 1-4 (Q4 is peak M&A season)
+    "quarter",  # 1-4 (Q4 is peak M&A season)
     "days_since_last_signal",
 ]
 
@@ -88,7 +88,7 @@ class UrgencyModel:
     _instance: Optional["UrgencyModel"] = None
 
     def __init__(self) -> None:
-        self._model: Optional[CalibratedClassifierCV] = None
+        self._model: CalibratedClassifierCV | None = None
 
     @classmethod
     def get(cls) -> "UrgencyModel":
@@ -149,7 +149,7 @@ def find_optimal_threshold(
     return 0.5, float(prec[-2]), float(rec[-2])
 
 
-def train(csv_path: str, output_path: Optional[Path] = None) -> dict:
+def train(csv_path: str, output_path: Path | None = None) -> dict:
     """
     Train and calibrate the LightGBM urgency model.
 

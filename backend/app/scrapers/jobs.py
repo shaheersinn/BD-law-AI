@@ -5,8 +5,7 @@ Schedule: daily at 6am.
 """
 
 import logging
-from datetime import datetime, timezone
-from email.utils import parsedate_to_datetime
+from datetime import UTC, datetime
 
 import feedparser
 
@@ -18,14 +17,32 @@ settings = get_settings()
 
 # (query snippet, signal type, practice area, urgency, base weight)
 LEGAL_JOB_SIGNALS: list[tuple[str, str, str, int, float]] = [
-    ('"General Counsel" "new" OR "first"',       "job_gc_hire",             "All Practice Areas",       78, 0.78),
-    ('"Chief Compliance Officer" "urgent" OR "immediate"', "job_cco_urgent","Regulatory / AML",         85, 0.85),
-    ('"Data Protection Officer" OR "Privacy Counsel"', "job_privacy_counsel","Privacy & Cybersecurity", 82, 0.82),
-    ('"Senior M&A Counsel" "in-house"',          "job_ma_counsel",          "Corporate / M&A",          80, 0.80),
-    ('"Senior Litigation Counsel" "in-house"',   "job_litigation_counsel",  "Litigation",               83, 0.83),
-    ('"Deputy General Counsel" "Regulatory"',    "job_deputy_gc_regulatory","Regulatory",               77, 0.77),
-    ('"Environmental Counsel" OR "Indigenous Counsel"',"job_environmental_counsel","Environmental",      79, 0.79),
-    ('"VP Legal" OR "Head of Legal" "build"',    "job_gc_hire",             "All Practice Areas",       70, 0.70),
+    ('"General Counsel" "new" OR "first"', "job_gc_hire", "All Practice Areas", 78, 0.78),
+    (
+        '"Chief Compliance Officer" "urgent" OR "immediate"',
+        "job_cco_urgent",
+        "Regulatory / AML",
+        85,
+        0.85,
+    ),
+    (
+        '"Data Protection Officer" OR "Privacy Counsel"',
+        "job_privacy_counsel",
+        "Privacy & Cybersecurity",
+        82,
+        0.82,
+    ),
+    ('"Senior M&A Counsel" "in-house"', "job_ma_counsel", "Corporate / M&A", 80, 0.80),
+    ('"Senior Litigation Counsel" "in-house"', "job_litigation_counsel", "Litigation", 83, 0.83),
+    ('"Deputy General Counsel" "Regulatory"', "job_deputy_gc_regulatory", "Regulatory", 77, 0.77),
+    (
+        '"Environmental Counsel" OR "Indigenous Counsel"',
+        "job_environmental_counsel",
+        "Environmental",
+        79,
+        0.79,
+    ),
+    ('"VP Legal" OR "Head of Legal" "build"', "job_gc_hire", "All Practice Areas", 70, 0.70),
 ]
 
 
@@ -33,18 +50,13 @@ class JobsScraper(BaseScraper):
     source_name = "JOBS"
     request_delay_seconds = 2.0
 
-    async def fetch_for_company(
-        self, company_name: str
-    ) -> list[RawSignal]:
+    async def fetch_for_company(self, company_name: str) -> list[RawSignal]:
         """Search job boards for legal role postings at a specific company."""
         signals: list[RawSignal] = []
         safe_company = company_name.replace('"', "").replace("&", "and")
 
         for query, sig_type, practice, urgency, weight in LEGAL_JOB_SIGNALS:
-            rss_url = (
-                f"https://www.indeed.com/rss?q={query}+{safe_company}"
-                "&l=Canada&sort=date"
-            )
+            rss_url = f"https://www.indeed.com/rss?q={query}+{safe_company}&l=Canada&sort=date"
             try:
                 feed = feedparser.parse(rss_url)
                 for entry in feed.entries[:5]:
@@ -53,9 +65,9 @@ class JobsScraper(BaseScraper):
                         continue
 
                     try:
-                        published = datetime(*entry.published_parsed[:6], tzinfo=timezone.utc)
+                        published = datetime(*entry.published_parsed[:6], tzinfo=UTC)
                     except (AttributeError, TypeError):
-                        published = datetime.now(timezone.utc)
+                        published = datetime.now(UTC)
 
                     signals.append(
                         RawSignal(

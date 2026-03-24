@@ -13,11 +13,10 @@ Required for Law Society data governance obligations.
 """
 
 import logging
-from datetime import datetime, timezone
-from enum import Enum
-from typing import Optional
+from datetime import datetime
+from enum import StrEnum
 
-from sqlalchemy import BigInteger, DateTime, Integer, String, Text, func
+from sqlalchemy import BigInteger, DateTime, Integer, String, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -28,17 +27,18 @@ log = logging.getLogger(__name__)
 
 # ── ORM Model ─────────────────────────────────────────────────────────────────
 
-class AuditEventType(str, Enum):
-    ai_generate    = "ai_generate"
-    login_success  = "login_success"
-    login_failure  = "login_failure"
-    logout         = "logout"
-    data_export    = "data_export"
-    alert_label    = "alert_label"
-    trigger_label  = "trigger_label"
-    model_retrain  = "model_retrain"
-    user_create    = "user_create"
-    user_update    = "user_update"
+
+class AuditEventType(StrEnum):
+    ai_generate = "ai_generate"
+    login_success = "login_success"
+    login_failure = "login_failure"
+    logout = "logout"
+    data_export = "data_export"
+    alert_label = "alert_label"
+    trigger_label = "trigger_label"
+    model_retrain = "model_retrain"
+    user_create = "user_create"
+    user_update = "user_update"
     scrape_trigger = "scrape_trigger"
 
 
@@ -47,14 +47,14 @@ class AuditLog(Base):
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     event_type: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
-    user_id: Mapped[Optional[int]] = mapped_column(Integer, index=True)
-    user_email: Mapped[Optional[str]] = mapped_column(String(200))
-    resource_type: Mapped[Optional[str]] = mapped_column(String(50))   # "client", "trigger", etc.
-    resource_id: Mapped[Optional[int]] = mapped_column(Integer)
-    detail: Mapped[Optional[dict]] = mapped_column(JSONB)               # arbitrary event metadata
-    ip_address: Mapped[Optional[str]] = mapped_column(String(45))
-    user_agent: Mapped[Optional[str]] = mapped_column(String(300))
-    request_id: Mapped[Optional[str]] = mapped_column(String(36))
+    user_id: Mapped[int | None] = mapped_column(Integer, index=True)
+    user_email: Mapped[str | None] = mapped_column(String(200))
+    resource_type: Mapped[str | None] = mapped_column(String(50))  # "client", "trigger", etc.
+    resource_id: Mapped[int | None] = mapped_column(Integer)
+    detail: Mapped[dict | None] = mapped_column(JSONB)  # arbitrary event metadata
+    ip_address: Mapped[str | None] = mapped_column(String(45))
+    user_agent: Mapped[str | None] = mapped_column(String(300))
+    request_id: Mapped[str | None] = mapped_column(String(36))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), index=True
     )
@@ -62,16 +62,17 @@ class AuditLog(Base):
 
 # ── Service ───────────────────────────────────────────────────────────────────
 
+
 async def log_event(
     event_type: AuditEventType,
-    user_id: Optional[int] = None,
-    user_email: Optional[str] = None,
-    resource_type: Optional[str] = None,
-    resource_id: Optional[int] = None,
-    detail: Optional[dict] = None,
-    ip_address: Optional[str] = None,
-    user_agent: Optional[str] = None,
-    request_id: Optional[str] = None,
+    user_id: int | None = None,
+    user_email: str | None = None,
+    resource_type: str | None = None,
+    resource_id: int | None = None,
+    detail: dict | None = None,
+    ip_address: str | None = None,
+    user_agent: str | None = None,
+    request_id: str | None = None,
 ) -> None:
     """
     Write a single audit log entry.
@@ -98,6 +99,7 @@ async def log_event(
 
 
 # ── FastAPI helper ─────────────────────────────────────────────────────────────
+
 
 def extract_request_meta(request) -> dict:
     """Extract IP and User-Agent from a FastAPI Request object."""

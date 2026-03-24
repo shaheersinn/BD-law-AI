@@ -1,7 +1,11 @@
 """app/scrapers/legal/osb_insolvency.py — OSB insolvency statistics (postal code level)."""
+
 from __future__ import annotations
+
 import io
+
 from app.scrapers.base import BaseScraper, SignalData
+
 
 class OsbInsolvencyScraper(BaseScraper):
     NAME = "osb_insolvency_stats"
@@ -19,10 +23,13 @@ class OsbInsolvencyScraper(BaseScraper):
         signals: list[SignalData] = []
         try:
             import openpyxl
+
             response = await self.get(self._EXCEL_URL)
             if not response:
                 return signals
-            wb = openpyxl.load_workbook(io.BytesIO(response.content), read_only=True, data_only=True)
+            wb = openpyxl.load_workbook(
+                io.BytesIO(response.content), read_only=True, data_only=True
+            )
             ws = wb.active
             rows = list(ws.iter_rows(values_only=True))
             # Extract recent sector-level insolvency counts
@@ -34,16 +41,19 @@ class OsbInsolvencyScraper(BaseScraper):
                 if not sector or sector.strip() in ("", "Sector", "Industry"):
                     continue
                 strength = min(0.90, 0.50 + (int(count or 0) / 100) * 0.40)
-                signals.append(SignalData(
-                    scraper_name=self.NAME, signal_type="insolvency_statistic",
-                    raw_entity_name=sector,
-                    title=f"OSB insolvency: {sector} — {count} filings",
-                    summary=f"Business insolvency statistics: {sector}, count: {count}",
-                    source_url=self.SOURCE_URL,
-                    practice_areas=["insolvency_restructuring", "banking_finance"],
-                    signal_strength=float(strength),
-                    metadata={"sector": sector, "count": count, "source": "OSB"},
-                ))
+                signals.append(
+                    SignalData(
+                        scraper_name=self.NAME,
+                        signal_type="insolvency_statistic",
+                        raw_entity_name=sector,
+                        title=f"OSB insolvency: {sector} — {count} filings",
+                        summary=f"Business insolvency statistics: {sector}, count: {count}",
+                        source_url=self.SOURCE_URL,
+                        practice_areas=["insolvency_restructuring", "banking_finance"],
+                        signal_strength=float(strength),
+                        metadata={"sector": sector, "count": count, "source": "OSB"},
+                    )
+                )
         except Exception as exc:
             self.log.error("OSB: error parsing Excel: %s", exc)
         return signals

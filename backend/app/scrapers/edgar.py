@@ -4,7 +4,7 @@ Free REST API — no key required. Schedule: hourly.
 """
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from app.scrapers.base import BaseScraper, RawSignal
 
@@ -14,29 +14,25 @@ EDGAR_SEARCH = "https://efts.sec.gov/LATEST/search-index"
 EDGAR_COMPANY_URL = "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK="
 
 EDGAR_TRIGGERS: dict[str, tuple[str, int, float]] = {
-    "CT ORDER":  ("Corporate / M&A",  92, 0.89),
-    "SC 13D":    ("Corporate / M&A",  85, 0.85),
-    "DEFM14A":   ("Corporate / M&A",  95, 0.96),
-    "S-4":       ("Corporate / M&A",  95, 0.96),
-    "8-K":       ("Securities",       75, 0.75),
+    "CT ORDER": ("Corporate / M&A", 92, 0.89),
+    "SC 13D": ("Corporate / M&A", 85, 0.85),
+    "DEFM14A": ("Corporate / M&A", 95, 0.96),
+    "S-4": ("Corporate / M&A", 95, 0.96),
+    "8-K": ("Securities", 75, 0.75),
 }
 
 
 class EdgarScraper(BaseScraper):
     source_name = "EDGAR"
-    request_delay_seconds = 0.5   # SEC allows reasonable crawling
+    request_delay_seconds = 0.5  # SEC allows reasonable crawling
 
     async def fetch_new(self, days_back: int = 2) -> list[RawSignal]:
-        date_from = (datetime.now(timezone.utc) - timedelta(days=days_back)).strftime(
-            "%Y-%m-%d"
-        )
+        date_from = (datetime.now(UTC) - timedelta(days=days_back)).strftime("%Y-%m-%d")
         signals: list[RawSignal] = []
 
         for form_type, (practice, urgency, weight) in EDGAR_TRIGGERS.items():
             try:
-                batch = await self._fetch_form_type(
-                    form_type, date_from, practice, urgency, weight
-                )
+                batch = await self._fetch_form_type(form_type, date_from, practice, urgency, weight)
                 signals.extend(batch)
             except Exception as e:
                 log.warning("EDGAR scrape error for %s: %s", form_type, e)
@@ -72,11 +68,9 @@ class EdgarScraper(BaseScraper):
             file_date = src.get("file_date", date_from)
 
             try:
-                filed_at = datetime.strptime(file_date, "%Y-%m-%d").replace(
-                    tzinfo=timezone.utc
-                )
+                filed_at = datetime.strptime(file_date, "%Y-%m-%d").replace(tzinfo=UTC)
             except ValueError:
-                filed_at = datetime.now(timezone.utc)
+                filed_at = datetime.now(UTC)
 
             results.append(
                 RawSignal(

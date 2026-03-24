@@ -7,7 +7,7 @@ Schedule: every 2 hours during business hours via Celery beat.
 """
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from bs4 import BeautifulSoup
 
@@ -20,16 +20,16 @@ SEARCH_URL = f"{SEDAR_BASE}/csa-party/public/search/results.html"
 
 # Filing type → (practice area, urgency 0-100, base weight)
 TRIGGER_MAP: dict[str, tuple[str, int, float]] = {
-    "Material Change Report":             ("Corporate / M&A",           88, 0.88),
-    "Business Acquisition Report":        ("Corporate / M&A",           92, 0.92),
-    "Confidential Treatment Request":     ("Corporate / M&A",           91, 0.91),
-    "Cease Trade Order":                  ("Securities",                 87, 0.87),
-    "Annual Information Form":            ("Securities",                 40, 0.40),
-    "Notice of Meeting":                  ("Corporate / Governance",     45, 0.45),
-    "Going Concern Qualification":        ("Restructuring / Insolvency", 84, 0.84),
-    "Auditor Change":                     ("Corporate / Governance",     79, 0.79),
-    "Director or Officer Change":         ("Corporate / Governance",     76, 0.76),
-    "Management Information Circular":    ("Corporate / Governance",     55, 0.55),
+    "Material Change Report": ("Corporate / M&A", 88, 0.88),
+    "Business Acquisition Report": ("Corporate / M&A", 92, 0.92),
+    "Confidential Treatment Request": ("Corporate / M&A", 91, 0.91),
+    "Cease Trade Order": ("Securities", 87, 0.87),
+    "Annual Information Form": ("Securities", 40, 0.40),
+    "Notice of Meeting": ("Corporate / Governance", 45, 0.45),
+    "Going Concern Qualification": ("Restructuring / Insolvency", 84, 0.84),
+    "Auditor Change": ("Corporate / Governance", 79, 0.79),
+    "Director or Officer Change": ("Corporate / Governance", 76, 0.76),
+    "Management Information Circular": ("Corporate / Governance", 55, 0.55),
 }
 
 
@@ -39,9 +39,7 @@ class SedarScraper(BaseScraper):
 
     async def fetch_new(self, days_back: int = 1) -> list[RawSignal]:
         """Scrape new SEDAR+ filings from the last `days_back` days."""
-        date_from = (datetime.now(timezone.utc) - timedelta(days=days_back)).strftime(
-            "%Y-%m-%d"
-        )
+        date_from = (datetime.now(UTC) - timedelta(days=days_back)).strftime("%Y-%m-%d")
         signals: list[RawSignal] = []
 
         for filing_type, (practice, urgency, weight) in TRIGGER_MAP.items():
@@ -87,7 +85,7 @@ class SedarScraper(BaseScraper):
                 continue
 
             company_name = cols[0].get_text(strip=True)
-            doc_type = cols[1].get_text(strip=True) if len(cols) > 1 else filing_type
+            cols[1].get_text(strip=True) if len(cols) > 1 else filing_type
             date_str = cols[2].get_text(strip=True) if len(cols) > 2 else date_from
             link_tag = row.find("a", href=True)
             url = f"{SEDAR_BASE}{link_tag['href']}" if link_tag else SEARCH_URL
@@ -96,11 +94,9 @@ class SedarScraper(BaseScraper):
                 continue
 
             try:
-                filed_at = datetime.strptime(date_str, "%Y-%m-%d").replace(
-                    tzinfo=timezone.utc
-                )
+                filed_at = datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=UTC)
             except ValueError:
-                filed_at = datetime.now(timezone.utc)
+                filed_at = datetime.now(UTC)
 
             results.append(
                 RawSignal(

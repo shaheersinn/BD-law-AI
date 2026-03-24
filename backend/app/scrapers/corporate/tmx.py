@@ -4,9 +4,12 @@ Source: https://www.tmx.com/resource/en/440 (trading halts)
         TMX DataLinx for market data (requires subscription)
 Signals: market_trading_halt, market_company_news
 """
+
 from __future__ import annotations
+
 import structlog
 from bs4 import BeautifulSoup
+
 from app.scrapers.base import BaseScraper, ScraperResult
 from app.scrapers.registry import register
 
@@ -29,7 +32,9 @@ class TMXScraper(BaseScraper):
         results: list[ScraperResult] = []
         try:
             # Trading halts are very high signal — often precede material change disclosures
-            response = await self.get("https://www.tsx.com/trading/market-data-and-statistics/market-statistics-and-reports/market-alerts")
+            response = await self.get(
+                "https://www.tsx.com/trading/market-data-and-statistics/market-statistics-and-reports/market-alerts"
+            )
             if response.status_code == 200:
                 soup = BeautifulSoup(response.text, "html.parser")
                 # Extract trading halt notices
@@ -43,15 +48,21 @@ class TMXScraper(BaseScraper):
                             company = cells[1].get_text(strip=True)
                             reason = cells[2].get_text(strip=True) if len(cells) > 2 else ""
                             if ticker:
-                                results.append(ScraperResult(
-                                    source_id=self.source_id,
-                                    signal_type="market_trading_halt",
-                                    raw_company_name=company,
-                                    signal_value={"ticker": ticker, "reason": reason},
-                                    signal_text=f"Trading halt: {company} ({ticker}) — {reason}",
-                                    practice_area_hints=["securities", "ma"],
-                                    raw_payload={"ticker": ticker, "company": company, "reason": reason},
-                                ))
+                                results.append(
+                                    ScraperResult(
+                                        source_id=self.source_id,
+                                        signal_type="market_trading_halt",
+                                        raw_company_name=company,
+                                        signal_value={"ticker": ticker, "reason": reason},
+                                        signal_text=f"Trading halt: {company} ({ticker}) — {reason}",
+                                        practice_area_hints=["securities", "ma"],
+                                        raw_payload={
+                                            "ticker": ticker,
+                                            "company": company,
+                                            "reason": reason,
+                                        },
+                                    )
+                                )
         except Exception as exc:
             log.error("tmx_error", error=str(exc))
         return results

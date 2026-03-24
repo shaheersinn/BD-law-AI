@@ -29,8 +29,6 @@ Signals produced:
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
-from typing import Optional
 
 from app.scrapers.base import BaseScraper, SignalData
 
@@ -87,19 +85,19 @@ EDGAR_SIGNAL_FORMS = {
 
 # 8-K item codes that indicate legal/regulatory issues
 HIGH_SIGNAL_8K_ITEMS = {
-    "1.01": ("ma_corporate", 0.80),          # Entry into material agreement
-    "1.02": ("ma_corporate", 0.75),          # Termination of material agreement
+    "1.01": ("ma_corporate", 0.80),  # Entry into material agreement
+    "1.02": ("ma_corporate", 0.75),  # Termination of material agreement
     "1.03": ("insolvency_restructuring", 0.95),  # Bankruptcy/receivership
-    "2.01": ("ma_corporate", 0.90),          # Completion of acquisition
-    "2.03": ("banking_finance", 0.70),       # Creation of direct financial obligation
+    "2.01": ("ma_corporate", 0.90),  # Completion of acquisition
+    "2.03": ("banking_finance", 0.70),  # Creation of direct financial obligation
     "2.06": ("securities_capital_markets", 0.75),  # Material impairments
     "3.01": ("securities_capital_markets", 0.90),  # Notice of delisting
-    "4.01": ("regulatory_compliance", 0.85),     # Auditor changes
+    "4.01": ("regulatory_compliance", 0.85),  # Auditor changes
     "4.02": ("securities_capital_markets", 0.90),  # Non-reliance on financials
-    "5.01": ("ma_corporate", 0.85),          # Changes in control
+    "5.01": ("ma_corporate", 0.85),  # Changes in control
     "5.02": ("securities_capital_markets", 0.65),  # Director/officer changes
     "7.01": ("securities_capital_markets", 0.65),  # Regulation FD disclosures
-    "8.01": ("litigation", 0.70),            # Other events
+    "8.01": ("litigation", 0.70),  # Other events
 }
 
 # EDGAR base URLs
@@ -119,11 +117,19 @@ class EdgarScraper(BaseScraper):
     On subsequent runs: checks recent filings for known CIKs.
     """
 
-    NAME = "edgar_filings"
-    CATEGORY = "filings"
+    source_id = "corporate_edgar"
+    source_name = "SEC EDGAR Filings"
+    CATEGORY = "corporate"
+    signal_types = [
+        "corporate_filing",
+        "activist_shareholder",
+        "proxy_circular",
+        "annual_report",
+        "late_filing",
+    ]
     SOURCE_URL = "https://data.sec.gov"
-    RATE_LIMIT_RPS = 5.0
-    MAX_CONCURRENT = 5
+    rate_limit_rps = 5.0
+    concurrency = 5
     SOURCE_RELIABILITY = 1.0
     MAX_RETRIES = 3
 
@@ -134,7 +140,7 @@ class EdgarScraper(BaseScraper):
         "Accept-Encoding": "gzip, deflate",
     }
 
-    async def run(self) -> list[SignalData]:
+    async def scrape(self) -> list[SignalData]:
         """Scrape recent EDGAR filings for watchlist companies with CIKs."""
         signals: list[SignalData] = []
 
@@ -207,9 +213,10 @@ class EdgarScraper(BaseScraper):
             cik = company.get("cik", "").zfill(10)
             acc_no_dashes = accession.replace("-", "")
             filing_url = (
-                f"https://www.sec.gov/Archives/edgar/data/{cik}/"
-                f"{acc_no_dashes}/{primary_doc}"
-            ) if accession else ""
+                (f"https://www.sec.gov/Archives/edgar/data/{cik}/{acc_no_dashes}/{primary_doc}")
+                if accession
+                else ""
+            )
 
             # Determine practice areas
             practice_areas = list(config["practice_areas"])
@@ -228,26 +235,27 @@ class EdgarScraper(BaseScraper):
             if date_str:
                 title += f" ({date_str})"
 
-            signals.append(SignalData(
-                scraper_name=self.NAME,
-                signal_type=signal_type,
-                raw_entity_name=entity_name,
-                title=title,
-                summary=(
-                    f"EDGAR {form_type} filing by {entity_name}. "
-                    f"Accession: {accession}"
-                ),
-                source_url=filing_url,
-                published_at=published_at,
-                practice_areas=practice_areas,
-                signal_strength=strength,
-                metadata={
-                    "form_type": form_type,
-                    "accession_number": accession,
-                    "cik": company.get("cik"),
-                    "primary_document": primary_doc,
-                },
-            ))
+            signals.append(
+                SignalData(
+                    source_id=self.source_id,
+                    signal_type=signal_type,
+                    raw_company_name=entity_name,
+                    signal_text=(
+                        f"EDGAR {form_type} filing by {entity_name}. Accession: {accession}"
+                    ),
+                    source_url=filing_url,
+                    published_at=published_at,
+                    practice_area_hints=practice_areas,
+                    confidence_score=strength,
+                    signal_value={
+                        "form_type": form_type,
+                        "accession_number": accession,
+                        "cik": company.get("cik"),
+                        "primary_document": primary_doc,
+                        "title": title,
+                    },
+                )
+            )
 
         return signals
 
@@ -312,20 +320,18 @@ class EdgarScraper(BaseScraper):
         self.log.info("EDGAR bootstrap: %d Canadian companies added/updated", count)
         return count
 
-    async def _upsert_company(
-        self, cik: str, name: str, tickers: list[str]
-    ) -> None:
+    async def _upsert_company(self, cik: str, name: str, tickers: list[str]) -> None:
         """Add or update a company record from EDGAR data."""
         try:
-            from app.database import AsyncSessionLocal
-            from app.models.company import Company
-            from sqlalchemy import select
             import re
 
+            from sqlalchemy import select
+
+            from app.database import AsyncSessionLocal
+            from app.models.company import Company
+
             async with AsyncSessionLocal() as db:
-                result = await db.execute(
-                    select(Company).where(Company.cik == cik.lstrip("0"))
-                )
+                result = await db.execute(select(Company).where(Company.cik == cik.lstrip("0")))
                 company = result.scalar_one_or_none()
 
                 if company is None:
@@ -350,14 +356,15 @@ class EdgarScraper(BaseScraper):
     async def _load_companies_with_cik(self, max_companies: int = 100) -> list[dict]:
         """Load companies that have EDGAR CIKs."""
         try:
+            from sqlalchemy import select
+
             from app.database import AsyncSessionLocal
             from app.models.company import Company
-            from sqlalchemy import select
 
             async with AsyncSessionLocal() as db:
                 result = await db.execute(
                     select(Company.id, Company.name, Company.cik, Company.ticker)
-                    .where(Company.is_active == True)
+                    .where(Company.is_active)
                     .where(Company.cik.isnot(None))
                     .order_by(Company.watchlist_priority.asc())
                     .limit(max_companies)

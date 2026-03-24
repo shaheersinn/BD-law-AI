@@ -7,7 +7,6 @@ Includes a Groq fallback (free, 14 400 req/day) when the Anthropic key is unset.
 """
 
 import logging
-from typing import Optional
 
 import anthropic
 import httpx
@@ -35,7 +34,6 @@ Risk signals:
 
 Provide: (1) Root cause analysis — 2-3 sentences (2) Immediate recommended action with timing (3) One non-obvious insight.
 Direct, no headers, plain text. Partner reads on their phone.""",
-
     "regulatory_alert": """Draft a proactive client alert (150-180 words) from a Canadian law firm to this client about the regulatory update.
 
 Update: {source} — {title}
@@ -47,7 +45,6 @@ Active matter: {matter}
 Practice groups: {practice_groups}
 
 Professional email style, first person plural ("we"). Include: (1) What changed (2) Why it specifically affects this client (3) One concrete recommended action (4) Offer to discuss. Under 180 words. Plain text only, no subject line.""",
-
     "prospect_outreach": """BigLaw BD AI. Generate outreach strategy brief (under 140 words) for this prospect.
 
 Company: {name}
@@ -61,7 +58,6 @@ Signals:
 {signals}
 
 Provide: (1) The one insight creating urgency to call NOW (2) Exact opening line to use (3) What to offer in first call. Specific, direct, plain text.""",
-
     "jet_brief": """BigLaw M&A BD. A corporate jet track has fired a mandate signal.
 
 Company: {company}
@@ -81,7 +77,6 @@ Write a 120-word tactical action brief:
 4. What to pitch in the first 5 minutes
 
 Direct, plain text. No headers.""",
-
     "foot_traffic_strategy": """BigLaw BD AI. A client has been detected at a competitor law firm.
 
 Client: {client}
@@ -98,7 +93,6 @@ Write a 100-word response strategy:
 4. Exact tone — urgent but not panicked
 
 Plain text. Direct.""",
-
     "satellite_brief": """BigLaw BD analyst. Satellite intelligence signal detected.
 
 Company: {company}
@@ -116,7 +110,6 @@ Write a 120-word legal exposure brief:
 4. Timeline: days until this becomes a public event
 
 Direct, specific, plain text.""",
-
     "permit_brief": """BigLaw BD analyst. A significant permit filing predicts legal work.
 
 Company: {company}
@@ -136,7 +129,6 @@ Write a 120-word outreach brief:
 4. Opening line
 
 Direct, plain text.""",
-
     "mandate_brief": """ORACLE synthesis AI. A mandate is forming.
 
 Company: {company}
@@ -150,14 +142,12 @@ Est. Value: {value}
 Provide: (1) One sentence — why to call TODAY (2) Who at firm should call (3) Exact first sentence when GC answers (4) What to offer in first 5 minutes.
 
 Plain text. Partner reads on phone. Urgent where warranted.""",
-
     "alumni_message": """Draft a personal message from {mentor} (BigLaw partner) to former associate {name} (now {role} at {company}). They left in {departure_year}.
 The message must feel genuinely personal, NOT like a sales pitch.
 
 Active trigger: {trigger}
 
 Under 100 words. Open with a genuine personal touch (not "Hope this finds you well"). Reference something natural about their role. Mention the legal development casually. End with a low-pressure ask. Plain text only.""",
-
     "gc_profile": """Build a GC psychographic profile for law firm BD. Return ONLY valid JSON, no markdown.
 
 Company: {company}
@@ -165,7 +155,6 @@ Public information:
 {information}
 
 {{"name":"string","title":"string","decision_style":"string","risk_tolerance":"Low/Medium/High","communication_pref":"string","fee_sensitivity":"string","career_ambition":"string","key_concerns":["str","str","str"],"pitch_hooks":["str","str","str"],"credibility":65,"reliability":70,"intimacy":50,"self_orientation":40,"trust_score":62,"brief":"2-3 sentence pre-meeting brief for senior partner"}}""",
-
     "trigger_brief": """BigLaw BD analyst. A legal trigger signal just fired.
 
 Source: {source}
@@ -183,7 +172,6 @@ Write a 120-word partner action brief:
 4. The exact opening line — demonstrates knowledge without revealing surveillance
 
 Direct, plain text. Partner reads on phone.""",
-
     "coaching_brief": """You are a BigLaw BD performance coach. Analyse this partner's data and write 4 specific coaching observations. Each must cite actual numbers. Each must end with a concrete action for THIS WEEK — not 'consider', a specific directive.
 
 Partner: {name} ({role})
@@ -197,7 +185,6 @@ Best content type: {best_content_type}
 CLE talks in 6 months: {talks}
 
 Style: direct, specific, respectful. Like a great coach. Max 280 words. Plain text, no headers.""",
-
     "linkedin_draft": """You are ghostwriting a LinkedIn post for {name}, {title} at {firm}.
 Their writing style — match this exactly:
 {writing_samples}
@@ -215,17 +202,14 @@ Rules:
 - Do not use: "game-changer", "exciting", "thrilled", "proud to", "unpacking", "deep dive"
 
 Output the post only. No preamble.""",
-
     "pitch_debrief": """Analyze this lost pitch debrief. Under 140 words. Direct.
 
 {debrief}
 
 Provide: (1) Most likely root cause of loss (2) What winning firm likely did differently (3) One specific improvement for next pitch (4) Re-pitch in 6 months or walk away? Plain text.""",
-
     "bd_campaign": """Design a 4-step 6-week BD campaign for {client_name} ({industry}). Active matter: {matter}. Partner: {partner}. Wallet share: {wallet_share}% (room to grow). Flight risk: {churn_score}/100.
 
 For each step specify: week, channel (email/call/event/memo), sender, content angle, expected client action. Under 220 words. Plain text, simple numbering.""",
-
     "geo_brief": """BigLaw BD AI. Write a 130-word market intelligence brief for a Canadian firm considering a BD push into {jurisdiction}.
 
 Legal demand index: {index}/100
@@ -233,7 +217,6 @@ Top practice areas: {practice}
 Key drivers: {drivers}
 
 Provide: (1) Highest-value opportunity for a Canadian firm right now (2) Which existing client relationships have cross-border exposure (3) One concrete BD action this quarter — event, thought leadership, or referral network. Plain text, direct, no headers.""",
-
     "ma_strategy": """M&A BD AI. Write outreach strategy (under 140 words) for pre-announcement deal intelligence.
 
 Company: {company}
@@ -254,6 +237,7 @@ Specific, direct, plain text.""",
 
 # ── Client ─────────────────────────────────────────────────────────────────────
 
+
 class AnthropicService:
     """
     Thin wrapper around the Anthropic Python SDK.
@@ -261,7 +245,7 @@ class AnthropicService:
     """
 
     def __init__(self) -> None:
-        self._client: Optional[anthropic.AsyncAnthropic] = None
+        self._client: anthropic.AsyncAnthropic | None = None
 
     def _get_client(self) -> anthropic.AsyncAnthropic:
         if self._client is None:

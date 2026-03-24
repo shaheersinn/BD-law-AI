@@ -17,7 +17,8 @@ from __future__ import annotations
 import json
 import logging
 import time
-from typing import Any, Callable, TypeVar
+from collections.abc import Callable
+from typing import Any, TypeVar
 
 import redis.asyncio as aioredis
 from redis.asyncio import Redis
@@ -34,35 +35,30 @@ T = TypeVar("T")
 
 TTL = {
     # High-velocity signals — check frequently
-    "options_anomaly":       300,     # 5 minutes
-    "jet_track":             900,     # 15 minutes
-    "breaking_news":         600,     # 10 minutes
-    "live_score":            60,      # 1 minute (live feed scores)
-
+    "options_anomaly": 300,  # 5 minutes
+    "jet_track": 900,  # 15 minutes
+    "breaking_news": 600,  # 10 minutes
+    "live_score": 60,  # 1 minute (live feed scores)
     # Medium-velocity signals — check daily
-    "job_postings":          86400,   # 24 hours
-    "social_sentiment":      43200,   # 12 hours
-    "google_trends":         21600,   # 6 hours
-    "regulatory_news":       7200,    # 2 hours
-
+    "job_postings": 86400,  # 24 hours
+    "social_sentiment": 43200,  # 12 hours
+    "google_trends": 21600,  # 6 hours
+    "regulatory_news": 7200,  # 2 hours
     # Low-velocity signals — check weekly
-    "sedar_filings":         86400,   # 24 hours
-    "canlii_cases":          86400,   # 24 hours
-    "osb_insolvency_stats":  604800,  # 7 days
-    "scc_decisions":         604800,  # 7 days
-    "stats_canada":          604800,  # 7 days
-
+    "sedar_filings": 86400,  # 24 hours
+    "canlii_cases": 86400,  # 24 hours
+    "osb_insolvency_stats": 604800,  # 7 days
+    "scc_decisions": 604800,  # 7 days
+    "stats_canada": 604800,  # 7 days
     # Static reference data — cache for a month
-    "corporations_canada":   2592000, # 30 days
-    "transport_canada":      2592000, # 30 days
-    "law_firm_posts":        86400,   # 24 hours
-
+    "corporations_canada": 2592000,  # 30 days
+    "transport_canada": 2592000,  # 30 days
+    "law_firm_posts": 86400,  # 24 hours
     # Computed scores
-    "practice_area_score":   3600,    # 1 hour
-    "company_features":      7200,    # 2 hours
-
+    "practice_area_score": 3600,  # 1 hour
+    "company_features": 7200,  # 2 hours
     # Default fallback
-    "default":               3600,    # 1 hour
+    "default": 3600,  # 1 hour
 }
 
 
@@ -100,8 +96,8 @@ class RedisCache:
         """Check Redis connectivity. Returns True if connected."""
         try:
             client = self._get_client()
-            await client.ping()
-            return True
+            result = await client.ping()  # type: ignore[misc]
+            return bool(result)
         except Exception as e:
             log.error("Redis health check failed: %s", e)
             return False
@@ -156,7 +152,7 @@ class RedisCache:
         """Delete a key from cache. Returns True if deleted."""
         try:
             client = self._get_client()
-            result = await client.delete(key)
+            result: int = await client.delete(key)  # type: ignore[assignment]
             return result > 0
         except Exception as e:
             log.warning("Cache DELETE failed for key %s: %s", key, e)
@@ -176,7 +172,8 @@ class RedisCache:
             client = self._get_client()
             keys = await client.keys(pattern)
             if keys:
-                return await client.delete(*keys)
+                result: int = await client.delete(*keys)  # type: ignore[assignment]
+                return result
             return 0
         except Exception as e:
             log.warning("Cache DELETE PATTERN failed for %s: %s", pattern, e)
@@ -256,10 +253,10 @@ class RedisCache:
 
             # Pipeline for atomic execution
             pipe = client.pipeline()
-            pipe.zremrangebyscore(full_key, 0, window_start)   # Remove old entries
-            pipe.zadd(full_key, {str(now): now})                # Add current request
-            pipe.zcard(full_key)                                 # Count requests in window
-            pipe.expire(full_key, window_seconds + 1)           # Set TTL
+            pipe.zremrangebyscore(full_key, 0, window_start)  # Remove old entries
+            pipe.zadd(full_key, {str(now): now})  # Add current request
+            pipe.zcard(full_key)  # Count requests in window
+            pipe.expire(full_key, window_seconds + 1)  # Set TTL
 
             results = await pipe.execute()
             request_count = results[2]
@@ -284,6 +281,21 @@ class RedisCache:
         """
         return await self.delete_pattern(f"oracle:*:{company_id}:*")
 
+    # ── Key helpers ─────────────────────────────────────────────────────────────
+
+    def ai_response_key(self, template_id: str, **params: Any) -> str:
+        """Deterministic cache key for AI-generated text responses."""
+        sorted_params = ":".join(f"{k}={v}" for k, v in sorted(params.items()))
+        return f"oracle:ai:{template_id}:{sorted_params}"
+
+    def client_key(self, client_id: int) -> str:
+        """Cache key for a client record."""
+        return f"client:v1:{client_id}"
+
+    def trigger_feed_key(self, category: str, limit: int, offset: int) -> str:
+        """Cache key for a paginated trigger feed."""
+        return f"triggers:v1:live:{category}:{limit}:{offset}"
+
     async def close(self) -> None:
         """Close the Redis connection pool. Called on application shutdown."""
         if self._client is not None:
@@ -296,3 +308,11 @@ class RedisCache:
 #   from app.cache.client import cache
 
 cache = RedisCache()
+
+# Alias for backward-compat with tests that import CacheClient
+CacheClient = RedisCache
+
+
+async def get_redis() -> Redis:
+    """Return the underlying redis.asyncio.Redis client from the singleton cache."""
+    return cache._get_client()

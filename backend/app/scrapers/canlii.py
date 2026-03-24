@@ -5,7 +5,7 @@ Schedule: daily at 7am.
 """
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from app.config import get_settings
 from app.scrapers.base import BaseScraper, RawSignal
@@ -20,17 +20,13 @@ class CanLIIScraper(BaseScraper):
     source_name = "CANLII"
     request_delay_seconds = 1.5
 
-    async def search_company(
-        self, company_name: str, days_back: int = 7
-    ) -> list[RawSignal]:
+    async def search_company(self, company_name: str, days_back: int = 7) -> list[RawSignal]:
         """Search for recent cases naming a company as party."""
         if not settings.canlii_api_key:
             log.warning("CANLII_API_KEY not set — skipping CanLII scrape")
             return []
 
-        date_after = (
-            datetime.now(timezone.utc) - timedelta(days=days_back)
-        ).strftime("%Y-%m-%d")
+        date_after = (datetime.now(UTC) - timedelta(days=days_back)).strftime("%Y-%m-%d")
 
         params = {
             "api_key": settings.canlii_api_key,
@@ -56,25 +52,18 @@ class CanLIIScraper(BaseScraper):
 
             # Determine defendant vs plaintiff
             parts = title.split(" v. ")
-            is_defendant = (
-                len(parts) > 1
-                and company_name.lower() in parts[-1].lower()
-            )
+            is_defendant = len(parts) > 1 and company_name.lower() in parts[-1].lower()
 
             practice = "Litigation — Defense" if is_defendant else "Litigation — Advisory"
             urgency = 80 if is_defendant else 60
             weight = 0.88 if is_defendant else 0.72
 
-            trigger_type = (
-                "litigation_defendant" if is_defendant else "litigation_plaintiff"
-            )
+            trigger_type = "litigation_defendant" if is_defendant else "litigation_plaintiff"
 
             try:
-                filed_at = datetime.strptime(date_str, "%Y-%m-%d").replace(
-                    tzinfo=timezone.utc
-                )
+                filed_at = datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=UTC)
             except ValueError:
-                filed_at = datetime.now(timezone.utc)
+                filed_at = datetime.now(UTC)
 
             signals.append(
                 RawSignal(

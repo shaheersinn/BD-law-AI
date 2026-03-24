@@ -16,7 +16,6 @@ Design:
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional
 
 from sqlalchemy import (
     BigInteger,
@@ -34,7 +33,6 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
-
 
 # ── Practice Area Bitmask Constants ───────────────────────────────────────────
 # Each practice area has a fixed bit position.
@@ -93,7 +91,7 @@ class Signal(Base):
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
 
     # ── Company FK ────────────────────────────────────────────────────────────
-    company_id: Mapped[Optional[int]] = mapped_column(
+    company_id: Mapped[int | None] = mapped_column(
         Integer,
         ForeignKey("companies.id", ondelete="CASCADE"),
         nullable=True,
@@ -103,78 +101,90 @@ class Signal(Base):
 
     # ── Source Identification ─────────────────────────────────────────────────
     scraper_name: Mapped[str] = mapped_column(
-        String(100), nullable=False, index=True,
-        comment="Scraper that produced this signal (e.g., 'osc_enforcement')"
+        String(100),
+        nullable=False,
+        index=True,
+        comment="Scraper that produced this signal (e.g., 'osc_enforcement')",
     )
-    source_url: Mapped[Optional[str]] = mapped_column(
-        String(2000), nullable=True
-    )
+    source_url: Mapped[str | None] = mapped_column(String(2000), nullable=True)
 
     # ── Signal Classification ─────────────────────────────────────────────────
     signal_type: Mapped[str] = mapped_column(
-        String(100), nullable=False, index=True,
-        comment="e.g., enforcement_action, corporate_filing, job_posting, news_mention"
+        String(100),
+        nullable=False,
+        index=True,
+        comment="e.g., enforcement_action, corporate_filing, job_posting, news_mention",
     )
     practice_area_flags: Mapped[int] = mapped_column(
-        BigInteger, nullable=False, default=0,
-        comment="34-bit bitmask — one bit per practice area"
+        BigInteger, nullable=False, default=0, comment="34-bit bitmask — one bit per practice area"
     )
-    primary_practice_area: Mapped[Optional[str]] = mapped_column(
-        String(100), nullable=True, index=True,
-        comment="Highest-confidence practice area for this signal"
+    primary_practice_area: Mapped[str | None] = mapped_column(
+        String(100),
+        nullable=True,
+        index=True,
+        comment="Highest-confidence practice area for this signal",
     )
 
     # ── Signal Content ────────────────────────────────────────────────────────
-    title: Mapped[Optional[str]] = mapped_column(String(1000), nullable=True)
-    summary: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    raw_entity_name: Mapped[Optional[str]] = mapped_column(
-        String(500), nullable=True, index=True,
-        comment="Company name as it appeared in the source (before entity resolution)"
+    title: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+    summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+    raw_entity_name: Mapped[str | None] = mapped_column(
+        String(500),
+        nullable=True,
+        index=True,
+        comment="Company name as it appeared in the source (before entity resolution)",
     )
 
     # ── Deduplication ─────────────────────────────────────────────────────────
     content_hash: Mapped[str] = mapped_column(
-        String(64), nullable=False, unique=True, index=True,
-        comment="SHA256 of (scraper_name + source_url + published_at.date) — prevents duplicates"
+        String(64),
+        nullable=False,
+        unique=True,
+        index=True,
+        comment="SHA256 of (scraper_name + source_url + published_at.date) — prevents duplicates",
     )
 
     # ── Signal Quality ────────────────────────────────────────────────────────
     signal_strength: Mapped[float] = mapped_column(
-        Float, nullable=False, default=0.5,
-        comment="Raw pre-ML signal weight 0.0–1.0"
+        Float, nullable=False, default=0.5, comment="Raw pre-ML signal weight 0.0–1.0"
     )
     source_reliability: Mapped[float] = mapped_column(
-        Float, nullable=False, default=0.8,
-        comment="Trust score for the source 0.0–1.0 (configured per scraper)"
+        Float,
+        nullable=False,
+        default=0.8,
+        comment="Trust score for the source 0.0–1.0 (configured per scraper)",
     )
 
     # ── Entity Resolution ─────────────────────────────────────────────────────
     entity_resolved: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, default=False, index=True,
-        comment="True after entity resolution has linked signal to a Company"
+        Boolean,
+        nullable=False,
+        default=False,
+        index=True,
+        comment="True after entity resolution has linked signal to a Company",
     )
-    entity_resolution_confidence: Mapped[Optional[float]] = mapped_column(
-        Float, nullable=True,
-        comment="Confidence of entity match 0.0–1.0"
+    entity_resolution_confidence: Mapped[float | None] = mapped_column(
+        Float, nullable=True, comment="Confidence of entity match 0.0–1.0"
     )
 
     # ── Extra Metadata ────────────────────────────────────────────────────────
-    metadata: Mapped[Optional[dict]] = mapped_column(
-        JSONB, nullable=True,
-        comment="Source-specific fields (fine amount, case number, etc.)"
+    metadata: Mapped[dict | None] = mapped_column(
+        JSONB, nullable=True, comment="Source-specific fields (fine amount, case number, etc.)"
     )
 
     # ── Timestamps ────────────────────────────────────────────────────────────
-    published_at: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True), nullable=True, index=True,
-        comment="When the original event occurred / was published"
+    published_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+        index=True,
+        comment="When the original event occurred / was published",
     )
     scraped_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now(), index=True
     )
 
     # ── Relationships ─────────────────────────────────────────────────────────
-    company: Mapped[Optional["Company"]] = relationship(  # type: ignore[name-defined]
+    company: Mapped[Company | None] = relationship(  # type: ignore[name-defined]  # noqa: F821
         "Company", back_populates="signals", lazy="noload"
     )
 

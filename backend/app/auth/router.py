@@ -12,7 +12,7 @@ Endpoints:
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, EmailStr, Field
@@ -36,6 +36,7 @@ router = APIRouter(prefix="/auth", tags=["authentication"])
 
 
 # ── Request / Response Schemas ─────────────────────────────────────────────────
+
 
 class LoginRequest(BaseModel):
     email: EmailStr
@@ -80,6 +81,7 @@ class CreateUserRequest(BaseModel):
 
 
 # ── Endpoints ──────────────────────────────────────────────────────────────────
+
 
 @router.post("/login", response_model=TokenResponse, summary="Login and get tokens")
 async def login(
@@ -140,8 +142,8 @@ async def refresh_token(
     try:
         payload = decode_token(body.refresh_token, expected_type="refresh")
         user_id = int(payload["sub"])
-    except Exception:
-        raise credentials_exception
+    except Exception as exc:
+        raise credentials_exception from exc
 
     user = await get_user_by_id(db, user_id)
     if user is None or not user.is_active:
@@ -149,15 +151,14 @@ async def refresh_token(
 
     # Verify refresh token matches stored hash
     from passlib.context import CryptContext
+
     pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
     if not user.hashed_refresh_token or not pwd_ctx.verify(
         body.refresh_token, user.hashed_refresh_token
     ):
         raise credentials_exception
 
-    return AccessTokenResponse(
-        access_token=create_access_token(user.id, user.role)
-    )
+    return AccessTokenResponse(access_token=create_access_token(user.id, user.role))
 
 
 @router.post("/logout", summary="Logout (invalidate refresh token)")
@@ -195,9 +196,7 @@ async def create_new_user(
         409: Email already registered.
     """
     # Check for duplicate email
-    existing = await db.execute(
-        select(User).where(User.email == body.email.lower().strip())
-    )
+    existing = await db.execute(select(User).where(User.email == body.email.lower().strip()))
     if existing.scalar_one_or_none() is not None:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,

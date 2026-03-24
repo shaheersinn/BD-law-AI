@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import time
 import uuid
-from typing import Callable
+from collections.abc import Callable
 
 import structlog
 from fastapi import Request, Response
@@ -33,7 +33,7 @@ class ErrorHandlerMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:  # type: ignore[type-arg]
         try:
-            return await call_next(request)
+            return await call_next(request)  # type: ignore[no-any-return]
         except Exception as exc:
             request_id = getattr(request.state, "request_id", str(uuid.uuid4()))
 
@@ -47,12 +47,11 @@ class ErrorHandlerMiddleware(BaseHTTPMiddleware):
 
             # Never expose internal error details in production
             from app.config import get_settings
+
             settings = get_settings()
 
             error_detail = (
-                str(exc)
-                if settings.is_development
-                else "An internal server error occurred"
+                str(exc) if settings.is_development else "An internal server error occurred"
             )
 
             return JSONResponse(

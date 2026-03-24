@@ -22,7 +22,6 @@ Algorithm:
 import logging
 import re
 from dataclasses import dataclass
-from typing import Optional
 
 from rapidfuzz import fuzz, process
 
@@ -36,11 +35,12 @@ settings = get_settings()
 _LEGAL_SUFFIXES = re.compile(
     r"\b(inc\.?|incorporated|corp\.?|corporation|llc|llp|ltd\.?|limited|"
     r"lp|l\.p\.|co\.?|company|plc|sa|ag|bv|gmbh|s\.a\.|n\.v\.|"
-    r"holdings?|group|enterprises?|partners?|associates?|"
+    r"group|enterprises?|partners?|associates?|"
     r"fund|capital|management|trust|reit|properties?)\b",
     re.IGNORECASE,
 )
 
+_DOTS = re.compile(r"\.")
 _PUNCT = re.compile(r"[^\w\s]")
 _WHITESPACE = re.compile(r"\s+")
 
@@ -50,11 +50,13 @@ def normalise(name: str) -> str:
     Canonical form: strip legal suffixes, punctuation, extra whitespace, lowercase.
     "Arctis Mining Corp." → "arctis mining"
     "NORTHFIELD ENERGY PARTNERS LP" → "northfield energy"
+    "A.B.C. Holdings" → "abc holdings"
     """
     if not name:
         return ""
     n = _LEGAL_SUFFIXES.sub("", name)
-    n = _PUNCT.sub(" ", n)
+    n = _DOTS.sub("", n)        # Remove dots (handles abbreviations: A.B.C. → ABC)
+    n = _PUNCT.sub(" ", n)      # Replace remaining punctuation with spaces
     n = _WHITESPACE.sub(" ", n).strip().lower()
     return n
 
@@ -62,11 +64,11 @@ def normalise(name: str) -> str:
 @dataclass
 class MatchResult:
     matched: bool
-    entity_id: Optional[int]    # client_id or prospect_id
-    entity_type: str             # "client", "prospect", "unknown"
+    entity_id: int | None  # client_id or prospect_id
+    entity_type: str  # "client", "prospect", "unknown"
     canonical_name: str
     original_name: str
-    score: float                 # 0.0 – 100.0
+    score: float  # 0.0 – 100.0
 
 
 class EntityResolver:
@@ -80,12 +82,12 @@ class EntityResolver:
         result = resolver.resolve("Arctis Mining Corp.")
     """
 
-    MATCH_THRESHOLD = 82.0   # Minimum combined score to accept a match
+    MATCH_THRESHOLD = 82.0  # Minimum combined score to accept a match
 
     def __init__(self) -> None:
         # Maps normalised_name → (entity_id, entity_type, original_name)
         self._index: dict[str, tuple[int, str, str]] = {}
-        self._norm_list: list[str] = []    # for rapidfuzz process.extractOne
+        self._norm_list: list[str] = []  # for rapidfuzz process.extractOne
 
     async def rebuild(self, db) -> int:
         """
@@ -94,14 +96,13 @@ class EntityResolver:
         Returns number of entities loaded.
         """
         from sqlalchemy import select
+
         from app.models import Client, Prospect
 
         new_index = {}
 
         # Clients
-        result = await db.execute(
-            select(Client.id, Client.name).where(Client.is_active == True)
-        )
+        result = await db.execute(select(Client.id, Client.name).where(Client.is_active))
         for client_id, name in result.all():
             norm = normalise(name)
             if norm:
@@ -126,8 +127,12 @@ class EntityResolver:
         """
         if not raw_name or not self._index:
             return MatchResult(
-                matched=False, entity_id=None, entity_type="unknown",
-                canonical_name=normalise(raw_name), original_name=raw_name, score=0.0,
+                matched=False,
+                entity_id=None,
+                entity_type="unknown",
+                canonical_name=normalise(raw_name),
+                original_name=raw_name,
+                score=0.0,
             )
 
         query_norm = normalise(raw_name)
@@ -136,8 +141,12 @@ class EntityResolver:
         if query_norm in self._index:
             entity_id, entity_type, original = self._index[query_norm]
             return MatchResult(
-                matched=True, entity_id=entity_id, entity_type=entity_type,
-                canonical_name=query_norm, original_name=original, score=100.0,
+                matched=True,
+                entity_id=entity_id,
+                entity_type=entity_type,
+                canonical_name=query_norm,
+                original_name=original,
+                score=100.0,
             )
 
         # Fuzzy match
@@ -150,8 +159,12 @@ class EntityResolver:
 
         if result is None:
             return MatchResult(
-                matched=False, entity_id=None, entity_type="unknown",
-                canonical_name=query_norm, original_name=raw_name, score=0.0,
+                matched=False,
+                entity_id=None,
+                entity_type="unknown",
+                canonical_name=query_norm,
+                original_name=raw_name,
+                score=0.0,
             )
 
         best_norm, sort_score, _ = result
@@ -162,14 +175,22 @@ class EntityResolver:
 
         if combined < self.MATCH_THRESHOLD:
             return MatchResult(
-                matched=False, entity_id=None, entity_type="unknown",
-                canonical_name=query_norm, original_name=raw_name, score=combined,
+                matched=False,
+                entity_id=None,
+                entity_type="unknown",
+                canonical_name=query_norm,
+                original_name=raw_name,
+                score=combined,
             )
 
         entity_id, entity_type, original = self._index[best_norm]
         return MatchResult(
-            matched=True, entity_id=entity_id, entity_type=entity_type,
-            canonical_name=best_norm, original_name=original, score=combined,
+            matched=True,
+            entity_id=entity_id,
+            entity_type=entity_type,
+            canonical_name=best_norm,
+            original_name=original,
+            score=combined,
         )
 
     def resolve_many(self, names: list[str]) -> list[MatchResult]:

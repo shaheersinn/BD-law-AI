@@ -15,22 +15,24 @@ Trend detection logic:
 
 Output: list[ScraperResult] with signal_type="blog_legal_trend"
 """
+
 from __future__ import annotations
-from datetime import datetime, timezone, timedelta
+
 from collections import defaultdict
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import structlog
 
 log = structlog.get_logger(__name__)
 
-_TIER1_THRESHOLD = 3    # Tier 1 firms to trigger trend
-_TIER2_THRESHOLD = 5    # Tier 2 firms alone to trigger trend
+_TIER1_THRESHOLD = 3  # Tier 1 firms to trigger trend
+_TIER2_THRESHOLD = 5  # Tier 2 firms alone to trigger trend
 _LOOKBACK_DAYS = 7
 
 
 async def detect_blog_trends(
-    db: Any,        # AsyncSession
+    db: Any,  # AsyncSession
     mongo_db: Any,  # MongoDB handle
 ) -> list[dict[str, Any]]:
     """
@@ -39,15 +41,15 @@ async def detect_blog_trends(
     Returns list of trend dicts (not ScraperResults — caller converts).
     Called by Celery task `run_blog_trend_detector`.
     """
-    from sqlalchemy import select, and_
+    from sqlalchemy import and_, select
+
     from app.models.company import SignalRecord
 
-    cutoff = datetime.now(tz=timezone.utc) - timedelta(days=_LOOKBACK_DAYS)
+    cutoff = datetime.now(tz=UTC) - timedelta(days=_LOOKBACK_DAYS)
 
     try:
         result = await db.execute(
-            select(SignalRecord)
-            .where(
+            select(SignalRecord).where(
                 and_(
                     SignalRecord.signal_type == "blog_practice_alert",
                     SignalRecord.scraped_at >= cutoff,
@@ -64,6 +66,7 @@ async def detect_blog_trends(
 
     for signal in signals:
         import json
+
         try:
             hints = json.loads(signal.practice_area_hints or "[]")
             value = json.loads(signal.signal_value or "{}")
@@ -81,18 +84,22 @@ async def detect_blog_trends(
         t2_count = len(tier_firms.get(2, set()))
         if t1_count >= _TIER1_THRESHOLD or t2_count >= _TIER2_THRESHOLD:
             confidence = min(0.95, 0.6 + (t1_count * 0.1) + (t2_count * 0.05))
-            trends.append({
-                "practice_area": area,
-                "tier1_firm_count": t1_count,
-                "tier2_firm_count": t2_count,
-                "all_firms": list(tier_firms.get(1, set()) | tier_firms.get(2, set())),
-                "confidence": confidence,
-                "detected_at": datetime.now(tz=timezone.utc).isoformat(),
-                "lookback_days": _LOOKBACK_DAYS,
-            })
+            trends.append(
+                {
+                    "practice_area": area,
+                    "tier1_firm_count": t1_count,
+                    "tier2_firm_count": t2_count,
+                    "all_firms": list(tier_firms.get(1, set()) | tier_firms.get(2, set())),
+                    "confidence": confidence,
+                    "detected_at": datetime.now(tz=UTC).isoformat(),
+                    "lookback_days": _LOOKBACK_DAYS,
+                }
+            )
 
-    log.info("trend_detector_complete",
-             trends_found=len(trends),
-             areas=[t["practice_area"] for t in trends])
+    log.info(
+        "trend_detector_complete",
+        trends_found=len(trends),
+        areas=[t["practice_area"] for t in trends],
+    )
 
     return trends

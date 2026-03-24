@@ -5,8 +5,7 @@ Schedule: every 4 hours.
 """
 
 import logging
-from datetime import datetime, timezone
-from typing import Any
+from datetime import UTC, datetime
 
 import feedparser
 
@@ -15,12 +14,37 @@ from app.scrapers.base import BaseScraper, RawSignal
 log = logging.getLogger(__name__)
 
 ENFORCEMENT_FEEDS: dict[str, tuple[str, str, int, float]] = {
-    "OSC":         ("https://www.osc.ca/en/news-events/enforcement/enforcement-decisions-rss",  "Securities",          90, 0.90),
-    "OSFI":        ("https://www.osfi-bsif.gc.ca/eng/fi-if/pages/rss.aspx",                    "Banking & Finance",   88, 0.88),
-    "CompBureau":  ("https://www.canada.ca/en/competition-bureau/news/enforcement.rss",          "Competition",         91, 0.91),
-    "FINTRAC":     ("https://www.fintrac-canafe.gc.ca/publications/index-eng",                   "Banking & Finance",   87, 0.87),
-    "ECCC":        ("https://www.canada.ca/en/environment-climate-change/news.rss",              "Environmental",       89, 0.89),
-    "HealthCan":   ("https://healthycanadians.gc.ca/recall-alert-rappel-avis/index-eng.php",     "Regulatory",          82, 0.82),
+    "OSC": (
+        "https://www.osc.ca/en/news-events/enforcement/enforcement-decisions-rss",
+        "Securities",
+        90,
+        0.90,
+    ),
+    "OSFI": ("https://www.osfi-bsif.gc.ca/eng/fi-if/pages/rss.aspx", "Banking & Finance", 88, 0.88),
+    "CompBureau": (
+        "https://www.canada.ca/en/competition-bureau/news/enforcement.rss",
+        "Competition",
+        91,
+        0.91,
+    ),
+    "FINTRAC": (
+        "https://www.fintrac-canafe.gc.ca/publications/index-eng",
+        "Banking & Finance",
+        87,
+        0.87,
+    ),
+    "ECCC": (
+        "https://www.canada.ca/en/environment-climate-change/news.rss",
+        "Environmental",
+        89,
+        0.89,
+    ),
+    "HealthCan": (
+        "https://healthycanadians.gc.ca/recall-alert-rappel-avis/index-eng.php",
+        "Regulatory",
+        82,
+        0.82,
+    ),
 }
 
 
@@ -51,11 +75,9 @@ class EnforcementScraper(BaseScraper):
                     summary = entry.get("summary", "")[:400]
 
                     try:
-                        published = datetime(
-                            *entry.published_parsed[:6], tzinfo=timezone.utc
-                        )
+                        published = datetime(*entry.published_parsed[:6], tzinfo=UTC)
                     except (AttributeError, TypeError):
-                        published = datetime.now(timezone.utc)
+                        published = datetime.now(UTC)
 
                     signals.append(
                         RawSignal(

@@ -1,13 +1,18 @@
 """app/scrapers/jobs/job_bank.py — Government of Canada Job Bank RSS."""
+
 from __future__ import annotations
+
 from app.scrapers.base import BaseScraper, SignalData
 
+
 class JobBankScraper(BaseScraper):
-    NAME = "job_bank"
+    source_id = "jobs_job_bank"
+    source_name = "Job Bank Canada"
     CATEGORY = "jobs"
+    signal_types = ["job_posting"]
     SOURCE_URL = "https://www.jobbank.gc.ca"
-    RATE_LIMIT_RPS = 1.0
-    MAX_CONCURRENT = 2
+    rate_limit_rps = 1.0
+    concurrency = 2
     SOURCE_RELIABILITY = 0.75
 
     _RSS_TEMPLATES = [
@@ -15,8 +20,8 @@ class JobBankScraper(BaseScraper):
         "https://www.jobbank.gc.ca/jobsearch/rss?searchstring=compliance+officer&locationstring=Canada",
     ]
 
-    async def run(self) -> list[SignalData]:
-        signals = []
+    async def scrape(self) -> list[SignalData]:
+        signals: list[SignalData] = []
         for rss_url in self._RSS_TEMPLATES:
             feed = await self.get_rss(rss_url)
             if not feed:
@@ -29,13 +34,17 @@ class JobBankScraper(BaseScraper):
                 company = entry.get("author", "")
                 if not title:
                     continue
-                signals.append(SignalData(
-                    scraper_name=self.NAME, signal_type="job_posting",
-                    raw_entity_name=company or title,
-                    title=f"Job Bank: {title}",
-                    summary=summary, source_url=link, published_at=published,
-                    practice_areas=["employment_labour", "regulatory_compliance"],
-                    signal_strength=0.55,
-                    metadata={"platform": "Job Bank Canada"},
-                ))
+                signals.append(
+                    SignalData(
+                        source_id=self.source_id,
+                        signal_type="job_posting",
+                        raw_company_name=company or title,
+                        signal_text=summary,
+                        source_url=link,
+                        published_at=published,
+                        practice_area_hints=["employment_labour", "regulatory_compliance"],
+                        confidence_score=0.55,
+                        signal_value={"platform": "Job Bank Canada", "title": f"Job Bank: {title}"},
+                    )
+                )
         return signals

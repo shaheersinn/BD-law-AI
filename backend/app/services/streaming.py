@@ -20,7 +20,7 @@ SSE format:
 
 import json
 import logging
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
 
 import anthropic
 
@@ -54,6 +54,7 @@ async def stream_ai_response(
     if not settings.anthropic_api_key:
         # Fallback: non-streaming Groq
         from app.services.anthropic_service import ai
+
         try:
             text = await ai._call_groq(prompt)
             yield f"data: {json.dumps({'delta': text})}\n\n"
@@ -95,5 +96,5 @@ def sse_headers() -> dict:
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache",
         "Connection": "keep-alive",
-        "X-Accel-Buffering": "no",   # Disable nginx buffering
+        "X-Accel-Buffering": "no",  # Disable nginx buffering
     }

@@ -19,13 +19,13 @@ from sqlalchemy import (
     Text,
     func,
 )
-from sqlalchemy.dialects.postgresql import ARRAY, JSONB
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
 
 
-class RiskLevel(str, enum.Enum):
+class RiskLevel(enum.StrEnum):
     critical = "critical"
     high = "high"
     medium = "medium"
@@ -53,9 +53,7 @@ class Client(Base):
     # ML scores (updated nightly)
     churn_score: Mapped[int] = mapped_column(Integer, default=0)  # 0-100
     churn_score_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    risk_level: Mapped[RiskLevel] = mapped_column(
-        Enum(RiskLevel), default=RiskLevel.low
-    )
+    risk_level: Mapped[RiskLevel] = mapped_column(Enum(RiskLevel), default=RiskLevel.low)
 
     # Financial
     estimated_annual_spend: Mapped[Decimal | None] = mapped_column(Numeric(15, 2))
@@ -66,9 +64,7 @@ class Client(Base):
     days_since_last_contact: Mapped[int] = mapped_column(Integer, default=0)
     days_since_last_matter: Mapped[int] = mapped_column(Integer, default=0)
 
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
@@ -109,9 +105,7 @@ class Matter(Base):
     total_billed: Mapped[Decimal] = mapped_column(Numeric(15, 2), default=Decimal("0"))
     referral_source: Mapped[str | None] = mapped_column(String(100))
 
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     client: Mapped["Client"] = relationship("Client", back_populates="matters")
 
@@ -123,9 +117,7 @@ class BillingRecord(Base):
     client_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("clients.id"), nullable=False, index=True
     )
-    matter_id: Mapped[int | None] = mapped_column(
-        Integer, ForeignKey("matters.id"), index=True
-    )
+    matter_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("matters.id"), index=True)
     bill_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
     amount_billed: Mapped[Decimal] = mapped_column(Numeric(15, 2), nullable=False)
     amount_collected: Mapped[Decimal] = mapped_column(Numeric(15, 2), default=Decimal("0"))
