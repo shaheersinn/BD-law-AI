@@ -236,6 +236,78 @@ def run_negative_sampler(self: Task) -> dict:  # type: ignore[type-arg]
         raise self.retry(exc=exc, countdown=2**self.request.retries) from exc
 
 
+# ── LLM Training Tasks (Phase 4) ──────────────────────────────────────────────
+
+
+@celery_app.task(
+    bind=True,
+    max_retries=1,
+    name="app.tasks._impl.run_pseudo_labeler",
+    soft_time_limit=3600,
+    time_limit=3900,
+)
+def run_pseudo_labeler(self: Task) -> dict:  # type: ignore[type-arg]
+    """Agent 018: Pseudo-Label Quality — Groq batch classification of unlabeled signals."""
+
+    async def _impl() -> dict[str, Any]:
+        from app.database import AsyncSessionLocal
+        from app.models.ground_truth import LabelingRun, RunStatus, RunType
+        from app.training.pseudo_labeler import PseudoLabeler
+
+        now = __import__("datetime").datetime.now(__import__("datetime").timezone.utc)
+        async with AsyncSessionLocal() as db:
+            run = LabelingRun(
+                run_type=RunType.pseudo_label.value,
+                status=RunStatus.running.value,
+                started_at=now,
+                config={},
+            )
+            db.add(run)
+            await db.flush()
+            await db.commit()
+
+            result = await PseudoLabeler().run(run_id=run.id, db=db, now=now)
+            run.status = RunStatus.completed.value
+            run.completed_at = __import__("datetime").datetime.now(
+                __import__("datetime").timezone.utc
+            )
+            run.positive_labels_created = result.get("pseudo_labels_created", 0)
+            await db.commit()
+            return result
+
+    try:
+        return _run_async(_impl())
+    except Exception as exc:  # noqa: BLE001
+        log.error("run_pseudo_labeler failed", error=str(exc))
+        raise self.retry(exc=exc, countdown=2**self.request.retries) from exc
+
+
+@celery_app.task(
+    bind=True,
+    max_retries=1,
+    name="app.tasks._impl.run_training_data_curator",
+    soft_time_limit=1800,
+    time_limit=2100,
+)
+def run_training_data_curator(self: Task) -> dict:  # type: ignore[type-arg]
+    """Agent 019: Training Data Curator — label QA + training set export."""
+
+    async def _impl() -> dict[str, Any]:
+        from app.database import AsyncSessionLocal
+        from app.training.curator import TrainingDataCurator
+
+        async with AsyncSessionLocal() as db:
+            result = await TrainingDataCurator().curate(db=db)
+            await db.commit()
+            return result
+
+    try:
+        return _run_async(_impl())
+    except Exception as exc:  # noqa: BLE001
+        log.error("run_training_data_curator failed", error=str(exc))
+        raise self.retry(exc=exc, countdown=2**self.request.retries) from exc
+
+
 # ── Agent Tasks (Phase 6+) ─────────────────────────────────────────────────────
 
 

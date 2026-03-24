@@ -106,6 +106,9 @@ celery_app.conf.task_routes = {
     # Ground truth agents → agents queue
     "app.tasks._impl.run_retrospective_labeler": {"queue": "agents"},
     "app.tasks._impl.run_negative_sampler": {"queue": "agents"},
+    # LLM Training agents → agents queue
+    "app.tasks._impl.run_pseudo_labeler": {"queue": "agents"},
+    "app.tasks._impl.run_training_data_curator": {"queue": "agents"},
 }
 
 # ── Beat Schedule ──────────────────────────────────────────────────────────────
@@ -231,6 +234,19 @@ celery_app.conf.beat_schedule = {
     "run-negative-sampler": {
         "task": "app.tasks._impl.run_negative_sampler",
         "schedule": crontab(minute=0, hour=3),
+        "options": {"queue": "agents"},
+    },
+    # ── Phase 4: LLM Training ─────────────────────────────────────────────────
+    # Agent 018: Pseudo-Labeler — daily at 4am UTC (after ground truth)
+    "run-pseudo-labeler": {
+        "task": "app.tasks._impl.run_pseudo_labeler",
+        "schedule": crontab(minute=0, hour=4),
+        "options": {"queue": "agents"},
+    },
+    # Agent 019: Training Data Curator — daily at 5am UTC (after pseudo-labeler)
+    "run-training-data-curator": {
+        "task": "app.tasks._impl.run_training_data_curator",
+        "schedule": crontab(minute=0, hour=5),
         "options": {"queue": "agents"},
     },
 }

@@ -242,6 +242,11 @@ from app.routes.ground_truth import router as ground_truth_router  # noqa: E402
 
 app.include_router(ground_truth_router, prefix=PREFIX)
 
+# Phase 4 — LLM Training Pipeline
+from app.routes.training import router as training_router  # noqa: E402
+
+app.include_router(training_router, prefix=PREFIX)
+
 # Phase 1+ routers — stubs registered now, implemented in later phases
 # These are imported conditionally to avoid import errors during Phase 0
 # Uncomment as each phase is implemented:

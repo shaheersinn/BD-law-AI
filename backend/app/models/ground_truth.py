@@ -39,6 +39,7 @@ class RunType(StrEnum):
     retrospective = "retrospective"
     negative_sampling = "negative_sampling"
     full = "full"
+    pseudo_label = "pseudo_label"
 
 
 class RunStatus(StrEnum):
@@ -51,6 +52,7 @@ class LabelSource(StrEnum):
     retrospective = "retrospective"
     manual = "manual"
     active_learning = "active_learning"
+    pseudo_label = "pseudo_label"
 
 
 class LabelingRun(Base):
