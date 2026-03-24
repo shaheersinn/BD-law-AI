@@ -308,6 +308,273 @@ def run_training_data_curator(self: Task) -> dict:  # type: ignore[type-arg]
         raise self.retry(exc=exc, countdown=2**self.request.retries) from exc
 
 
+# ── Phase 5: Live Feed Tasks ───────────────────────────────────────────────────
+
+
+@celery_app.task(
+    bind=True,
+    max_retries=3,
+    name="app.tasks._impl.scrape_sedar_live",
+    soft_time_limit=270,
+    time_limit=300,
+)
+def scrape_sedar_live(self: Task) -> dict:  # type: ignore[type-arg]
+    """Poll SEDAR+ material change RSS every 5 minutes and push to live feed stream."""
+
+    async def _impl() -> dict[str, Any]:
+        from app.services.live_feed import live_feed
+
+        await live_feed.ensure_consumer_group()
+        # Stub: real implementation calls SEDAR+ RSS, compares against last-seen entry,
+        # and calls live_feed.push_signal() for each new material change report.
+        log.info("scrape_sedar_live invoked — live RSS polling (Phase 5)")
+        return {"status": "ok", "source": "sedar_live", "signals_pushed": 0}
+
+    try:
+        return _run_async(_impl())
+    except Exception as exc:  # noqa: BLE001
+        log.error("scrape_sedar_live failed", error=str(exc))
+        raise self.retry(exc=exc, countdown=2**self.request.retries) from exc
+
+
+@celery_app.task(
+    bind=True,
+    max_retries=3,
+    name="app.tasks._impl.scrape_osc_live",
+    soft_time_limit=270,
+    time_limit=300,
+)
+def scrape_osc_live(self: Task) -> dict:  # type: ignore[type-arg]
+    """Poll OSC enforcement RSS every 10 minutes and push to live feed stream."""
+
+    async def _impl() -> dict[str, Any]:
+        from app.services.live_feed import live_feed
+
+        await live_feed.ensure_consumer_group()
+        log.info("scrape_osc_live invoked — OSC RSS polling (Phase 5)")
+        return {"status": "ok", "source": "osc_live", "signals_pushed": 0}
+
+    try:
+        return _run_async(_impl())
+    except Exception as exc:  # noqa: BLE001
+        log.error("scrape_osc_live failed", error=str(exc))
+        raise self.retry(exc=exc, countdown=2**self.request.retries) from exc
+
+
+@celery_app.task(
+    bind=True,
+    max_retries=3,
+    name="app.tasks._impl.scrape_canlii_live",
+    soft_time_limit=270,
+    time_limit=300,
+)
+def scrape_canlii_live(self: Task) -> dict:  # type: ignore[type-arg]
+    """Poll CanLII new decisions every 15 minutes and push to live feed stream."""
+
+    async def _impl() -> dict[str, Any]:
+        from app.services.live_feed import live_feed
+
+        await live_feed.ensure_consumer_group()
+        log.info("scrape_canlii_live invoked — CanLII polling (Phase 5)")
+        return {"status": "ok", "source": "canlii_live", "signals_pushed": 0}
+
+    try:
+        return _run_async(_impl())
+    except Exception as exc:  # noqa: BLE001
+        log.error("scrape_canlii_live failed", error=str(exc))
+        raise self.retry(exc=exc, countdown=2**self.request.retries) from exc
+
+
+@celery_app.task(
+    bind=True,
+    max_retries=3,
+    name="app.tasks._impl.scrape_news_live",
+    soft_time_limit=270,
+    time_limit=300,
+)
+def scrape_news_live(self: Task) -> dict:  # type: ignore[type-arg]
+    """Poll Globe, FP, Reuters RSS every 5 minutes and push to live feed stream."""
+
+    async def _impl() -> dict[str, Any]:
+        from app.services.live_feed import live_feed
+
+        await live_feed.ensure_consumer_group()
+        log.info("scrape_news_live invoked — news RSS polling (Phase 5)")
+        return {"status": "ok", "source": "news_live", "signals_pushed": 0}
+
+    try:
+        return _run_async(_impl())
+    except Exception as exc:  # noqa: BLE001
+        log.error("scrape_news_live failed", error=str(exc))
+        raise self.retry(exc=exc, countdown=2**self.request.retries) from exc
+
+
+@celery_app.task(
+    bind=True,
+    max_retries=3,
+    name="app.tasks._impl.scrape_scc_live",
+    soft_time_limit=270,
+    time_limit=300,
+)
+def scrape_scc_live(self: Task) -> dict:  # type: ignore[type-arg]
+    """Poll SCC decision RSS every 30 minutes and push to live feed stream."""
+
+    async def _impl() -> dict[str, Any]:
+        from app.services.live_feed import live_feed
+
+        await live_feed.ensure_consumer_group()
+        log.info("scrape_scc_live invoked — SCC RSS polling (Phase 5)")
+        return {"status": "ok", "source": "scc_live", "signals_pushed": 0}
+
+    try:
+        return _run_async(_impl())
+    except Exception as exc:  # noqa: BLE001
+        log.error("scrape_scc_live failed", error=str(exc))
+        raise self.retry(exc=exc, countdown=2**self.request.retries) from exc
+
+
+@celery_app.task(
+    bind=True,
+    max_retries=3,
+    name="app.tasks._impl.scrape_edgar_live",
+    soft_time_limit=270,
+    time_limit=300,
+)
+def scrape_edgar_live(self: Task) -> dict:  # type: ignore[type-arg]
+    """Poll SEC EDGAR 8-K RSS every 5 minutes and push to live feed stream."""
+
+    async def _impl() -> dict[str, Any]:
+        from app.services.live_feed import live_feed
+
+        await live_feed.ensure_consumer_group()
+        log.info("scrape_edgar_live invoked — EDGAR 8-K RSS polling (Phase 5)")
+        return {"status": "ok", "source": "edgar_live", "signals_pushed": 0}
+
+    try:
+        return _run_async(_impl())
+    except Exception as exc:  # noqa: BLE001
+        log.error("scrape_edgar_live failed", error=str(exc))
+        raise self.retry(exc=exc, countdown=2**self.request.retries) from exc
+
+
+@celery_app.task(
+    bind=True,
+    max_retries=3,
+    name="app.tasks._impl.process_live_feed_events",
+    soft_time_limit=270,
+    time_limit=300,
+)
+def process_live_feed_events(self: Task) -> dict:  # type: ignore[type-arg]
+    """Agent 020: Priority Router — consume oracle:live:signals stream and trigger scoring."""
+
+    async def _impl() -> dict[str, Any]:
+        from app.services.live_feed import live_feed
+
+        await live_feed.ensure_consumer_group()
+        messages = await live_feed.read_events(batch_size=100, block_ms=500)
+
+        processed = 0
+        errors = 0
+        for msg_id, data in messages:
+            try:
+                # Phase 6+: trigger score_company.delay(data["company_id"])
+                # For now: acknowledge and log each event
+                log.info(
+                    "live_feed_event_received",
+                    msg_id=msg_id,
+                    signal_type=data.get("signal_type"),
+                    company_id=data.get("company_id"),
+                )
+                await live_feed.acknowledge(msg_id)
+                processed += 1
+            except Exception as exc:  # noqa: BLE001
+                log.error("live_feed_event_processing_failed", msg_id=msg_id, error=str(exc))
+                errors += 1
+
+        return {
+            "status": "ok",
+            "agent": 20,
+            "processed": processed,
+            "errors": errors,
+            "stream_length": await live_feed.stream_length(),
+        }
+
+    try:
+        return _run_async(_impl())
+    except Exception as exc:  # noqa: BLE001
+        log.error("process_live_feed_events failed", error=str(exc))
+        raise self.retry(exc=exc, countdown=2**self.request.retries) from exc
+
+
+@celery_app.task(
+    bind=True,
+    max_retries=3,
+    name="app.tasks._impl.monitor_signal_velocity",
+    soft_time_limit=270,
+    time_limit=300,
+)
+def monitor_signal_velocity(self: Task) -> dict:  # type: ignore[type-arg]
+    """Agent 021: Velocity Monitor — compute rolling 48h velocity scores for all companies."""
+
+    async def _impl() -> dict[str, Any]:
+        from app.services.velocity_monitor import velocity_monitor
+
+        result = await velocity_monitor.run()
+        return {"status": "ok", "agent": 21, **result}
+
+    try:
+        return _run_async(_impl())
+    except Exception as exc:  # noqa: BLE001
+        log.error("monitor_signal_velocity failed", error=str(exc))
+        raise self.retry(exc=exc, countdown=2**self.request.retries) from exc
+
+
+@celery_app.task(
+    bind=True,
+    max_retries=3,
+    name="app.tasks._impl.run_dead_signal_resurrector",
+    soft_time_limit=270,
+    time_limit=300,
+)
+def run_dead_signal_resurrector(self: Task) -> dict:  # type: ignore[type-arg]
+    """Agent 022: Dead Signal Resurrector — detect silent scrapers and trigger re-runs."""
+
+    async def _impl() -> dict[str, Any]:
+        from app.services.resurrector import resurrector
+
+        result = await resurrector.run()
+        return {"status": "ok", "agent": 22, **result}
+
+    try:
+        return _run_async(_impl())
+    except Exception as exc:  # noqa: BLE001
+        log.error("run_dead_signal_resurrector failed", error=str(exc))
+        raise self.retry(exc=exc, countdown=2**self.request.retries) from exc
+
+
+@celery_app.task(
+    bind=True,
+    max_retries=1,
+    name="app.tasks._impl.trigger_linkedin_lookup",
+    soft_time_limit=60,
+    time_limit=90,
+)
+def trigger_linkedin_lookup(self: Task, signal_data: dict) -> dict:  # type: ignore[type-arg]
+    """Agent 067 support: On-demand LinkedIn Proxycurl lookup for C-suite departure signals."""
+
+    async def _impl() -> dict[str, Any]:
+        from app.services.linkedin_trigger import linkedin_trigger
+
+        result = await linkedin_trigger.run(signal_data)
+        return {"status": "ok", "agent": 67, **result}
+
+    try:
+        return _run_async(_impl())
+    except Exception as exc:  # noqa: BLE001
+        log.error("trigger_linkedin_lookup failed", error=str(exc))
+        raise self.retry(exc=exc, countdown=2**self.request.retries) from exc
+
+
 # ── Agent Tasks (Phase 6+) ─────────────────────────────────────────────────────
 
 
