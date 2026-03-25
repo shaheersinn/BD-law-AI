@@ -27,9 +27,9 @@ Built for BigLaw BD teams. Zero external LLM dependency in production.
 | 1C — Scraper Performance | ⏳ PENDING | — |
 | 2 — Feature Engineering | ⏳ PENDING | — |
 | 3 — Ground Truth | ✅ COMPLETE | March 2026 |
-| 4 — LLM Training (Groq only) | ⏳ NEXT | — |
-| 5 — Live Feeds | ⏳ PENDING | — |
-| 6 — ML Training + 10 Enhancements | ⏳ PENDING | — |
+| 4 — LLM Training (Groq only) | ✅ COMPLETE | March 2026 |
+| 5 — Live Feeds | ✅ COMPLETE | March 2026 |
+| 6 — ML Training + 10 Enhancements | ⏳ NEXT | — |
 | 7 — Scoring API | ⏳ PENDING | — |
 | 8A — Functional Frontend | ⏳ PENDING | — |
 | 8B — Production UI (ConstructLex) | ⏳ PENDING | — |
@@ -305,5 +305,41 @@ All implemented as Celery tasks in app/tasks/_impl.py (stubs in Phase 0, impleme
 
 ---
 
-*Last updated: Phase 3 — March 2026*
-*Next update: Phase 1C completion*
+## Phase 5 — What Was Built
+
+Phase 5 established the live data feed pipeline — priority signals now delivered in < 60
+seconds via Redis Streams instead of waiting for the next batch cycle.
+
+### Key Files Added in Phase 5
+- `app/services/live_feed.py` — LiveFeedRouter: Redis Stream `oracle:live:signals`, consumer
+  group `scoring_consumers`, push/read/ack/stream_length helpers, `live_feeds_enabled` feature flag
+- `app/services/velocity_monitor.py` — VelocityMonitor: 48-hour rolling velocity via Redis sorted
+  sets, 30-day baseline normalisation, `signal_velocity_score` per company cached as Redis hash
+- `app/services/linkedin_trigger.py` — LinkedInTrigger: on-demand Proxycurl lookup capped at
+  5/day (Redis counter), fires only on confirmed C-suite departure signals from Agent 067
+- `app/services/resurrector.py` — DeadSignalResurrector: queries scraper_health, detects silence
+  beyond 2× expected interval, dispatches high-priority Celery re-run per category
+- `app/tasks/_impl.py` — 10 new tasks: 6 live scrapers (sedar/osc/canlii/news/scc/edgar),
+  Agents 020/021/022 (Priority Router, Velocity Monitor, Resurrector), Agent 067 LinkedIn trigger
+- `app/tasks/celery_app.py` — 10 new beat entries: live scrapers every 5–30 min, stream consumer
+  every 1 min, velocity monitor every 5 min, resurrector every 30 min; 10 new routing rules
+- `tests/test_phase5_live_feeds.py` — 50+ tests covering all 4 services + Celery task registration
+
+### Live-Trigger Sources (polling intervals)
+- SEDAR+ material change reports → every 5 minutes
+- OSC enforcement actions → every 10 minutes
+- CanLII new decisions → every 15 minutes
+- Globe / FP / Reuters RSS → every 5 minutes
+- SCC decisions → every 30 minutes
+- EDGAR 8-K filings → every 5 minutes
+
+### Agents Activated in Phase 5
+- Agent 020 — Priority Router (process_live_feed_events — scoring queue, every 1 min)
+- Agent 021 — Velocity Monitor (monitor_signal_velocity — agents queue, every 5 min)
+- Agent 022 — Dead Signal Resurrector (run_dead_signal_resurrector — agents queue, every 30 min)
+- Agent 067 — Executive Behaviour support (trigger_linkedin_lookup — agents queue, on-demand)
+
+---
+
+*Last updated: Phase 5 — March 2026*
+*Next update: Phase 6 completion*

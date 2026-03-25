@@ -106,6 +106,22 @@ celery_app.conf.task_routes = {
     # Ground truth agents → agents queue
     "app.tasks._impl.run_retrospective_labeler": {"queue": "agents"},
     "app.tasks._impl.run_negative_sampler": {"queue": "agents"},
+    # LLM Training agents → agents queue
+    "app.tasks._impl.run_pseudo_labeler": {"queue": "agents"},
+    "app.tasks._impl.run_training_data_curator": {"queue": "agents"},
+    # Phase 5: Live feed scrapers → scrapers queue
+    "app.tasks._impl.scrape_sedar_live": {"queue": "scrapers"},
+    "app.tasks._impl.scrape_osc_live": {"queue": "scrapers"},
+    "app.tasks._impl.scrape_canlii_live": {"queue": "scrapers"},
+    "app.tasks._impl.scrape_news_live": {"queue": "scrapers"},
+    "app.tasks._impl.scrape_scc_live": {"queue": "scrapers"},
+    "app.tasks._impl.scrape_edgar_live": {"queue": "scrapers"},
+    # Phase 5: Live feed consumer → scoring queue (time-critical)
+    "app.tasks._impl.process_live_feed_events": {"queue": "scoring"},
+    # Phase 5: Velocity monitor + resurrector → agents queue
+    "app.tasks._impl.monitor_signal_velocity": {"queue": "agents"},
+    "app.tasks._impl.run_dead_signal_resurrector": {"queue": "agents"},
+    "app.tasks._impl.trigger_linkedin_lookup": {"queue": "agents"},
 }
 
 # ── Beat Schedule ──────────────────────────────────────────────────────────────
@@ -231,6 +247,77 @@ celery_app.conf.beat_schedule = {
     "run-negative-sampler": {
         "task": "app.tasks._impl.run_negative_sampler",
         "schedule": crontab(minute=0, hour=3),
+        "options": {"queue": "agents"},
+    },
+    # ── Phase 4: LLM Training ─────────────────────────────────────────────────
+    # Agent 018: Pseudo-Labeler — daily at 4am UTC (after ground truth)
+    "run-pseudo-labeler": {
+        "task": "app.tasks._impl.run_pseudo_labeler",
+        "schedule": crontab(minute=0, hour=4),
+        "options": {"queue": "agents"},
+    },
+    # Agent 019: Training Data Curator — daily at 5am UTC (after pseudo-labeler)
+    "run-training-data-curator": {
+        "task": "app.tasks._impl.run_training_data_curator",
+        "schedule": crontab(minute=0, hour=5),
+        "options": {"queue": "agents"},
+    },
+    # ── Phase 5: Live Feed Scrapers ────────────────────────────────────────────
+    # SEDAR+ material change reports — every 5 minutes
+    "scrape-sedar-live": {
+        "task": "app.tasks._impl.scrape_sedar_live",
+        "schedule": crontab(minute="*/5"),
+        "options": {"queue": "scrapers"},
+    },
+    # OSC enforcement actions — every 10 minutes
+    "scrape-osc-live": {
+        "task": "app.tasks._impl.scrape_osc_live",
+        "schedule": crontab(minute="*/10"),
+        "options": {"queue": "scrapers"},
+    },
+    # CanLII new decisions — every 15 minutes
+    "scrape-canlii-live": {
+        "task": "app.tasks._impl.scrape_canlii_live",
+        "schedule": crontab(minute="*/15"),
+        "options": {"queue": "scrapers"},
+    },
+    # Globe, FP, Reuters RSS — every 5 minutes
+    "scrape-news-live": {
+        "task": "app.tasks._impl.scrape_news_live",
+        "schedule": crontab(minute="*/5"),
+        "options": {"queue": "scrapers"},
+    },
+    # SCC decisions — every 30 minutes
+    "scrape-scc-live": {
+        "task": "app.tasks._impl.scrape_scc_live",
+        "schedule": crontab(minute="*/30"),
+        "options": {"queue": "scrapers"},
+    },
+    # EDGAR 8-K filings — every 5 minutes
+    "scrape-edgar-live": {
+        "task": "app.tasks._impl.scrape_edgar_live",
+        "schedule": crontab(minute="*/5"),
+        "options": {"queue": "scrapers"},
+    },
+    # ── Phase 5: Live Feed Consumer (Agent 020) ────────────────────────────────
+    # Consumes oracle:live:signals stream and triggers priority scoring
+    "process-live-feed-events": {
+        "task": "app.tasks._impl.process_live_feed_events",
+        "schedule": crontab(minute="*"),  # Every minute
+        "options": {"queue": "scoring"},
+    },
+    # ── Phase 5: Velocity Monitor (Agent 021) ─────────────────────────────────
+    # Computes 48-hour rolling signal velocity for all active companies
+    "monitor-signal-velocity": {
+        "task": "app.tasks._impl.monitor_signal_velocity",
+        "schedule": crontab(minute="*/5"),
+        "options": {"queue": "agents"},
+    },
+    # ── Phase 5: Dead Signal Resurrector (Agent 022) ───────────────────────────
+    # Checks for silent scrapers and triggers immediate re-runs
+    "run-dead-signal-resurrector": {
+        "task": "app.tasks._impl.run_dead_signal_resurrector",
+        "schedule": crontab(minute="*/30"),
         "options": {"queue": "agents"},
     },
 }
