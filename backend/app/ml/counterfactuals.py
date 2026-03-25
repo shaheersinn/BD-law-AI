@@ -15,7 +15,7 @@ Output:
 from __future__ import annotations
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 
@@ -47,13 +47,13 @@ ACTIONABLE_FEATURES: set[str] = {
 
 
 def explain_prediction(
-    model: Any,              # CalibratedClassifierCV wrapping XGBClassifier
+    model: Any,  # CalibratedClassifierCV wrapping XGBClassifier
     features: dict[str, float],
     feature_columns: list[str],
     practice_area: str,
     horizon: int,
     score: float,
-) -> Optional[dict[str, Any]]:
+) -> dict[str, Any] | None:
     """
     Compute SHAP values and counterfactuals for one prediction.
 
@@ -123,13 +123,15 @@ def explain_prediction(
             # Estimate what value would bring SHAP contribution to ~0
             # Simple linear approximation: target_val ≈ current_val - (shap / weight)
             reduction_pct = min(0.5, abs(float(sv[i])) / max(score, 0.01))
-            counterfactuals.append({
-                "feature": feat_name,
-                "current_value": feat_val,
-                "suggested_direction": "decrease",
-                "estimated_score_reduction": round(abs(float(sv[i])), 4),
-                "shap_contribution": round(float(sv[i]), 4),
-            })
+            counterfactuals.append(
+                {
+                    "feature": feat_name,
+                    "current_value": feat_val,
+                    "suggested_direction": "decrease",
+                    "estimated_score_reduction": round(abs(float(sv[i])), 4),
+                    "shap_contribution": round(float(sv[i]), 4),
+                }
+            )
 
             if len(counterfactuals) >= COUNTERFACTUAL_FEATURES:
                 break
@@ -151,7 +153,7 @@ def explain_prediction(
 
 
 def explain_company(
-    models_by_pa: dict[str, Any],   # {practice_area: CalibratedClassifierCV}
+    models_by_pa: dict[str, Any],  # {practice_area: CalibratedClassifierCV}
     features: dict[str, float],
     feature_columns: list[str],
     scores: dict[str, dict[int, float]],
@@ -197,7 +199,7 @@ def explain_company(
     return explanations
 
 
-def _extract_base_xgb(calibrated_model: Any) -> Optional[Any]:
+def _extract_base_xgb(calibrated_model: Any) -> Any | None:
     """Extract the underlying XGBClassifier from CalibratedClassifierCV."""
     try:
         # CalibratedClassifierCV stores calibrated classifiers list

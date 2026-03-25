@@ -18,7 +18,8 @@ Features produced:
 from __future__ import annotations
 
 import logging
-from typing import Any, Optional
+from datetime import UTC
+from typing import Any
 
 import networkx as nx
 
@@ -31,6 +32,7 @@ MAX_GRAPH_NODES: int = 50_000
 
 
 # ── Graph builder ─────────────────────────────────────────────────────────────
+
 
 def build_interlock_graph(
     edge_records: list[dict[str, Any]],
@@ -60,7 +62,8 @@ def build_interlock_graph(
 
     log.info(
         "Built interlock graph: %d nodes, %d edges",
-        G.number_of_nodes(), G.number_of_edges(),
+        G.number_of_nodes(),
+        G.number_of_edges(),
     )
     return G
 
@@ -68,7 +71,7 @@ def build_interlock_graph(
 def compute_centrality_features(
     G: nx.Graph,
     company_ids: list[int],
-    current_scores: Optional[dict[int, float]] = None,
+    current_scores: dict[int, float] | None = None,
 ) -> dict[int, dict[str, float]]:
     """
     Compute graph centrality features for a list of company IDs.
@@ -123,7 +126,7 @@ def compute_centrality_features(
 def build_and_compute(
     edge_records: list[dict[str, Any]],
     company_ids: list[int],
-    current_scores: Optional[dict[int, float]] = None,
+    current_scores: dict[int, float] | None = None,
 ) -> dict[int, dict[str, float]]:
     """
     Convenience wrapper: build graph + compute features in one call.
@@ -155,13 +158,13 @@ def extract_subgraph(
 
     nodes = [{"id": n} for n in ego.nodes()]
     edges = [
-        {"source": u, "target": v, "weight": d.get("weight", 1)}
-        for u, v, d in ego.edges(data=True)
+        {"source": u, "target": v, "weight": d.get("weight", 1)} for u, v, d in ego.edges(data=True)
     ]
     return {"nodes": nodes, "edges": edges}
 
 
 # ── MongoDB async fetchers (called from Celery tasks) ─────────────────────────
+
 
 async def fetch_edge_records_from_mongo(
     mongo_db: Any,
@@ -214,7 +217,7 @@ async def upsert_director_edge(
     shared_directors: list[str],
 ) -> None:
     """Upsert a director interlock edge between two companies."""
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     # Canonical edge: lower company_id always as source
     source, target = (min(company_a, company_b), max(company_a, company_b))
@@ -226,7 +229,7 @@ async def upsert_director_edge(
                 "$set": {
                     "shared_directors": shared_directors,
                     "weight": len(shared_directors),
-                    "last_verified_at": datetime.now(tz=timezone.utc),
+                    "last_verified_at": datetime.now(tz=UTC),
                 }
             },
             upsert=True,

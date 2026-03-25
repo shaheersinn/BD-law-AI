@@ -15,7 +15,9 @@ import pytest
 
 # Override environment for tests — never use production settings in tests
 os.environ.setdefault("ENVIRONMENT", "development")
-os.environ.setdefault("DATABASE_URL", "postgresql+asyncpg://oracle:oracle@localhost:5432/oracle_test")
+os.environ.setdefault(
+    "DATABASE_URL", "postgresql+asyncpg://oracle:oracle@localhost:5432/oracle_test"
+)
 os.environ.setdefault("REDIS_URL", "redis://localhost:6379/15")  # DB 15 = test isolation
 os.environ.setdefault("MONGODB_URL", "mongodb://localhost:27017")
 os.environ.setdefault("MONGODB_DB_NAME", "oracle_test")

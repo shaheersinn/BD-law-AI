@@ -33,13 +33,11 @@ import sys
 from pathlib import Path
 from typing import Any
 
-import numpy as np
-import pandas as pd
-
 log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
 # ── Entry point ────────────────────────────────────────────────────────────────
+
 
 async def run_training_pipeline(
     output_base: Path = Path("/tmp/oracle_models"),
@@ -67,7 +65,9 @@ async def run_training_pipeline(
 
     log.info("=" * 60)
     log.info("ORACLE ML Training Pipeline")
-    log.info("Practice areas: %d | Horizons: 3 | Optuna trials: %d", len(PRACTICE_AREAS), n_optuna_trials)
+    log.info(
+        "Practice areas: %d | Horizons: 3 | Optuna trials: %d", len(PRACTICE_AREAS), n_optuna_trials
+    )
     log.info("=" * 60)
 
     output_base.mkdir(parents=True, exist_ok=True)
@@ -79,6 +79,7 @@ async def run_training_pipeline(
     }
 
     import time
+
     pipeline_start = time.perf_counter()
 
     # ── Build datasets ─────────────────────────────────────────────────────────
@@ -91,7 +92,9 @@ async def run_training_pipeline(
         )
         clean_X = await builder.fetch_clean_company_features(feature_columns=FEATURE_COLUMNS)
         mandate_events_by_pa = await builder.fetch_mandate_events_for_cooccurrence()
-        sector_training_data = await builder.fetch_sector_training_data(feature_columns=FEATURE_COLUMNS)
+        sector_training_data = await builder.fetch_sector_training_data(
+            feature_columns=FEATURE_COLUMNS
+        )
 
     log.info("Dataset build complete. %d practice areas have data.", len(datasets))
 
@@ -108,8 +111,12 @@ async def run_training_pipeline(
         pa_output = output_base / "bayesian" / pa
         pa_output.mkdir(parents=True, exist_ok=True)
 
-        log.info("Training %s (%d train, %d holdout samples)",
-                 pa, pa_data["n_train"], pa_data["n_holdout"])
+        log.info(
+            "Training %s (%d train, %d holdout samples)",
+            pa,
+            pa_data["n_train"],
+            pa_data["n_holdout"],
+        )
 
         # ── Bayesian training ──────────────────────────────────────────────────
         try:
@@ -126,9 +133,7 @@ async def run_training_pipeline(
                 output_dir=pa_output,
                 n_trials=n_optuna_trials,
             )
-            bayesian_f1_30 = next(
-                (r.f1_holdout for r in bayesian_results if r.horizon == 30), 0.0
-            )
+            bayesian_f1_30 = next((r.f1_holdout for r in bayesian_results if r.horizon == 30), 0.0)
         except Exception:
             log.exception("BayesianEngine training failed for %s", pa)
             summary["practice_areas_failed"].append(pa)
@@ -154,6 +159,7 @@ async def run_training_pipeline(
 
         # ── Record in model_registry ───────────────────────────────────────────
         from app.ml.bayesian_engine import ORCHESTRATOR_F1_THRESHOLD
+
         active_model = (
             "transformer"
             if transformer_f1_30 > bayesian_f1_30 + ORCHESTRATOR_F1_THRESHOLD
@@ -169,7 +175,10 @@ async def run_training_pipeline(
         }
         log.info(
             "%s: active=%s bayesian_f1=%.3f transformer_f1=%.3f",
-            pa, active_model, bayesian_f1_30, transformer_f1_30,
+            pa,
+            active_model,
+            bayesian_f1_30,
+            transformer_f1_30,
         )
 
     # ── Anomaly detector training ──────────────────────────────────────────────
@@ -177,6 +186,7 @@ async def run_training_pipeline(
         log.info("Training AnomalyDetector on %d clean companies...", len(clean_X))
         try:
             from app.ml.anomaly_detector import AnomalyDetector
+
             anomaly_result = AnomalyDetector.train(
                 X_clean=clean_X,
                 output_dir=output_base / "anomaly",
@@ -193,9 +203,14 @@ async def run_training_pipeline(
         log.info("Mining signal co-occurrence rules...")
         try:
             from app.ml.cooccurrence import mine_all_practice_areas
+
             all_rules = mine_all_practice_areas(mandate_events_by_pa)
             total_rules = sum(len(v) for v in all_rules.values())
-            log.info("Co-occurrence: %d rules mined across %d practice areas", total_rules, len(all_rules))
+            log.info(
+                "Co-occurrence: %d rules mined across %d practice areas",
+                total_rules,
+                len(all_rules),
+            )
             summary["cooccurrence_rules"] = total_rules
         except Exception:
             log.exception("Co-occurrence mining failed (non-fatal)")
@@ -204,8 +219,9 @@ async def run_training_pipeline(
     if sector_training_data is not None:
         log.info("Calibrating sector signal weights...")
         try:
-            from app.ml.sector_weights import calibrate_sector_weights
             from app.ml.bayesian_engine import FEATURE_COLUMNS as FEAT_COLS
+            from app.ml.sector_weights import calibrate_sector_weights
+
             weights = calibrate_sector_weights(
                 X_train=sector_training_data["X"],
                 y_train=sector_training_data["y"],

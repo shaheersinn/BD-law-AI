@@ -20,9 +20,8 @@ from __future__ import annotations
 
 import logging
 import time
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import numpy as np
 import torch
@@ -38,11 +37,11 @@ settings = get_settings()
 
 # ── Hyperparameters ────────────────────────────────────────────────────────────
 
-SEQUENCE_LENGTH: int = 30      # days of feature history used as input
-D_MODEL: int = 128             # transformer embedding dimension
-N_HEADS: int = 8               # attention heads
-N_LAYERS: int = 4              # transformer encoder layers
-D_FF: int = 256                # feedforward dimension
+SEQUENCE_LENGTH: int = 30  # days of feature history used as input
+D_MODEL: int = 128  # transformer embedding dimension
+N_HEADS: int = 8  # attention heads
+N_LAYERS: int = 4  # transformer encoder layers
+D_FF: int = 256  # feedforward dimension
 DROPOUT: float = 0.1
 LEARNING_RATE: float = 1e-4
 WEIGHT_DECAY: float = 1e-2
@@ -52,6 +51,7 @@ WARMUP_STEPS: int = 100
 
 
 # ── Model definition ───────────────────────────────────────────────────────────
+
 
 class LearnedPositionalEncoding(nn.Module):
     """Learnable positional encoding. Better than fixed sinusoidal for legal event timing."""
@@ -109,19 +109,23 @@ class MandateTransformer(nn.Module):
             dim_feedforward=d_ff,
             dropout=dropout,
             batch_first=True,  # [batch, seq, d_model]
-            norm_first=True,   # Pre-LN: more stable training
+            norm_first=True,  # Pre-LN: more stable training
         )
         self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=n_layers)
         self.pool = GlobalAttentionPooling(d_model)
 
         # Three horizon-specific heads (shared encoder → separate classification heads)
         for horizon in HORIZONS:
-            setattr(self, f"head_{horizon}d", nn.Sequential(
-                nn.Linear(d_model, 64),
-                nn.GELU(),
-                nn.Dropout(dropout),
-                nn.Linear(64, 1),
-            ))
+            setattr(
+                self,
+                f"head_{horizon}d",
+                nn.Sequential(
+                    nn.Linear(d_model, 64),
+                    nn.GELU(),
+                    nn.Dropout(dropout),
+                    nn.Linear(64, 1),
+                ),
+            )
 
     def forward(self, x: torch.Tensor) -> dict[int, torch.Tensor]:
         """
@@ -153,6 +157,7 @@ class MandateTransformer(nn.Module):
 
 # ── Scorer (inference wrapper) ─────────────────────────────────────────────────
 
+
 class TransformerScorer:
     """
     Wrapper around MandateTransformer for production inference.
@@ -166,28 +171,26 @@ class TransformerScorer:
         if practice_area not in PRACTICE_AREAS:
             raise ValueError(f"Unknown practice area: {practice_area}")
         self.practice_area = practice_area
-        self._model: Optional[MandateTransformer] = None
+        self._model: MandateTransformer | None = None
         self._device = torch.device("cpu")
         self._model_version = "unloaded"
         self._loaded = False
 
-    def load(self, model_dir: Optional[Path] = None) -> None:
+    def load(self, model_dir: Path | None = None) -> None:
         """Load model weights from disk."""
         if model_dir is None:
-            model_dir = (
-                Path(settings.models_dir) / "transformer" / self.practice_area
-            )
+            model_dir = Path(settings.models_dir) / "transformer" / self.practice_area
 
         weights_path = model_dir / "model.pt"
         if not weights_path.exists():
-            log.warning("TransformerScorer %s: weights not found at %s", self.practice_area, weights_path)
+            log.warning(
+                "TransformerScorer %s: weights not found at %s", self.practice_area, weights_path
+            )
             return
 
         n_features = len(FEATURE_COLUMNS)
         self._model = MandateTransformer(n_features=n_features)
-        self._model.load_state_dict(
-            torch.load(weights_path, map_location=self._device)
-        )
+        self._model.load_state_dict(torch.load(weights_path, map_location=self._device))
         self._model.eval()
 
         version_path = model_dir / "version.txt"
@@ -195,7 +198,9 @@ class TransformerScorer:
             self._model_version = version_path.read_text().strip()
 
         self._loaded = True
-        log.info("TransformerScorer %s loaded (version=%s)", self.practice_area, self._model_version)
+        log.info(
+            "TransformerScorer %s loaded (version=%s)", self.practice_area, self._model_version
+        )
 
     def score(self, sequence: list[dict[str, float]]) -> dict[int, float]:
         """
@@ -220,20 +225,20 @@ class TransformerScorer:
             outputs = self._model(x)
 
         scores = {
-            horizon: float(np.clip(outputs[horizon].item(), 0.001, 0.999))
-            for horizon in HORIZONS
+            horizon: float(np.clip(outputs[horizon].item(), 0.001, 0.999)) for horizon in HORIZONS
         }
         log.debug(
             "TransformerScorer %s inference: %.1fms",
-            self.practice_area, (time.perf_counter() - t0) * 1000,
+            self.practice_area,
+            (time.perf_counter() - t0) * 1000,
         )
         return scores
 
     @staticmethod
     def train(
         practice_area: str,
-        X_seq_train: np.ndarray,   # [n_samples, seq_len, n_features]
-        y_train: dict[int, np.ndarray],   # {30: labels, 60: labels, 90: labels}
+        X_seq_train: np.ndarray,  # [n_samples, seq_len, n_features]
+        y_train: dict[int, np.ndarray],  # {30: labels, 60: labels, 90: labels}
         X_seq_holdout: np.ndarray,
         y_holdout: dict[int, np.ndarray],
         output_dir: Path,
@@ -274,8 +279,13 @@ class TransformerScorer:
             for h, y in y_train.items()
         }
 
-        log.info("Training TransformerScorer %s on %s (%d samples, %d epochs)",
-                 practice_area, device, len(X_seq_train), n_epochs)
+        log.info(
+            "Training TransformerScorer %s on %s (%d samples, %d epochs)",
+            practice_area,
+            device,
+            len(X_seq_train),
+            n_epochs,
+        )
 
         best_val_loss = float("inf")
         training_history: list[dict[str, float]] = []
@@ -311,9 +321,14 @@ class TransformerScorer:
 
             log.info(
                 "Epoch %d/%d — train_loss=%.4f val_loss=%.4f",
-                epoch + 1, n_epochs, epoch_avg, val_loss,
+                epoch + 1,
+                n_epochs,
+                epoch_avg,
+                val_loss,
             )
-            training_history.append({"epoch": epoch + 1, "train_loss": epoch_avg, "val_loss": val_loss})
+            training_history.append(
+                {"epoch": epoch + 1, "train_loss": epoch_avg, "val_loss": val_loss}
+            )
 
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
@@ -332,6 +347,7 @@ class TransformerScorer:
         torch.save(model.state_dict(), output_dir / "model.pt")
 
         import datetime
+
         version = datetime.datetime.utcnow().strftime("%Y%m%d_%H%M%S")
         (output_dir / "version.txt").write_text(version)
 
@@ -346,6 +362,7 @@ class TransformerScorer:
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
+
 
 def _sequence_to_tensor(
     sequence: list[dict[str, float]],
@@ -375,10 +392,7 @@ def _evaluate_transformer_loss(
 
     with torch.no_grad():
         outputs = model(X_t)
-        total_loss = sum(
-            F.binary_cross_entropy(outputs[h], y_t[h]).item()
-            for h in HORIZONS
-        )
+        total_loss = sum(F.binary_cross_entropy(outputs[h], y_t[h]).item() for h in HORIZONS)
     return total_loss / len(HORIZONS)
 
 

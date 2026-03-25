@@ -13,9 +13,9 @@ from __future__ import annotations
 
 import logging
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import joblib
 import numpy as np
@@ -46,42 +46,91 @@ ORCHESTRATOR_F1_THRESHOLD: float = 0.03
 
 # 34 practice area slugs — must match enum in mandate_labels table
 PRACTICE_AREAS: list[str] = [
-    "ma", "litigation", "regulatory", "employment", "insolvency",
-    "securities", "competition", "privacy", "environmental", "tax",
-    "real_estate", "banking", "ip", "immigration", "infrastructure",
-    "wills_estates", "admin_public", "arbitration", "class_actions",
-    "construction_disputes", "defamation", "financial_regulatory",
-    "franchise", "health_sciences", "insurance", "intl_trade",
-    "mining", "municipal_land", "nfp_charity", "pension_benefits",
-    "product_liability", "sports_entertainment", "tech_fintech",
+    "ma",
+    "litigation",
+    "regulatory",
+    "employment",
+    "insolvency",
+    "securities",
+    "competition",
+    "privacy",
+    "environmental",
+    "tax",
+    "real_estate",
+    "banking",
+    "ip",
+    "immigration",
+    "infrastructure",
+    "wills_estates",
+    "admin_public",
+    "arbitration",
+    "class_actions",
+    "construction_disputes",
+    "defamation",
+    "financial_regulatory",
+    "franchise",
+    "health_sciences",
+    "insurance",
+    "intl_trade",
+    "mining",
+    "municipal_land",
+    "nfp_charity",
+    "pension_benefits",
+    "product_liability",
+    "sports_entertainment",
+    "tech_fintech",
     "data_privacy_tech",
 ]
 
 # Features supplied by Phase 2 company_features table (must match column names)
 FEATURE_COLUMNS: list[str] = [
     # Filing features
-    "filing_frequency_30d", "filing_frequency_delta", "material_change_count_90d",
-    "mda_sentiment_score", "hedging_language_score", "restatement_flag",
-    "auditor_change_flag", "going_concern_flag",
+    "filing_frequency_30d",
+    "filing_frequency_delta",
+    "material_change_count_90d",
+    "mda_sentiment_score",
+    "hedging_language_score",
+    "restatement_flag",
+    "auditor_change_flag",
+    "going_concern_flag",
     # Legal/Court features
-    "active_litigation_count", "new_filing_30d", "regulatory_action_count_90d",
-    "canlii_mention_velocity", "class_action_proximity",
+    "active_litigation_count",
+    "new_filing_30d",
+    "regulatory_action_count_90d",
+    "canlii_mention_velocity",
+    "class_action_proximity",
     # Employment features
-    "legal_hire_velocity", "exec_departure_count_90d", "layoff_signal_score",
-    "gc_departure_flag", "compliance_hire_spike",
+    "legal_hire_velocity",
+    "exec_departure_count_90d",
+    "layoff_signal_score",
+    "gc_departure_flag",
+    "compliance_hire_spike",
     # Market features
-    "price_decline_90d", "volatility_30d", "short_interest_ratio",
-    "options_put_call_ratio", "volume_anomaly_score", "analyst_downgrade_count_30d",
+    "price_decline_90d",
+    "volatility_30d",
+    "short_interest_ratio",
+    "options_put_call_ratio",
+    "volume_anomaly_score",
+    "analyst_downgrade_count_30d",
     # NLP signal features (populated by Phase 4)
-    "intent_score", "named_entity_company_mentions", "sentiment_trend_7d",
+    "intent_score",
+    "named_entity_company_mentions",
+    "sentiment_trend_7d",
     # Geographic features
-    "regional_insolvency_rate", "court_volume_index", "google_trends_score",
-    "boc_rate_cycle", "sector_insolvency_indicator",
+    "regional_insolvency_rate",
+    "court_volume_index",
+    "google_trends_score",
+    "boc_rate_cycle",
+    "sector_insolvency_indicator",
     # Network features
-    "director_interlocks_count", "law_firm_shared_counsel",
+    "director_interlocks_count",
+    "law_firm_shared_counsel",
     # Temporal decay-weighted signal aggregates (populated by temporal_decay.py)
-    "decayed_filing_signal", "decayed_legal_signal", "decayed_employment_signal",
-    "decayed_market_signal", "decayed_nlp_signal",
+    "decayed_filing_signal",
+    "decayed_legal_signal",
+    "decayed_employment_signal",
+    "decayed_market_signal",
+    "decayed_nlp_signal",
     # Sector encoding (one-hot compressed via PCA — single float from sector_weights.py)
     "sector_weight_multiplier",
     # Velocity features (populated by velocity_scorer.py — live)
@@ -89,7 +138,8 @@ FEATURE_COLUMNS: list[str] = [
     # Anomaly feature (populated by anomaly_detector.py)
     "anomaly_score",
     # Corporate graph features (populated by graph_features.py)
-    "graph_centrality", "peer_distress_score",
+    "graph_centrality",
+    "peer_distress_score",
     # Cross-jurisdiction propagation
     "cross_jurisdiction_signal",
 ]
@@ -97,9 +147,11 @@ FEATURE_COLUMNS: list[str] = [
 
 # ── Data classes ───────────────────────────────────────────────────────────────
 
+
 @dataclass
 class HorizonScores:
     """Output of a single BayesianEngine inference call."""
+
     practice_area: str
     score_30d: float
     score_60d: float
@@ -118,6 +170,7 @@ class HorizonScores:
 @dataclass
 class TrainingResult:
     """Output of BayesianEngine.train(). Stored in model_registry table."""
+
     practice_area: str
     horizon: int
     f1_holdout: float
@@ -135,6 +188,7 @@ class TrainingResult:
 
 # ── Engine ─────────────────────────────────────────────────────────────────────
 
+
 class BayesianEngine:
     """
     XGBoost mandate probability scorer for a single practice area.
@@ -150,8 +204,7 @@ class BayesianEngine:
     def __init__(self, practice_area: str) -> None:
         if practice_area not in PRACTICE_AREAS:
             raise ValueError(
-                f"Unknown practice area: {practice_area}. "
-                f"Valid areas: {PRACTICE_AREAS}"
+                f"Unknown practice area: {practice_area}. Valid areas: {PRACTICE_AREAS}"
             )
         self.practice_area = practice_area
         self._models: dict[int, CalibratedClassifierCV] = {}
@@ -161,7 +214,7 @@ class BayesianEngine:
 
     # ── Inference ─────────────────────────────────────────────────────────────
 
-    def load(self, model_dir: Optional[Path] = None) -> None:
+    def load(self, model_dir: Path | None = None) -> None:
         """Load all 3 horizon models from disk. Called at API startup."""
         if model_dir is None:
             model_dir = Path(settings.models_dir) / "bayesian" / self.practice_area
@@ -185,7 +238,8 @@ class BayesianEngine:
         if missing:
             log.warning(
                 "BayesianEngine %s: missing model files: %s",
-                self.practice_area, missing,
+                self.practice_area,
+                missing,
             )
 
         version_path = model_dir / "version.txt"
@@ -195,7 +249,9 @@ class BayesianEngine:
         self._loaded = bool(self._models)
         log.info(
             "BayesianEngine %s loaded %d/3 horizon models (version=%s)",
-            self.practice_area, len(self._models), self._model_version,
+            self.practice_area,
+            len(self._models),
+            self._model_version,
         )
 
     def score(self, features: dict[str, float]) -> HorizonScores:
@@ -235,7 +291,8 @@ class BayesianEngine:
             except Exception:
                 log.exception(
                     "BayesianEngine %s h%d score failed",
-                    self.practice_area, horizon,
+                    self.practice_area,
+                    horizon,
                 )
                 scores[horizon] = 0.0
 
@@ -250,14 +307,10 @@ class BayesianEngine:
             inference_ms=inference_ms,
         )
 
-    def score_batch(
-        self, feature_rows: list[dict[str, float]]
-    ) -> list[HorizonScores]:
+    def score_batch(self, feature_rows: list[dict[str, float]]) -> list[HorizonScores]:
         """Score multiple companies in one vectorised call."""
         if not self._loaded:
-            raise RuntimeError(
-                f"BayesianEngine {self.practice_area} not loaded."
-            )
+            raise RuntimeError(f"BayesianEngine {self.practice_area} not loaded.")
 
         t0 = time.perf_counter()
         X = np.array(
@@ -284,14 +337,16 @@ class BayesianEngine:
         per_ms = total_ms / max(len(feature_rows), 1)
 
         for i in range(len(feature_rows)):
-            results.append(HorizonScores(
-                practice_area=self.practice_area,
-                score_30d=float(horizon_probs[30][i]),
-                score_60d=float(horizon_probs[60][i]),
-                score_90d=float(horizon_probs[90][i]),
-                model_version=self._model_version,
-                inference_ms=per_ms,
-            ))
+            results.append(
+                HorizonScores(
+                    practice_area=self.practice_area,
+                    score_30d=float(horizon_probs[30][i]),
+                    score_60d=float(horizon_probs[60][i]),
+                    score_90d=float(horizon_probs[90][i]),
+                    model_version=self._model_version,
+                    inference_ms=per_ms,
+                )
+            )
 
         return results
 
@@ -344,9 +399,7 @@ class BayesianEngine:
             # Compute class weight for this horizon
             n_pos = int(y_train.sum())
             n_neg = int(len(y_train) - n_pos)
-            scale_pos_weight = (
-                n_neg / n_pos if n_pos > 0 else DEFAULT_SCALE_POS_WEIGHT
-            )
+            scale_pos_weight = n_neg / n_pos if n_pos > 0 else DEFAULT_SCALE_POS_WEIGHT
 
             # Optuna objective
             def objective(trial: optuna.Trial) -> float:
@@ -376,7 +429,8 @@ class BayesianEngine:
                     X_fold_val = X_train.iloc[fold_val_idx]
                     y_fold_val = y_train.iloc[fold_val_idx]
                     model.fit(
-                        X_fold_tr, y_fold_tr,
+                        X_fold_tr,
+                        y_fold_tr,
                         eval_set=[(X_fold_val, y_fold_val)],
                         verbose=False,
                         early_stopping_rounds=EARLY_STOPPING_ROUNDS,
@@ -404,7 +458,8 @@ class BayesianEngine:
             # Final training on full train set
             base_model = XGBClassifier(**best_params)
             base_model.fit(
-                X_train, y_train,
+                X_train,
+                y_train,
                 eval_set=[(X_holdout, y_holdout)],
                 verbose=False,
                 early_stopping_rounds=EARLY_STOPPING_ROUNDS,
@@ -412,9 +467,7 @@ class BayesianEngine:
 
             # Probability calibration — isotonic for larger datasets, sigmoid for smaller
             method = "isotonic" if len(X_train) >= 1000 else "sigmoid"
-            calibrated = CalibratedClassifierCV(
-                estimator=base_model, method=method, cv="prefit"
-            )
+            calibrated = CalibratedClassifierCV(estimator=base_model, method=method, cv="prefit")
             calibrated.fit(X_holdout, y_holdout)
 
             # Find optimal threshold (maximise F1 on holdout)
@@ -428,7 +481,12 @@ class BayesianEngine:
 
             log.info(
                 "%s h%dd — F1=%.3f PR-AUC=%.3f ROC-AUC=%.3f threshold=%.3f",
-                practice_area, horizon, best_f1, pr_auc, roc_auc, best_threshold,
+                practice_area,
+                horizon,
+                best_f1,
+                pr_auc,
+                roc_auc,
+                best_threshold,
             )
 
             # Feature importances (gain)
@@ -436,12 +494,12 @@ class BayesianEngine:
             try:
                 raw_imp = base_model.feature_importances_
                 importances = {
-                    col: float(imp)
-                    for col, imp in zip(FEATURE_COLUMNS, raw_imp)
-                    if imp > 0
+                    col: float(imp) for col, imp in zip(FEATURE_COLUMNS, raw_imp) if imp > 0
                 }
             except Exception:
-                log.warning("%s h%dd: could not extract feature importances", practice_area, horizon)
+                log.warning(
+                    "%s h%dd: could not extract feature importances", practice_area, horizon
+                )
 
             # Save artifacts
             model_path = output_dir / f"h{horizon}.pkl"
@@ -451,39 +509,43 @@ class BayesianEngine:
 
             training_seconds = time.perf_counter() - t0
 
-            results.append(TrainingResult(
-                practice_area=practice_area,
-                horizon=horizon,
-                f1_holdout=best_f1,
-                pr_auc_holdout=pr_auc,
-                roc_auc_holdout=roc_auc,
-                best_threshold=best_threshold,
-                best_params=best_params,
-                feature_importances=importances,
-                scale_pos_weight=scale_pos_weight,
-                n_train=len(X_train),
-                n_holdout=len(X_holdout),
-                artifact_path=str(model_path),
-                training_seconds=training_seconds,
-            ))
+            results.append(
+                TrainingResult(
+                    practice_area=practice_area,
+                    horizon=horizon,
+                    f1_holdout=best_f1,
+                    pr_auc_holdout=pr_auc,
+                    roc_auc_holdout=roc_auc,
+                    best_threshold=best_threshold,
+                    best_params=best_params,
+                    feature_importances=importances,
+                    scale_pos_weight=scale_pos_weight,
+                    n_train=len(X_train),
+                    n_holdout=len(X_holdout),
+                    artifact_path=str(model_path),
+                    training_seconds=training_seconds,
+                )
+            )
 
         # Write version file
         import datetime
+
         version = datetime.datetime.utcnow().strftime("%Y%m%d_%H%M%S")
         (output_dir / "version.txt").write_text(version)
 
         log.info(
             "Training complete for %s: %d horizon models saved to %s",
-            practice_area, len(results), output_dir,
+            practice_area,
+            len(results),
+            output_dir,
         )
         return results
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
-def _find_optimal_threshold(
-    y_true: np.ndarray, y_proba: np.ndarray
-) -> tuple[float, float]:
+
+def _find_optimal_threshold(y_true: np.ndarray, y_proba: np.ndarray) -> tuple[float, float]:
     """Find probability threshold maximising F1 on holdout."""
     if y_true.sum() == 0:
         return 0.5, 0.0
@@ -503,6 +565,7 @@ def _safe_pr_auc(y_true: np.ndarray, y_proba: np.ndarray) -> float:
         return 0.0
     try:
         from sklearn.metrics import average_precision_score
+
         return float(average_precision_score(y_true, y_proba))
     except Exception:
         return 0.0

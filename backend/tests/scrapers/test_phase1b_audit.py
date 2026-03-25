@@ -29,10 +29,9 @@ Coverage:
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
-
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -170,7 +169,7 @@ class TestValidateSignal:
     def test_future_published_at_warns(self):
         from app.scrapers.quality_validator import validate_signal
 
-        future = datetime.now(tz=timezone.utc) + timedelta(hours=48)
+        future = datetime.now(tz=UTC) + timedelta(hours=48)
         result = validate_signal(_make_signal(published_at=future))
         assert result.valid is True  # Warning, not error
         assert any("future" in w for w in result.warnings)
@@ -178,7 +177,7 @@ class TestValidateSignal:
     def test_past_published_at_no_warning(self):
         from app.scrapers.quality_validator import validate_signal
 
-        past = datetime.now(tz=timezone.utc) - timedelta(days=1)
+        past = datetime.now(tz=UTC) - timedelta(days=1)
         result = validate_signal(_make_signal(published_at=past))
         assert result.valid is True
         assert not any("future" in w for w in result.warnings)
@@ -236,10 +235,10 @@ class TestCanarySignal:
         canary = ScraperResult(
             source_id="canary",
             signal_type="canary_heartbeat",
-            signal_text=f"CANARY-{datetime.now(tz=timezone.utc).isoformat()}",
+            signal_text=f"CANARY-{datetime.now(tz=UTC).isoformat()}",
             confidence_score=1.0,
             practice_area_hints=["litigation"],
-            signal_value={"canary": True, "ts": datetime.now(tz=timezone.utc).isoformat()},
+            signal_value={"canary": True, "ts": datetime.now(tz=UTC).isoformat()},
             is_negative_label=False,
         )
         result = validate_signal(canary)

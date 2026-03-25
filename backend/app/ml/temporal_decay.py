@@ -29,7 +29,7 @@ log = logging.getLogger(__name__)
 
 # Lambda grid for calibration (grid search over these values)
 LAMBDA_GRID: list[float] = [0.002, 0.005, 0.01, 0.02, 0.03, 0.05, 0.07, 0.10, 0.15, 0.20]
-LAMBDA_FLOOR: float = 0.002     # no signal can decay in under ~7 days (half-life floor)
+LAMBDA_FLOOR: float = 0.002  # no signal can decay in under ~7 days (half-life floor)
 HALF_LIFE_FLOOR_DAYS: float = 7.0
 
 # Default lambda values (used before calibration from data)
@@ -63,8 +63,8 @@ DEFAULT_LAMBDAS: dict[str, float] = {
     # News — short-lived (news cycle)
     "news_lawsuit": 0.040,
     "news_investigation": 0.035,
-    "news_data_breach": 0.023,   # ~30 day half-life
-    "news_merger": 0.050,        # ~14 day half-life
+    "news_data_breach": 0.023,  # ~30 day half-life
+    "news_merger": 0.050,  # ~14 day half-life
     "news_exploring_strategic": 0.050,
     "news_layoffs": 0.040,
     "news_legal_proceedings": 0.030,
@@ -84,11 +84,12 @@ DEFAULT_LAMBDAS: dict[str, float] = {
 @dataclass
 class DecayConfig:
     """Lambda value for one signal type (optionally per practice area)."""
+
     signal_type: str
-    practice_area: str        # "global" if same decay across all practice areas
+    practice_area: str  # "global" if same decay across all practice areas
     lambda_value: float
     half_life_days: float
-    calibrated: bool          # True if calibrated from data, False if default
+    calibrated: bool  # True if calibrated from data, False if default
 
 
 def half_life_from_lambda(lam: float) -> float:
@@ -127,7 +128,7 @@ def apply_decay(base_weight: float, age_days: float, lam: float) -> float:
 def compute_decayed_signal_aggregate(
     signals: list[dict[str, Any]],
     decay_configs: dict[str, float],  # {signal_type: lambda}
-    base_weights: dict[str, float],   # {signal_type: base_weight}
+    base_weights: dict[str, float],  # {signal_type: base_weight}
 ) -> float:
     """
     Compute convergence score with temporal decay applied.
@@ -153,7 +154,7 @@ def compute_decayed_signal_aggregate(
         bw = base_weights.get(signal_type, 0.5)
 
         decayed_weight = apply_decay(bw, age_days, lam)
-        product *= (1.0 - decayed_weight)
+        product *= 1.0 - decayed_weight
 
     return float(1.0 - product)
 
@@ -226,7 +227,8 @@ def calibrate_lambda(
     if len(events) < 10:
         log.warning(
             "temporal_decay: only %d events for %s — using default lambda",
-            len(events), signal_type,
+            len(events),
+            signal_type,
         )
         return DEFAULT_LAMBDAS.get(signal_type, 0.01)
 
@@ -258,7 +260,9 @@ def calibrate_lambda(
 
     log.info(
         "temporal_decay: calibrated %s → λ=%.4f (half-life=%.1f days)",
-        signal_type, best_lambda, half_life_from_lambda(best_lambda),
+        signal_type,
+        best_lambda,
+        half_life_from_lambda(best_lambda),
     )
     return best_lambda
 
@@ -270,12 +274,14 @@ def build_default_decay_config_rows() -> list[dict[str, Any]]:
     """
     rows: list[dict[str, Any]] = []
     for signal_type, lam in DEFAULT_LAMBDAS.items():
-        rows.append({
-            "signal_type": signal_type,
-            "practice_area": "global",
-            "lambda_value": lam,
-            "half_life_days": half_life_from_lambda(lam),
-            "calibrated": False,
-            "source": "default_prior",
-        })
+        rows.append(
+            {
+                "signal_type": signal_type,
+                "practice_area": "global",
+                "lambda_value": lam,
+                "half_life_days": half_life_from_lambda(lam),
+                "calibrated": False,
+                "source": "default_prior",
+            }
+        )
     return rows

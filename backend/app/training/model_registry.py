@@ -9,7 +9,7 @@ Read by Orchestrator at startup and refreshed by Agent 023 post-training.
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from sqlalchemy import text
@@ -35,7 +35,7 @@ class ModelRegistry:
         bayesian_results: list[Any],  # list[TrainingResult]
     ) -> None:
         """Record training outcome for a practice area."""
-        now = datetime.now(tz=timezone.utc).isoformat()
+        now = datetime.now(tz=UTC).isoformat()
 
         # Best model metadata from 30d horizon result
         best_30 = next(
@@ -43,19 +43,21 @@ class ModelRegistry:
             None,
         )
 
-        self._records.append({
-            "practice_area": practice_area,
-            "active_model": active_model,
-            "bayesian_f1": bayesian_f1,
-            "transformer_f1": transformer_f1,
-            "bayesian_version": best_30.artifact_path if best_30 else "",
-            "n_train": best_30.n_train if best_30 else 0,
-            "n_holdout": best_30.n_holdout if best_30 else 0,
-            "scale_pos_weight": best_30.scale_pos_weight if best_30 else 5.0,
-            "top_features": _top_features_json(best_30) if best_30 else "{}",
-            "trained_at": now,
-            "is_active": True,
-        })
+        self._records.append(
+            {
+                "practice_area": practice_area,
+                "active_model": active_model,
+                "bayesian_f1": bayesian_f1,
+                "transformer_f1": transformer_f1,
+                "bayesian_version": best_30.artifact_path if best_30 else "",
+                "n_train": best_30.n_train if best_30 else 0,
+                "n_holdout": best_30.n_holdout if best_30 else 0,
+                "scale_pos_weight": best_30.scale_pos_weight if best_30 else 5.0,
+                "top_features": _top_features_json(best_30) if best_30 else "{}",
+                "trained_at": now,
+                "is_active": True,
+            }
+        )
 
     async def flush_to_db(self, db: AsyncSession) -> None:
         """Upsert all registry records to PostgreSQL model_registry table."""
@@ -92,7 +94,9 @@ class ModelRegistry:
                     rec,
                 )
             except Exception:
-                log.exception("Failed to flush model_registry record for %s", rec.get("practice_area"))
+                log.exception(
+                    "Failed to flush model_registry record for %s", rec.get("practice_area")
+                )
 
         await db.commit()
         log.info("ModelRegistry: flushed %d records to PostgreSQL", len(self._records))
@@ -101,11 +105,10 @@ class ModelRegistry:
 def _top_features_json(result: Any) -> str:
     """Extract top 10 feature importances as JSON string."""
     import json
+
     if not result or not result.feature_importances:
         return "{}"
-    top10 = dict(
-        sorted(result.feature_importances.items(), key=lambda x: x[1], reverse=True)[:10]
-    )
+    top10 = dict(sorted(result.feature_importances.items(), key=lambda x: x[1], reverse=True)[:10])
     return json.dumps({k: round(v, 4) for k, v in top10.items()})
 
 

@@ -5,6 +5,7 @@ Tests normalisation edge cases and batch resolution.
 """
 
 import pytest
+
 from app.services.entity_resolution import EntityResolver, normalise
 
 
@@ -12,21 +13,21 @@ class TestNormaliseEdgeCases:
     """Normalisation edge cases from real-world SEDAR/EDGAR company names."""
 
     CASES = [
-        ("Northfield Energy Partners L.P.",     "northfield energy"),
-        ("THE GOLDMAN SACHS GROUP, INC.",        "goldman sachs group"),
-        ("BlackBerry Ltd.",                      "blackberry"),
-        ("SUNCOR ENERGY INC.",                   "suncor energy"),
-        ("Shopify Inc.",                         "shopify"),
-        ("Couche-Tard Inc.",                     "couche-tard"),  # hyphen preserved
-        ("ENBRIDGE INC",                         "enbridge"),
-        ("Manulife Financial Corporation",       "manulife financial"),
-        ("Royal Bank of Canada",                 "royal bank of canada"),  # 'of' kept
-        ("BCE Inc.",                             "bce"),
-        ("Canadian Natural Resources Limited",  "canadian natural resources"),
-        ("Barrick Gold Corporation",             "barrick gold"),
-        ("TC Energy Corp",                       "tc energy"),
-        ("Pembina Pipeline Corp.",               "pembina pipeline"),
-        ("Fortis Inc.",                          "fortis"),
+        ("Northfield Energy Partners L.P.", "northfield energy"),
+        ("THE GOLDMAN SACHS GROUP, INC.", "goldman sachs group"),
+        ("BlackBerry Ltd.", "blackberry"),
+        ("SUNCOR ENERGY INC.", "suncor energy"),
+        ("Shopify Inc.", "shopify"),
+        ("Couche-Tard Inc.", "couche-tard"),  # hyphen preserved
+        ("ENBRIDGE INC", "enbridge"),
+        ("Manulife Financial Corporation", "manulife financial"),
+        ("Royal Bank of Canada", "royal bank of canada"),  # 'of' kept
+        ("BCE Inc.", "bce"),
+        ("Canadian Natural Resources Limited", "canadian natural resources"),
+        ("Barrick Gold Corporation", "barrick gold"),
+        ("TC Energy Corp", "tc energy"),
+        ("Pembina Pipeline Corp.", "pembina pipeline"),
+        ("Fortis Inc.", "fortis"),
     ]
 
     @pytest.mark.parametrize("raw, expected", CASES)
@@ -38,12 +39,12 @@ class TestResolverBatchOperations:
     def _build_resolver(self):
         r = EntityResolver()
         r._index = {
-            "arctis mining":          (1, "client",   "Arctis Mining Corp."),
-            "northfield energy":      (4, "client",   "Northfield Energy"),
-            "westbrook digital":      (3, "prospect", "Westbrook Digital Corp"),
-            "ember financial":        (5, "client",   "Ember Financial"),
-            "borealis genomics":      (6, "prospect", "Borealis Genomics Inc."),
-            "caldwell steel":         (7, "prospect", "Caldwell Steel Works"),
+            "arctis mining": (1, "client", "Arctis Mining Corp."),
+            "northfield energy": (4, "client", "Northfield Energy"),
+            "westbrook digital": (3, "prospect", "Westbrook Digital Corp"),
+            "ember financial": (5, "client", "Ember Financial"),
+            "borealis genomics": (6, "prospect", "Borealis Genomics Inc."),
+            "caldwell steel": (7, "prospect", "Caldwell Steel Works"),
         }
         r._norm_list = list(r._index.keys())
         return r
@@ -65,9 +66,9 @@ class TestResolverBatchOperations:
     def test_batch_resolve_partial_match(self):
         r = self._build_resolver()
         names = [
-            "Arctis Mining Corp",       # should match
-            "Completely Unknown Co",    # should not match
-            "Ember Financial Ltd",      # should match
+            "Arctis Mining Corp",  # should match
+            "Completely Unknown Co",  # should not match
+            "Ember Financial Ltd",  # should match
         ]
         results = r.resolve_many(names)
         assert results[0].matched

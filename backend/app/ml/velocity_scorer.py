@@ -15,13 +15,13 @@ Also maintained in Redis hash for real-time access by Agent 021.
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta, timezone
-from typing import Any, Optional
+from datetime import datetime, timedelta
+from typing import Any
 
 log = logging.getLogger(__name__)
 
 VELOCITY_WINDOW_DAYS: int = 7
-VELOCITY_HIGH_THRESHOLD: float = 0.3   # triggers BD alert
+VELOCITY_HIGH_THRESHOLD: float = 0.3  # triggers BD alert
 VELOCITY_MIN_DENOMINATOR: float = 0.01  # prevents division by near-zero
 
 
@@ -107,7 +107,7 @@ def flag_high_velocity_companies(
 
 def compute_velocity_from_history(
     score_history: list[dict[str, Any]],
-) -> Optional[float]:
+) -> float | None:
     """
     Compute velocity from a list of historical score records.
 
@@ -131,9 +131,9 @@ def compute_velocity_from_history(
         return None
 
     latest = history[-1]
-    cutoff = datetime.fromisoformat(
-        latest["scored_at"].replace("Z", "+00:00")
-    ) - timedelta(days=VELOCITY_WINDOW_DAYS)
+    cutoff = datetime.fromisoformat(latest["scored_at"].replace("Z", "+00:00")) - timedelta(
+        days=VELOCITY_WINDOW_DAYS
+    )
 
     # Find the score closest to 7 days ago
     prior = None

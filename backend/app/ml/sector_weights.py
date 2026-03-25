@@ -18,15 +18,27 @@ log = logging.getLogger(__name__)
 
 # Sector slugs (must match NAICS codes in company table)
 SECTORS: list[str] = [
-    "energy", "mining", "tech", "financial_services", "real_estate",
-    "healthcare", "manufacturing", "retail", "construction", "telecom",
-    "media", "agriculture", "transportation", "utilities", "other",
+    "energy",
+    "mining",
+    "tech",
+    "financial_services",
+    "real_estate",
+    "healthcare",
+    "manufacturing",
+    "retail",
+    "construction",
+    "telecom",
+    "media",
+    "agriculture",
+    "transportation",
+    "utilities",
+    "other",
 ]
 
 
 def calibrate_sector_weights(
-    X_train: Any,    # pd.DataFrame with feature columns + sector column
-    y_train: Any,    # pd.Series (binary labels)
+    X_train: Any,  # pd.DataFrame with feature columns + sector column
+    y_train: Any,  # pd.Series (binary labels)
     feature_columns: list[str],
     sector_column: str = "sector",
 ) -> dict[str, dict[str, float]]:
@@ -41,7 +53,6 @@ def calibrate_sector_weights(
         {sector: {feature: weight_multiplier}}
     """
     try:
-        import pandas as pd
         from sklearn.feature_selection import mutual_info_classif
 
         weights: dict[str, dict[str, float]] = {}
@@ -57,14 +68,14 @@ def calibrate_sector_weights(
             mask = X_train[sector_column] == sector
             if mask.sum() < 30:
                 # Not enough data for this sector — use global weights
-                weights[sector] = {feat: 1.0 for feat in feature_columns}
+                weights[sector] = dict.fromkeys(feature_columns, 1.0)
                 continue
 
             X_sector = X_train.loc[mask, feature_columns].fillna(0)
             y_sector = y_train[mask]
 
             if y_sector.sum() == 0:
-                weights[sector] = {feat: 1.0 for feat in feature_columns}
+                weights[sector] = dict.fromkeys(feature_columns, 1.0)
                 continue
 
             sector_mi = mutual_info_classif(X_sector, y_sector, random_state=42)
@@ -104,10 +115,7 @@ def apply_sector_weights(
     sector_w = weights.get(sector, {})
     if not sector_w:
         return features
-    return {
-        feat: val * sector_w.get(feat, 1.0)
-        for feat, val in features.items()
-    }
+    return {feat: val * sector_w.get(feat, 1.0) for feat, val in features.items()}
 
 
 def compute_aggregate_multiplier(
