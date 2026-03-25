@@ -21,6 +21,7 @@ import ExplainPage        from './pages/ExplainPage'
 import SignalsFeedPage    from './pages/SignalsFeedPage'
 import ScrapersAdminPage  from './pages/admin/ScrapersAdminPage'
 import UsersAdminPage     from './pages/admin/UsersAdminPage'
+import FeedbackPage       from './pages/FeedbackPage'
 import useAuthStore       from './stores/auth'
 
 function AppRoutes() {
@@ -50,6 +51,11 @@ function AppRoutes() {
       } />
       <Route path="/signals" element={
         <PrivateRoute><SignalsFeedPage /></PrivateRoute>
+      } />
+
+      {/* Partner+ */}
+      <Route path="/feedback" element={
+        <PrivateRoute><FeedbackPage /></PrivateRoute>
       } />
 
       {/* Admin only */}

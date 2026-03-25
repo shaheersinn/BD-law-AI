@@ -59,4 +59,12 @@ export const trends = {
   practiceAreas: () => api.get('/api/v1/trends/practice_areas').then(r => r.data),
 }
 
+// ── feedback ──────────────────────────────────────────────────────────────────
+export const feedback = {
+  confirmMandate: (body)    => api.post('/api/v1/feedback/mandate', body).then(r => r.data),
+  accuracy:       (days=90) => api.get('/api/v1/feedback/accuracy', { params: { days } }).then(r => r.data),
+  drift:          ()        => api.get('/api/v1/feedback/drift').then(r => r.data),
+  confirmations:  (params)  => api.get('/api/v1/feedback/confirmations', { params }).then(r => r.data),
+}
+
 export default api

@@ -33,8 +33,8 @@ Built for BigLaw BD teams. Zero external LLM dependency in production.
 | 7 — Scoring API | ✅ COMPLETE | March 2026 |
 | 8A — Functional Frontend | ✅ COMPLETE | March 2026 |
 | 8B — Production UI (ConstructLex) | ✅ COMPLETE | March 2026 |
-| 9 — Feedback Loop | ⏳ NEXT | — |
-| 10 — Testing & Hardening | ⏳ PENDING | — |
+| 9 — Feedback Loop | ✅ COMPLETE | March 2026 |
+| 10 — Testing & Hardening | ⏳ NEXT | — |
 | 11 — Deployment | ⏳ PENDING | — |
 | 12 — Post-Launch Optimization | ⏳ PENDING | — |
 
@@ -592,5 +592,49 @@ Phase 8B applies the ConstructLex Pro design system to every Phase 8A component.
 ### Agents Activated in Phase 8B
 - Agent 029 — Dashboard Freshness (monitors top-velocity cache staleness — no new Celery task; operates via existing cache TTL)
 
-*Last updated: Phase 8B — March 2026*
-*Next update: Phase 9 completion*
+*Last updated: Phase 9 — March 2026*
+*Next update: Phase 10 completion*
+
+---
+
+## Phase 9 — What Was Built
+
+Phase 9 closes the intelligence loop: when a mandate is confirmed (from CanLII, law firm announcements, or partner input), ORACLE records it against the prior prediction, measures lead time, tracks accuracy by practice area, and flags model drift when accuracy degrades.
+
+### Key Files Added in Phase 9
+
+**DB Migration (`backend/alembic/versions/0008_phase9_feedback.py`)**
+- `mandate_confirmations` — confirmed mandates (manual + auto-detected). Fields: company_id, practice_area, confirmed_at, confirmation_source, evidence_url, is_auto_detected, reviewed_by_user_id
+- `prediction_accuracy_log` — per-confirmation accuracy metrics. Fields: company_id, practice_area, horizon (30/60/90), predicted_score, threshold_used, was_correct, lead_days, confirmed_at
+- `model_drift_alerts` — practice areas with accuracy degradation. Fields: practice_area, detected_at, accuracy_before, accuracy_after, delta, ks_statistic, ks_pvalue, status (open/acknowledged/resolved)
+
+**Services (`backend/app/services/`)**
+- `mandate_confirmation.py` — `confirm_mandate()`: writes mandate_confirmations row; computes prediction_lead_days from scoring_results (days ORACLE had score > 0.5 before confirmation). `list_confirmations()`, `get_confirmation_stats()` helpers.
+- `accuracy_tracker.py` — `compute_accuracy_for_confirmation()`: for each horizon (30/60/90), finds closest scoring_results row and records was_correct + lead_days. Idempotent via ON CONFLICT DO NOTHING. `compute_all_pending()` called weekly by Agent 030.
+- `drift_detector.py` — `detect_drift()`: compares rolling 30-day accuracy vs prior 30 days per practice area. Flags if drop > 10pp. Runs KS test on score distributions via scipy.stats.ks_2samp. Inserts model_drift_alerts. `get_open_alerts()` used by API.
+- `confirmation_hunter.py` — `run()`: auto-detects mandate confirmations from recent signal_records. Three sources: canlii_live scraper, law_firm_* scrapers, SEDAR legal_contingency signals. Uses `EntityResolver` (rapidfuzz token_sort + partial_ratio, threshold 82.0) to match raw entity names. Creates confirmations with is_auto_detected=True — partner review required.
+
+**Celery Tasks (`backend/app/tasks/phase9_tasks.py`)**
+- `agents.compute_prediction_accuracy` (Agent 030) — weekly Sunday 01:00 UTC
+- `agents.run_drift_detector` (Agent 031) — weekly Sunday 02:00 UTC; also triggers orchestrator re-evaluation for flagged practice areas
+- `agents.run_confirmation_hunter` (Agent 032) — daily 06:30 UTC
+
+**API Routes (`backend/app/routes/feedback.py`)**
+- `POST /api/v1/feedback/mandate` — partner confirms mandate manually (require_partner)
+- `GET /api/v1/feedback/accuracy?days=90` — precision + avg lead days per practice area × horizon
+- `GET /api/v1/feedback/drift` — open model drift alerts
+- `GET /api/v1/feedback/confirmations` — recent confirmations list (filterable)
+
+**Frontend**
+- `frontend/src/pages/FeedbackPage.jsx` — 3 sections: Confirm Mandate form, Accuracy table, Drift Alerts. ConstructLex Pro design system.
+- `frontend/src/api/client.js` — added `feedback` endpoint group
+- `frontend/src/components/layout/Sidebar.jsx` — added Feedback nav item (partner + admin only)
+- `frontend/src/App.jsx` — added `/feedback` route
+
+**Tests (`backend/tests/test_phase9_feedback.py`)**
+- 14 tests covering: DB writes, lead_days computation, idempotency, drift threshold logic, auto-detected flag, fuzzy matching, role enforcement, schema validation, Celery task registration, migration file validity
+
+### Agents Activated in Phase 9
+- Agent 030 — Active Learning / Accuracy Tracker (`agents.compute_prediction_accuracy` — agents queue, weekly)
+- Agent 031 — Drift Detector (`agents.run_drift_detector` — agents queue, weekly)
+- Agent 032 — Mandate Confirmation Hunter (`agents.run_confirmation_hunter` — agents queue, daily)

@@ -35,7 +35,9 @@ celery_app = Celery(
     broker=settings.celery_broker_url,
     backend=settings.celery_result_backend,
     include=[
-        "app.tasks._impl",  # All task implementations
+        "app.tasks._impl",  # Phase 0-5 task implementations
+        "app.tasks.phase6_tasks",  # Phase 6 ML agents
+        "app.tasks.phase9_tasks",  # Phase 9 Feedback Loop agents
     ],
 )
 
@@ -122,6 +124,10 @@ celery_app.conf.task_routes = {
     "app.tasks._impl.monitor_signal_velocity": {"queue": "agents"},
     "app.tasks._impl.run_dead_signal_resurrector": {"queue": "agents"},
     "app.tasks._impl.trigger_linkedin_lookup": {"queue": "agents"},
+    # Phase 9: Feedback Loop agents → agents queue
+    "agents.compute_prediction_accuracy": {"queue": "agents"},
+    "agents.run_drift_detector": {"queue": "agents"},
+    "agents.run_confirmation_hunter": {"queue": "agents"},
 }
 
 # ── Beat Schedule ──────────────────────────────────────────────────────────────
@@ -318,6 +324,27 @@ celery_app.conf.beat_schedule = {
     "run-dead-signal-resurrector": {
         "task": "app.tasks._impl.run_dead_signal_resurrector",
         "schedule": crontab(minute="*/30"),
+        "options": {"queue": "agents"},
+    },
+    # ── Phase 9: Prediction Accuracy Tracker (Agent 030) ──────────────────────
+    # Computes was_correct + lead_days for all pending mandate confirmations
+    "compute-prediction-accuracy": {
+        "task": "agents.compute_prediction_accuracy",
+        "schedule": crontab(day_of_week="sunday", hour=1, minute=0),
+        "options": {"queue": "agents"},
+    },
+    # ── Phase 9: Drift Detector (Agent 031) ───────────────────────────────────
+    # Detects model accuracy degradation per practice area using KS test
+    "run-drift-detector": {
+        "task": "agents.run_drift_detector",
+        "schedule": crontab(day_of_week="sunday", hour=2, minute=0),
+        "options": {"queue": "agents"},
+    },
+    # ── Phase 9: Mandate Confirmation Hunter (Agent 032) ──────────────────────
+    # Auto-detects mandate confirmations from live signals (canlii, law firms, SEDAR)
+    "run-confirmation-hunter": {
+        "task": "agents.run_confirmation_hunter",
+        "schedule": crontab(hour=6, minute=30),
         "options": {"queue": "agents"},
     },
 }

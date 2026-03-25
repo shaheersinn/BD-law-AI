@@ -271,6 +271,11 @@ app.include_router(companies_router, prefix=PREFIX)
 app.include_router(signals_router, prefix=PREFIX)
 app.include_router(trends_router, prefix=PREFIX)
 
+# Phase 9 — Feedback Loop
+from app.routes.feedback import router as feedback_router  # noqa: E402
+
+app.include_router(feedback_router, prefix=PREFIX)
+
 
 # ── System Endpoints ───────────────────────────────────────────────────────────
 
