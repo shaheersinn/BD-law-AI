@@ -34,8 +34,8 @@ Built for BigLaw BD teams. Zero external LLM dependency in production.
 | 8A — Functional Frontend | ✅ COMPLETE | March 2026 |
 | 8B — Production UI (ConstructLex) | ✅ COMPLETE | March 2026 |
 | 9 — Feedback Loop | ✅ COMPLETE | March 2026 |
-| 10 — Testing & Hardening | ⏳ NEXT | — |
-| 11 — Deployment | ⏳ PENDING | — |
+| 10 — Testing & Hardening | ✅ COMPLETE | March 2026 |
+| 11 — Deployment | ⏳ NEXT | — |
 | 12 — Post-Launch Optimization | ⏳ PENDING | — |
 
 ---
@@ -638,3 +638,69 @@ Phase 9 closes the intelligence loop: when a mandate is confirmed (from CanLII, 
 - Agent 030 — Active Learning / Accuracy Tracker (`agents.compute_prediction_accuracy` — agents queue, weekly)
 - Agent 031 — Drift Detector (`agents.run_drift_detector` — agents queue, weekly)
 - Agent 032 — Mandate Confirmation Hunter (`agents.run_confirmation_hunter` — agents queue, daily)
+
+---
+
+## Phase 10 — What Was Built
+
+Phase 10 hardens the platform for production: fixes Celery's asyncio.run() anti-pattern,
+adds security headers, Prometheus metrics, Sentry Celery integration, integration + load
+test suites, and a React ErrorBoundary with Axios retry logic.
+
+### Key Files Added in Phase 10
+
+**Sync DB Session Factory (`backend/app/database_sync.py`)**
+- `_build_sync_url()` — converts `postgresql+asyncpg://` → `postgresql+psycopg2://`
+- `get_sync_db()` — context manager yielding a psycopg2-backed SQLAlchemy `Session`
+- `check_sync_db_connection()` — health probe for Celery worker startup
+- Lazy engine initialisation; pool_size=5, max_overflow=10, pool_pre_ping=True
+
+**Celery Task Hardening**
+- `backend/app/tasks/phase6_tasks.py` — 6 SQL-only tasks refactored to use `get_sync_db()` instead of `asyncio.run()`. Only `refresh_model_orchestrator` retains `asyncio.run()` (calls async service layer). All except blocks now call `sentry_sdk.capture_exception(exc)` (import guarded).
+- `backend/app/tasks/phase9_tasks.py` — Sentry `capture_exception()` added to all 3 agent except blocks. `asyncio.run()` retained (tasks call async services).
+
+**Sentry Celery Integration (`backend/app/main.py`)**
+- Added `CeleryIntegration(monitor_beat_tasks=True)` to `sentry_sdk.init()` integrations list alongside existing FastApiIntegration + SqlalchemyIntegration.
+
+**Security Headers Middleware (`backend/app/middleware/security_headers.py`)**
+- `SecurityHeadersMiddleware(is_production: bool)` — injects on every response:
+  - `Content-Security-Policy` (strict in production, relaxed for Swagger in dev)
+  - `X-Frame-Options: DENY`
+  - `X-Content-Type-Options: nosniff`
+  - `X-XSS-Protection: 1; mode=block`
+  - `Referrer-Policy: strict-origin-when-cross-origin`
+  - `Permissions-Policy: geolocation=(), microphone=(), camera=(), payment=(), usb=()`
+  - `Strict-Transport-Security` (production only, max-age=63072000 + includeSubDomains + preload)
+- Registered in `main.py` after `ErrorHandlerMiddleware`
+
+**Prometheus Metrics Endpoint (`backend/app/routes/metrics.py`)**
+- `GET /api/v1/metrics` — requires admin role; returns Prometheus text format
+- Metrics: `oracle_http_requests_total`, `oracle_http_request_p95_seconds`, `oracle_scoring_results_total`, `oracle_active_companies_total`, `oracle_model_drift_alerts_open`, `oracle_mandate_confirmations_total`, `oracle_metrics_scrape_duration_seconds`
+- All data from PostgreSQL; graceful error fallback (partial metrics on DB error)
+
+**Dependencies**
+- `backend/requirements.txt` — added `psycopg2-binary==2.9.10`, `prometheus-client==0.21.1`
+- `backend/requirements-dev.txt` — added `locust==2.32.3`, `types-psycopg2==2.9.21.20241019`
+
+**Integration Tests (`backend/tests/integration/`)**
+- `test_pipeline.py` — 3 tests: score_company_batch stores results, live feed cache invalidation, bulk DB call count assertion
+- `test_auth.py` — 4 tests: response schema, expired token rejection, JWT claims whitelist, role hierarchy
+- `test_batch_scoring.py` — 5 tests: 51-id 422, schema fields, max-50 valid, returns list, cache-hit skips DB
+- `test_cache_invalidation.py` — 4 tests: key format, 6h TTL, 15-min velocity TTL, 1h trends TTL
+
+**Load Tests (`backend/tests/load/locustfile.py`)**
+- `PartnerUser` (weight 3) — 6 tasks: score, explain, batch, top-velocity, confirm-mandate, accuracy
+- `AnalystUser` (weight 5) — 6 tasks: search, company profile, signal feed, trends, batch, health
+- `AdminUser` (weight 1) — 4 tasks: scraper health, drift alerts, metrics, readiness
+- Target SLOs: p95 < 200ms for single score, p95 < 500ms for batch, error rate < 0.1%
+
+**Phase 10 Hardening Tests (`backend/tests/test_phase10_hardening.py`)**
+- 13 tests: URL conversion, sync DB, security headers (X-Frame-Options, nosniff, HSTS prod, no HSTS dev), metrics gauge helper, sync DB import assertion, asyncio.run count assertion, requirements pins
+
+**Frontend Hardening**
+- `frontend/src/components/ErrorBoundary.jsx` — React class component; `getDerivedStateFromError` + `componentDidCatch`; ConstructLex Pro styled fallback UI (inline styles, safe from CSS variable failure); "Try again" resets state; Sentry forwarding via `window.__sentryHub`
+- `frontend/src/App.jsx` — wrapped `<BrowserRouter>` in `<ErrorBoundary>`
+- `frontend/src/api/client.js` — 5xx retry interceptor: up to 3 retries, linear backoff 500ms → 1000ms → 1500ms; 4xx errors never retried; 401 still clears auth immediately
+
+*Last updated: Phase 10 — March 2026*
+*Next update: Phase 11 completion*

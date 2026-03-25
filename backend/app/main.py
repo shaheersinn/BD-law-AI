@@ -63,13 +63,18 @@ log = structlog.get_logger(__name__)
 
 if settings.sentry_dsn:
     import sentry_sdk
+    from sentry_sdk.integrations.celery import CeleryIntegration
     from sentry_sdk.integrations.fastapi import FastApiIntegration
     from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 
     sentry_sdk.init(
         dsn=settings.sentry_dsn,
         environment=settings.environment,
-        integrations=[FastApiIntegration(), SqlalchemyIntegration()],
+        integrations=[
+            FastApiIntegration(),
+            SqlalchemyIntegration(),
+            CeleryIntegration(monitor_beat_tasks=True),
+        ],
         traces_sample_rate=0.1 if settings.is_production else 0.0,
         profiles_sample_rate=0.1 if settings.is_production else 0.0,
     )
@@ -178,10 +183,12 @@ from app.middleware.error_handler import (  # noqa: E402
     RequestLoggingMiddleware,
 )
 from app.middleware.rate_limiter import RateLimitMiddleware  # noqa: E402
+from app.middleware.security_headers import SecurityHeadersMiddleware  # noqa: E402
 
 app.add_middleware(RateLimitMiddleware)
 app.add_middleware(RequestLoggingMiddleware)
 app.add_middleware(ErrorHandlerMiddleware)
+app.add_middleware(SecurityHeadersMiddleware, is_production=settings.is_production)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins,
@@ -275,6 +282,11 @@ app.include_router(trends_router, prefix=PREFIX)
 from app.routes.feedback import router as feedback_router  # noqa: E402
 
 app.include_router(feedback_router, prefix=PREFIX)
+
+# Phase 10 — Prometheus Metrics
+from app.routes.metrics import router as metrics_router  # noqa: E402
+
+app.include_router(metrics_router, prefix=PREFIX)
 
 
 # ── System Endpoints ───────────────────────────────────────────────────────────

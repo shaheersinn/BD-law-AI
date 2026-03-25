@@ -5,6 +5,13 @@ Implements Agents 030-032:
     Agent 030 — Accuracy Tracker (compute_prediction_accuracy — weekly)
     Agent 031 — Drift Detector  (run_drift_detector — weekly)
     Agent 032 — Confirmation Hunter (run_confirmation_hunter — daily)
+
+Phase 10 hardening:
+    - Sentry capture_exception() added in all except blocks.
+    - These tasks call async service layers, so asyncio.run() is retained.
+      The underlying services (accuracy_tracker, drift_detector,
+      confirmation_hunter) use async SQLAlchemy and cannot trivially be
+      made synchronous without duplicating the service layer.
 """
 
 from __future__ import annotations
@@ -57,6 +64,11 @@ def compute_prediction_accuracy(self: Any) -> dict[str, Any]:
 
     except Exception as exc:
         log.exception("agent_030_accuracy_tracker_failed", error=str(exc))
+        try:
+            import sentry_sdk
+            sentry_sdk.capture_exception(exc)
+        except ImportError:
+            pass
         raise self.retry(exc=exc) from exc
 
 
@@ -118,6 +130,11 @@ def run_drift_detector(self: Any) -> dict[str, Any]:
 
     except Exception as exc:
         log.exception("agent_031_drift_detector_failed", error=str(exc))
+        try:
+            import sentry_sdk
+            sentry_sdk.capture_exception(exc)
+        except ImportError:
+            pass
         raise self.retry(exc=exc) from exc
 
 
@@ -165,4 +182,9 @@ def run_confirmation_hunter(self: Any) -> dict[str, Any]:
 
     except Exception as exc:
         log.exception("agent_032_confirmation_hunter_failed", error=str(exc))
+        try:
+            import sentry_sdk
+            sentry_sdk.capture_exception(exc)
+        except ImportError:
+            pass
         raise self.retry(exc=exc) from exc

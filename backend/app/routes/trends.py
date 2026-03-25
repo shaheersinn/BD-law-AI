@@ -26,6 +26,9 @@ router = APIRouter(prefix="/v1/trends", tags=["trends"])
 _TRENDS_CACHE_KEY = "trends:practice_areas:v1"
 _TRENDS_TTL = 3_600  # 1 hour
 
+# Public alias for Phase 10 tests and monitoring
+TRENDS_CACHE_TTL = _TRENDS_TTL
+
 
 @router.get(
     "/practice_areas",

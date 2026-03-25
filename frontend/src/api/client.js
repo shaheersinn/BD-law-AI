@@ -1,13 +1,18 @@
 /**
- * api/client.js — Phase 8B: adds scores.topVelocity() call.
+ * api/client.js — Phase 10: adds 5xx retry interceptor.
  *
- * All other methods unchanged from Phase 8A.
- * topVelocity calls GET /api/v1/scores/top-velocity?limit=N
- * which is the new Phase 8B backend endpoint.
+ * Changes from Phase 8B:
+ * - Response interceptor retries 5xx errors up to 3 times with linear
+ *   backoff: 500ms → 1000ms → 1500ms.
+ * - 4xx errors are never retried (client errors are final).
+ * - 401 still clears auth + redirects immediately (no retry).
  */
 
 import axios from 'axios'
 import useAuthStore from '../stores/auth'
+
+const MAX_RETRIES = 3
+const RETRY_DELAY_MS = 500  // base delay; multiplied by attempt number
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
@@ -21,13 +26,38 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-// Response interceptor — 401 → clear auth + redirect
+// Response interceptor — 401 → logout; 5xx → retry with backoff
 api.interceptors.response.use(
   (res) => res,
-  (err) => {
+  async (err) => {
+    const config = err.config
+
+    // 401: clear auth immediately, no retry
     if (err.response?.status === 401) {
       useAuthStore.getState().logout()
+      return Promise.reject(err)
     }
+
+    // 5xx: retry up to MAX_RETRIES times
+    const status = err.response?.status
+    const isServerError = status >= 500 && status <= 599
+    const isNetworkError = !err.response && err.code !== 'ECONNABORTED'
+
+    if ((isServerError || isNetworkError) && config && !config.__retryCount) {
+      config.__retryCount = 0
+    }
+
+    if (
+      (isServerError || isNetworkError) &&
+      config &&
+      config.__retryCount < MAX_RETRIES
+    ) {
+      config.__retryCount += 1
+      const delay = RETRY_DELAY_MS * config.__retryCount  // 500, 1000, 1500
+      await new Promise((resolve) => setTimeout(resolve, delay))
+      return api(config)
+    }
+
     return Promise.reject(err)
   },
 )

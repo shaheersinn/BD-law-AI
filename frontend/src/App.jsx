@@ -12,6 +12,7 @@ import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import './styles/design-system.css'
 
+import ErrorBoundary      from './components/ErrorBoundary'
 import PrivateRoute       from './components/PrivateRoute'
 import LoginPage          from './pages/LoginPage'
 import DashboardPage      from './pages/DashboardPage'
@@ -77,8 +78,10 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <AppRoutes />
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <AppRoutes />
+      </BrowserRouter>
+    </ErrorBoundary>
   )
 }

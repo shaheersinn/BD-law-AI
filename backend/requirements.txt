@@ -17,6 +17,7 @@ pydantic[email]==2.10.3
 # ── Database — PostgreSQL (async) ──────────────────────────────────────────────
 sqlalchemy==2.0.36
 asyncpg==0.30.0
+psycopg2-binary==2.9.10
 alembic==1.14.0
 greenlet==3.1.1
 
@@ -89,6 +90,7 @@ geopy==2.4.1
 # ── Logging / Monitoring ──────────────────────────────────────────────────────
 structlog==24.4.0
 sentry-sdk[fastapi]==2.19.2
+prometheus-client==0.21.1
 
 # ── Utilities ─────────────────────────────────────────────────────────────────
 python-dotenv==1.0.1
