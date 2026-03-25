@@ -128,6 +128,19 @@ async def lifespan(app: FastAPI):  # type: ignore[type-arg]
     ]:
         Path(directory).mkdir(parents=True, exist_ok=True)
 
+    # Phase 7: warm up ML orchestrator (non-blocking — API degrades gracefully if models absent)
+    try:
+        from app.ml.orchestrator import get_orchestrator
+
+        orchestrator = get_orchestrator()
+        if not orchestrator._loaded:
+            orchestrator.load()
+            log.info("ML orchestrator loaded at startup")
+    except Exception:
+        log.warning(
+            "ML orchestrator failed to load at startup — scoring endpoints will return empty"
+        )
+
     log.info("ORACLE startup complete", pg=pg_ok, mongo=mongo_ok)
 
     yield  # Application runs here
@@ -247,16 +260,16 @@ from app.routes.training import router as training_router  # noqa: E402
 
 app.include_router(training_router, prefix=PREFIX)
 
-# Phase 1+ routers — stubs registered now, implemented in later phases
-# These are imported conditionally to avoid import errors during Phase 0
-# Uncomment as each phase is implemented:
-#
-# from app.routes import companies, signals, scores, watchlist, analytics
-# app.include_router(companies.router, prefix=PREFIX)
-# app.include_router(signals.router, prefix=PREFIX)
-# app.include_router(scores.router, prefix=PREFIX)
-# app.include_router(watchlist.router, prefix=PREFIX)
-# app.include_router(analytics.router, prefix=PREFIX)
+# Phase 7 — Scoring API
+from app.routes.companies import router as companies_router  # noqa: E402
+from app.routes.scores import router as scores_router  # noqa: E402
+from app.routes.signals import router as signals_router  # noqa: E402
+from app.routes.trends import router as trends_router  # noqa: E402
+
+app.include_router(scores_router, prefix=PREFIX)
+app.include_router(companies_router, prefix=PREFIX)
+app.include_router(signals_router, prefix=PREFIX)
+app.include_router(trends_router, prefix=PREFIX)
 
 
 # ── System Endpoints ───────────────────────────────────────────────────────────
@@ -278,16 +291,25 @@ async def health() -> dict:  # type: ignore[type-arg]
 
     redis_ok = await redis_cache.health_check()
 
+    try:
+        from app.ml.orchestrator import get_orchestrator
+
+        ml_ready = get_orchestrator()._loaded
+    except Exception:
+        ml_ready = False
+
     overall = "ok" if (pg_ok and mongo_ok and redis_ok) else "degraded"
 
     return {
         "status": overall,
         "version": settings.app_version,
         "environment": settings.environment,
+        "ml_ready": ml_ready,
         "components": {
             "postgresql": "connected" if pg_ok else "unreachable",
             "mongodb": "connected" if mongo_ok else "unreachable",
             "redis": "connected" if redis_ok else "unreachable",
+            "ml": "ready" if ml_ready else "not_loaded",
         },
     }
 
