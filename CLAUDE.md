@@ -30,8 +30,8 @@ Built for BigLaw BD teams. Zero external LLM dependency in production.
 | 4 — LLM Training (Groq only) | ✅ COMPLETE | March 2026 |
 | 5 — Live Feeds | ✅ COMPLETE | March 2026 |
 | 6 — ML Training + 10 Enhancements | ✅ COMPLETE | March 2026 |
-| 7 — Scoring API | ⏳ NEXT | — |
-| 8A — Functional Frontend | ⏳ PENDING | — |
+| 7 — Scoring API | ✅ COMPLETE | March 2026 |
+| 8A — Functional Frontend | ✅ COMPLETE | March 2026 |
 | 8B — Production UI (ConstructLex) | ⏳ PENDING | — |
 | 9 — Feedback Loop | ⏳ PENDING | — |
 | 10 — Testing & Hardening | ⏳ PENDING | — |
@@ -341,8 +341,8 @@ seconds via Redis Streams instead of waiting for the next batch cycle.
 
 ---
 
-*Last updated: Phase 6 — March 2026*
-*Next update: Phase 7 completion*
+*Last updated: Phase 8A — March 2026*
+*Next update: Phase 8B completion*
 
 ---
 
@@ -416,13 +416,118 @@ This is the core intelligence layer. All scoring is now ML-driven — no more ru
 - Agent 026 — Sector Baseline (`agents.update_sector_baseline` — agents queue, monthly)
 - Agent 027 — CCAA Cascade (`agents.run_ccaa_cascade` — agents queue, daily)
 
-### Critical Post-Phase-6 Requirement (for Claude Code)
-Before Phase 7 can go live:
-1. Run `alembic upgrade head` (migration 0006 adds 7 new tables)
-2. Run `celery task agents.seed_decay_config` once (seeds default lambdas)
-3. Submit Azure training job: `python -m azure.training.azure_job --wait`
-4. Verify models downloaded to `settings.models_dir` (or auto-download from DO Spaces)
-5. Verify orchestrator loads cleanly: `GET /api/health` should show ml_ready: true
+---
 
-The Scoring API (Phase 7) depends on `get_orchestrator()` being loaded with trained models.
-Without step 3-4, Phase 7 endpoints return empty scores.
+## Phase 7 — What Was Built
+
+Phase 7 exposes the 34×3 mandate probability matrix as an authenticated REST API with
+Redis caching, SHAP explainability, batch scoring, fuzzy company search, signal feed,
+and practice area trend analytics.
+
+### Performance Fix — `score_company_batch`
+
+**File:** `backend/app/tasks/phase6_tasks.py`
+
+Replaced N+1 DB loop with a three-phase bulk pattern:
+- **Phase A** — One `SELECT DISTINCT ON (company_id)` to fetch all features for the batch
+- **Phase B** — In-memory ML scoring loop (zero DB I/O)
+- **Phase C** — Single `executemany` INSERT for all results
+
+50-company batch: 100 DB round-trips → 2.
+
+### Key Files Added in Phase 7
+
+**Scoring Service (`backend/app/services/scoring_service.py`)**
+- `get_company_score(company_id, db)` — Redis cache key `score:{id}:{YYYY-MM-DD}`, TTL 6h → DB fallback
+- `get_batch_scores(company_ids, practice_areas, db)` — cache-aware bulk retrieval (max 50)
+- `get_company_explain(company_id, db)` — top 5 SHAP counterfactuals from `scoring_explanations` table
+- `invalidate_score_cache(company_id)` — deletes today's cache key; called by live feed processor after new signal ingestion
+
+**Route Files (`backend/app/routes/`)**
+- `scores.py` — prefix `/v1/scores`, tags `["scores"]`
+  - `GET /{company_id}` → `ScoreResponse` (company_id, company_name, scored_at, scores dict[str, HorizonScores], velocity_score, anomaly_score, confidence, top_signals, model_versions)
+  - `GET /{company_id}/explain` → `list[ExplainItem]` (practice_area, horizon, score, top_shap_features, counterfactuals, base_value, explained_at)
+  - `POST /batch` → `list[dict | None]` — max 50 company_ids; optional `practice_areas` filter; 422 if >50
+  - 404 detail: `"No scores found for company {id}. Scoring may be pending."`
+- `companies.py` — prefix `/v1/companies`, tags `["companies"]`
+  - `GET /search?q=` — rapidfuzz WRatio, score_cutoff=60, aliases cached 1h under `companies:aliases:v1`
+  - `GET /{company_id}` — company profile + latest `company_features` row, cached 1h under `company:{id}:profile`
+- `signals.py` — prefix `/v1/signals`, tags `["signals"]`
+  - `GET /{company_id}` — last 90 days from `signal_records`, optional `signal_type` filter, limit 1–200
+- `trends.py` — prefix `/v1/trends`, tags `["trends"]`
+  - `GET /practice_areas` — signal counts per `practice_area_hints` over 7/30/90 days, cached 1h under `trends:practice_areas:v1`
+
+**Database (`backend/alembic/versions/0007_phase7_api.py`)**
+- `api_request_log` — id (BIGSERIAL), endpoint VARCHAR(200), company_id (nullable FK → companies.id),
+  response_time_ms FLOAT, user_id INT, status_code INT, created_at TIMESTAMPTZ
+- Indexes: `ix_api_request_log_endpoint`, `ix_api_request_log_created_at`, `ix_api_request_log_company_id`
+
+**main.py Updates**
+- Registers all 4 Phase 7 routers under `/api` prefix
+- Orchestrator warm-up in lifespan startup — non-blocking; logs warning if models not yet downloaded
+- `GET /api/health` now includes `ml_ready: bool` and `"ml": "ready" | "not_loaded"` in components dict
+
+**Tests (`backend/tests/test_phase7_api.py`)**
+15 tests: schema field validation, 404 for unknown company, 401 for unauthenticated requests,
+batch 422 for >50 ids, cache invalidation key format, bulk-fetch assertion (execute called
+exactly 2×), missing-features increments failed count, explain endpoint, trends endpoint.
+
+### Agent Activated in Phase 7
+- Agent 028 — Rate Limit Enforcer (operates via middleware; no new Celery task)
+
+---
+
+## Phase 8A — What Was Built
+
+Phase 8A delivers a functional React frontend wired to the Phase 7 API — navigable, authenticated,
+and data-driven. This is the working MVP UI; visual polish (ConstructLex Pro design system) comes in Phase 8B.
+
+### Frontend Stack
+React 18 + Vite + Zustand + Axios (custom client) + Recharts. All dependencies were already
+present in `frontend/package.json`.
+
+### Key Files Added in Phase 8A
+
+**API Layer (`frontend/src/api/client.js`)**
+- Axios instance — base URL from `VITE_API_URL` env var
+- JWT request interceptor: attaches `Authorization: Bearer {token}` from Zustand auth store
+- 401 response interceptor: clears auth store → redirects to `/login`
+- Exported endpoint groups: `scores` (get, explain, batch), `companies` (search, get), `signals` (list), `trends` (practiceAreas)
+
+**Zustand Stores (`frontend/src/stores/`)**
+- `auth.js` — state: `token`, `user`, `error`; actions: `login(email, pw)` (stores token in sessionStorage), `logout()` (clears + redirects), `loadUser()` (calls `/auth/me`)
+- `scores.js` — state: `Map<id, {data, fetchedAt}>`, stale threshold 6h; actions: `fetchScore(id)`, `fetchBatch(ids)`, `getScore(id)`, `isLoading(id)`, `getError(id)`
+
+**Pages (`frontend/src/pages/`)**
+- `LoginPage.jsx` — email/password form → `useAuthStore.login()`
+- `DashboardPage.jsx` — TrendCharts + navigation links to search and signals
+- `SearchPage.jsx` — fuzzy company search input → results list → navigate to company detail
+- `CompanyDetailPage.jsx` — company profile stats + tab view (ScoreMatrix / SignalFeed) + link to `/explain`
+- `ExplainPage.jsx` — SHAP counterfactuals grouped by practice area
+- `SignalsFeedPage.jsx` — signal feed filtered by company ID
+- `admin/ScrapersAdminPage.jsx` — scraper health table (admin only)
+- `admin/UsersAdminPage.jsx` — user management table (admin only)
+
+**Components (`frontend/src/components/`)**
+- `ScoreMatrix.jsx` — 34×3 table sorted by 30d score DESC; cell color: white (0.0) → teal #0C9182 (1.0) via RGB interpolation; click row → `navigate('/companies/${companyId}')`
+- `SignalFeed.jsx` — paginated list (PAGE_SIZE=20), `signal_type` filter dropdown, ConfidenceBadge with color-coded percentage
+- `TrendCharts.jsx` — Recharts `BarChart` with count_7d/30d/90d bars per practice area (top 20, angled X labels)
+- `PrivateRoute.jsx` — reads `token` from `useAuthStore`; redirects to `/login` if absent; `adminOnly` prop redirects non-admins to `/dashboard`
+
+**`frontend/src/App.jsx`** — React Router v6 with all 8 routes wrapped in `<PrivateRoute>` where required; `useEffect` calls `loadUser()` on mount when token present
+
+**`frontend/.env.example`** — added `VITE_API_URL=http://localhost:8000`
+
+### Route Map
+
+| URL | Component | Auth |
+|-----|-----------|------|
+| `/login` | `LoginPage` | Public |
+| `/dashboard` | `DashboardPage` | Private |
+| `/companies/:id` | `CompanyDetailPage` | Private |
+| `/companies/:id/explain` | `ExplainPage` | Private |
+| `/search` | `SearchPage` | Private |
+| `/signals` | `SignalsFeedPage` | Private |
+| `/admin/scrapers` | `ScrapersAdminPage` | Admin only |
+| `/admin/users` | `UsersAdminPage` | Admin only |
+
