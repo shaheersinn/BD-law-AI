@@ -8,14 +8,13 @@ Artifacts are versioned: spaces_path = oracle-models/{version}/{artifact_name}
 from __future__ import annotations
 
 import logging
-import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 log = logging.getLogger(__name__)
 
 SPACES_BUCKET = "oracle-models"
-MODEL_EXTENSIONS = {".pkl", ".pt", ".txt", ".json", ".pkl"}
+MODEL_EXTENSIONS = {".pkl", ".pt", ".txt", ".json"}
 
 
 async def upload_model_artifacts(local_dir: Path) -> int:
@@ -32,6 +31,7 @@ async def upload_model_artifacts(local_dir: Path) -> int:
         from botocore.client import Config
 
         from app.config import get_settings
+
         settings = get_settings()
 
         spaces_key = getattr(settings, "spaces_key", None)
@@ -52,7 +52,7 @@ async def upload_model_artifacts(local_dir: Path) -> int:
             config=Config(signature_version="s3v4"),
         )
 
-        version = datetime.now(tz=timezone.utc).strftime("%Y%m%d_%H%M%S")
+        version = datetime.now(tz=UTC).strftime("%Y%m%d_%H%M%S")
         uploaded = 0
 
         for artifact_path in local_dir.rglob("*"):
@@ -73,7 +73,12 @@ async def upload_model_artifacts(local_dir: Path) -> int:
                     ExtraArgs={"ACL": "private"},
                 )
                 uploaded += 1
-                log.debug("Uploaded %s → spaces://%s/%s", artifact_path.name, SPACES_BUCKET, spaces_key_path)
+                log.debug(
+                    "Uploaded %s → spaces://%s/%s",
+                    artifact_path.name,
+                    SPACES_BUCKET,
+                    spaces_key_path,
+                )
             except Exception:
                 log.exception("Failed to upload %s", artifact_path)
 
@@ -101,6 +106,7 @@ async def download_model_artifacts(
         from botocore.client import Config
 
         from app.config import get_settings
+
         settings = get_settings()
 
         spaces_key = getattr(settings, "spaces_key", None)
@@ -124,9 +130,7 @@ async def download_model_artifacts(
         # List objects in bucket with this version prefix
         if version == "latest":
             # Get the most recent version prefix
-            response = client.list_objects_v2(
-                Bucket=SPACES_BUCKET, Delimiter="/"
-            )
+            response = client.list_objects_v2(Bucket=SPACES_BUCKET, Delimiter="/")
             prefixes = [p["Prefix"].rstrip("/") for p in response.get("CommonPrefixes", [])]
             if not prefixes:
                 log.warning("No model versions found in DO Spaces")
@@ -140,7 +144,7 @@ async def download_model_artifacts(
             for obj in page.get("Contents", []):
                 key = obj["Key"]
                 # Strip version prefix from key
-                relative = key[len(f"{version}/"):]
+                relative = key[len(f"{version}/") :]
                 local_path = local_dir / relative
                 local_path.parent.mkdir(parents=True, exist_ok=True)
 

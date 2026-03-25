@@ -17,12 +17,10 @@ Usage:
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
-from typing import Any, Optional
+from dataclasses import dataclass
+from typing import Any
 
 from app.ml.bayesian_engine import (
-    FEATURE_COLUMNS,
-    HORIZONS,
     ORCHESTRATOR_F1_THRESHOLD,
     PRACTICE_AREAS,
     BayesianEngine,
@@ -36,14 +34,16 @@ log = logging.getLogger(__name__)
 
 # ── Data classes ───────────────────────────────────────────────────────────────
 
+
 @dataclass
 class ModelSelection:
     """Which model is active for a practice area."""
+
     practice_area: str
-    active_model: str          # "bayesian" or "transformer"
+    active_model: str  # "bayesian" or "transformer"
     bayesian_f1: float
     transformer_f1: float
-    reason: str                # Why this model was selected
+    reason: str  # Why this model was selected
 
 
 @dataclass
@@ -52,9 +52,10 @@ class CompanyScoreMatrix:
     34 × 3 mandate probability matrix for a single company.
     The primary output of ORACLE.
     """
+
     company_id: int
-    scores: dict[str, dict[int, float]]   # {practice_area: {30: 0.xx, 60: 0.xx, 90: 0.xx}}
-    model_versions: dict[str, str]        # {practice_area: "bayesian_v3" or "transformer_v1"}
+    scores: dict[str, dict[int, float]]  # {practice_area: {30: 0.xx, 60: 0.xx, 90: 0.xx}}
+    model_versions: dict[str, str]  # {practice_area: "bayesian_v3" or "transformer_v1"}
     velocity_score: float
     anomaly_score: float
     confidence_low: float
@@ -64,6 +65,7 @@ class CompanyScoreMatrix:
 
 
 # ── Orchestrator ───────────────────────────────────────────────────────────────
+
 
 class MandateOrchestrator:
     """
@@ -80,7 +82,7 @@ class MandateOrchestrator:
         self._selections: dict[str, ModelSelection] = {}
         self._loaded = False
 
-    def load(self, registry: Optional[list[dict[str, Any]]] = None) -> None:
+    def load(self, registry: list[dict[str, Any]] | None = None) -> None:
         """
         Load all engines and apply model registry decisions.
 
@@ -91,14 +93,13 @@ class MandateOrchestrator:
         # Load all Bayesian engines
         load_all_engines()
         from app.ml.bayesian_engine import _LOADED_ENGINES
+
         self._bayesian_engines = _LOADED_ENGINES.copy()
 
         # Load Transformer scorers (only for practice areas where they're active)
         if registry:
             transformer_active = {
-                row["practice_area"]
-                for row in registry
-                if row.get("active_model") == "transformer"
+                row["practice_area"] for row in registry if row.get("active_model") == "transformer"
             }
         else:
             transformer_active = set()
@@ -164,13 +165,15 @@ class MandateOrchestrator:
         )
         log.info(
             "Orchestrator loaded: %d practice areas, %d using transformer, %d using bayesian",
-            len(PRACTICE_AREAS), transformer_count, len(PRACTICE_AREAS) - transformer_count,
+            len(PRACTICE_AREAS),
+            transformer_count,
+            len(PRACTICE_AREAS) - transformer_count,
         )
 
     def score_company(
         self,
         features: dict[str, float],
-        sequences: Optional[dict[str, list[dict[str, float]]]] = None,
+        sequences: dict[str, list[dict[str, float]]] | None = None,
     ) -> dict[str, HorizonScores]:
         """
         Score a single company across all 34 practice areas.
@@ -208,9 +211,7 @@ class MandateOrchestrator:
                         )
                         continue
                     except Exception:
-                        log.exception(
-                            "TransformerScorer %s failed, falling back to Bayesian", pa
-                        )
+                        log.exception("TransformerScorer %s failed, falling back to Bayesian", pa)
 
             # Bayesian fallback (or primary)
             engine = self._bayesian_engines.get(pa)
@@ -249,7 +250,7 @@ class MandateOrchestrator:
 
 # ── Module-level singleton ─────────────────────────────────────────────────────
 
-_ORCHESTRATOR: Optional[MandateOrchestrator] = None
+_ORCHESTRATOR: MandateOrchestrator | None = None
 
 
 def get_orchestrator() -> MandateOrchestrator:
@@ -261,6 +262,7 @@ def get_orchestrator() -> MandateOrchestrator:
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
+
 
 def _zero_score(practice_area: str) -> HorizonScores:
     """Return zero scores — used when model is unavailable."""

@@ -9,8 +9,8 @@ Sequence data built for transformer (30-day rolling windows).
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timedelta, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime, timedelta
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -45,7 +45,7 @@ class DatasetBuilder:
                 n_train, n_holdout,
             }}
         """
-        holdout_cutoff = datetime.now(tz=timezone.utc) - timedelta(days=HOLDOUT_MONTHS * 30)
+        holdout_cutoff = datetime.now(tz=UTC) - timedelta(days=HOLDOUT_MONTHS * 30)
         limit = 1000 if dry_run else None
 
         # Pull all company_features
@@ -66,11 +66,13 @@ class DatasetBuilder:
 
         log.info(
             "Loaded %d feature rows, %d label rows",
-            len(features_df), len(labels_df),
+            len(features_df),
+            len(labels_df),
         )
 
         # Build per-practice-area datasets
         from app.ml.bayesian_engine import PRACTICE_AREAS
+
         datasets: dict[str, dict[str, Any]] = {}
 
         for pa in PRACTICE_AREAS:
@@ -96,7 +98,7 @@ class DatasetBuilder:
         practice_area: str,
         feature_columns: list[str],
         holdout_cutoff: datetime,
-    ) -> Optional[dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """Build train/holdout for a single practice area."""
         # Filter labels for this practice area
         pa_labels = labels_df[labels_df["practice_area"] == practice_area].copy()
@@ -112,6 +114,7 @@ class DatasetBuilder:
 
         # Build label columns per horizon
         for horizon in [30, 60, 90]:
+
             def has_mandate_in_window(row: pd.Series) -> int:
                 if pd.isna(row.get("mandate_confirmed_at")):
                     return 0
@@ -145,8 +148,12 @@ class DatasetBuilder:
         X_cols = [c for c in feature_columns if c in merged.columns]
         missing = [c for c in feature_columns if c not in merged.columns]
         if missing:
-            log.warning("%s: %d feature columns missing from features table: %s...",
-                        practice_area, len(missing), missing[:3])
+            log.warning(
+                "%s: %d feature columns missing from features table: %s...",
+                practice_area,
+                len(missing),
+                missing[:3],
+            )
 
         train_df = merged[~holdout_mask]
         holdout_df = merged[holdout_mask]
@@ -182,7 +189,7 @@ class DatasetBuilder:
         df: pd.DataFrame,
         feature_cols: list[str],
         seq_len: int = 30,
-    ) -> Optional[np.ndarray]:
+    ) -> np.ndarray | None:
         """
         Build [n_samples, seq_len, n_features] array for transformer.
         Attempts to sort by company_id + date and build rolling windows.
@@ -221,13 +228,13 @@ class DatasetBuilder:
             return None
 
     async def _fetch_features(
-        self, feature_columns: list[str], limit: Optional[int] = None
+        self, feature_columns: list[str], limit: int | None = None
     ) -> pd.DataFrame:
         """Fetch company_features from PostgreSQL."""
         try:
             limit_clause = f"LIMIT {limit}" if limit else ""
             query = text(f"""
-                SELECT company_id, feature_date, {', '.join(feature_columns)}
+                SELECT company_id, feature_date, {", ".join(feature_columns)}
                 FROM company_features
                 ORDER BY feature_date DESC
                 {limit_clause}
@@ -253,22 +260,27 @@ class DatasetBuilder:
             rows = result.fetchall()
             if not rows:
                 return pd.DataFrame()
-            return pd.DataFrame(rows, columns=["company_id", "practice_area",
-                                               "mandate_confirmed_at", "is_negative_label"])
+            return pd.DataFrame(
+                rows,
+                columns=[
+                    "company_id",
+                    "practice_area",
+                    "mandate_confirmed_at",
+                    "is_negative_label",
+                ],
+            )
         except Exception:
             log.exception("Failed to fetch mandate_labels")
             return pd.DataFrame()
 
-    async def fetch_clean_company_features(
-        self, feature_columns: list[str]
-    ) -> Optional[np.ndarray]:
+    async def fetch_clean_company_features(self, feature_columns: list[str]) -> np.ndarray | None:
         """
         Fetch feature vectors for companies with NO mandate labels.
         Used for AnomalyDetector training (clean baseline only).
         """
         try:
             query = text(f"""
-                SELECT cf.{', cf.'.join(feature_columns)}
+                SELECT cf.{", cf.".join(feature_columns)}
                 FROM company_features cf
                 WHERE cf.company_id NOT IN (
                     SELECT DISTINCT company_id FROM mandate_labels
@@ -314,8 +326,7 @@ class DatasetBuilder:
             output: dict[str, list[dict[str, Any]]] = {}
             for pa, company_events in events_by_pa.items():
                 output[pa] = [
-                    {"signal_types": list(signals)}
-                    for signals in company_events.values()
+                    {"signal_types": list(signals)} for signals in company_events.values()
                 ]
 
             return output
@@ -323,13 +334,11 @@ class DatasetBuilder:
             log.exception("Failed to fetch mandate events for co-occurrence")
             return {}
 
-    async def fetch_sector_training_data(
-        self, feature_columns: list[str]
-    ) -> Optional[dict[str, Any]]:
+    async def fetch_sector_training_data(self, feature_columns: list[str]) -> dict[str, Any] | None:
         """Fetch features + sector labels for sector weight calibration."""
         try:
             query = text(f"""
-                SELECT cf.{', cf.'.join(feature_columns)}, c.sector,
+                SELECT cf.{", cf.".join(feature_columns)}, c.sector,
                        CASE WHEN ml.company_id IS NOT NULL THEN 1 ELSE 0 END as has_mandate
                 FROM company_features cf
                 JOIN companies c ON c.id = cf.company_id
@@ -343,6 +352,7 @@ class DatasetBuilder:
                 return None
 
             import pandas as pd
+
             df = pd.DataFrame(rows, columns=feature_columns + ["sector", "has_mandate"])
             X = df[feature_columns].fillna(0)
             y = df["has_mandate"]

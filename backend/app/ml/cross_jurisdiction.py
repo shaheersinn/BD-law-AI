@@ -15,16 +15,16 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 log = logging.getLogger(__name__)
 
 # Propagation decay: how much signal strength carries across jurisdictions
 LINK_DECAY: dict[str, float] = {
-    "subsidiary": 0.85,    # parent's signal propagates strongly to subsidiary
-    "peer_same_sector": 0.40,   # peer event = moderate warning
-    "competitor": 0.25,    # competitor event = weak warning
+    "subsidiary": 0.85,  # parent's signal propagates strongly to subsidiary
+    "peer_same_sector": 0.40,  # peer event = moderate warning
+    "competitor": 0.25,  # competitor event = weak warning
 }
 
 # Signal types that propagate across jurisdictions
@@ -36,7 +36,7 @@ PROPAGATING_SIGNAL_TYPES: set[str] = {
     "edgar_8k",
     "edgar_conf_treatment",
     "edgar_merger_confirmed",
-    "sec_aaer",         # SEC accounting enforcement
+    "sec_aaer",  # SEC accounting enforcement
     "news_investigation",
     "news_merger",
     "news_data_breach",
@@ -51,6 +51,7 @@ MIN_SOURCE_STRENGTH: float = 0.5
 @dataclass
 class PropagatedSignal:
     """A signal that has been propagated from a source company to a target."""
+
     target_company_id: int
     source_company_id: int
     source_signal_type: str
@@ -105,7 +106,7 @@ def propagate_signals(
         link_index.setdefault(src, []).append(link)
 
     propagated: list[PropagatedSignal] = []
-    now = datetime.now(tz=timezone.utc).isoformat()
+    now = datetime.now(tz=UTC).isoformat()
 
     for event in trigger_events:
         company_id = event.get("company_id")
@@ -129,19 +130,22 @@ def propagate_signals(
             if prop_strength < 0.05:
                 continue  # too weak to store
 
-            propagated.append(PropagatedSignal(
-                target_company_id=target_id,
-                source_company_id=company_id,
-                source_signal_type=signal_type,
-                source_signal_strength=strength,
-                propagated_strength=prop_strength,
-                link_type=link_type,
-                propagated_at=now,
-            ))
+            propagated.append(
+                PropagatedSignal(
+                    target_company_id=target_id,
+                    source_company_id=company_id,
+                    source_signal_type=signal_type,
+                    source_signal_strength=strength,
+                    propagated_strength=prop_strength,
+                    link_type=link_type,
+                    propagated_at=now,
+                )
+            )
 
     log.info(
         "cross_jurisdiction: %d propagated signals from %d trigger events",
-        len(propagated), len(trigger_events),
+        len(propagated),
+        len(trigger_events),
     )
     return propagated
 
@@ -162,17 +166,14 @@ def aggregate_cross_jurisdiction_feature(
     Returns:
         cross_jurisdiction_signal feature value in [0, 1].
     """
-    incoming = [
-        s for s in propagated_signals
-        if s.target_company_id == company_id
-    ]
+    incoming = [s for s in propagated_signals if s.target_company_id == company_id]
     if not incoming:
         return 0.0
 
     # Convergence formula: multiple independent signals compound
     combined = 1.0
     for sig in incoming:
-        combined *= (1.0 - sig.propagated_strength)
+        combined *= 1.0 - sig.propagated_strength
 
     return float(1.0 - combined)
 
@@ -212,7 +213,7 @@ async def upsert_jurisdiction_link(
     try:
         doc = {
             "link_type": link_type,
-            "last_verified_at": datetime.now(tz=timezone.utc),
+            "last_verified_at": datetime.now(tz=UTC),
             **(metadata or {}),
         }
         await mongo_db["cross_jurisdiction_links"].update_one(
@@ -226,5 +227,6 @@ async def upsert_jurisdiction_link(
     except Exception:
         log.exception(
             "Failed to upsert jurisdiction link %d→%d",
-            source_company_id, target_company_id,
+            source_company_id,
+            target_company_id,
         )

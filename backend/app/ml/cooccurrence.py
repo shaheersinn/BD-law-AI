@@ -16,17 +16,16 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-import numpy as np
 import pandas as pd
 
 log = logging.getLogger(__name__)
 
 # Apriori hyperparameters
-MIN_SUPPORT: float = 0.05        # signal combo must appear in ≥ 5% of mandate events
-MIN_CONFIDENCE: float = 0.50     # 50%+ of times combo fires, mandate follows
-MIN_LIFT: float = 1.5            # combo predicts 50% better than individual signals
-MAX_RULES: int = 200             # store top 200 rules by lift (prevents noise storage)
-MAX_ITEMSET_SIZE: int = 4        # max signals in one rule (combinatorial explosion)
+MIN_SUPPORT: float = 0.05  # signal combo must appear in ≥ 5% of mandate events
+MIN_CONFIDENCE: float = 0.50  # 50%+ of times combo fires, mandate follows
+MIN_LIFT: float = 1.5  # combo predicts 50% better than individual signals
+MAX_RULES: int = 200  # store top 200 rules by lift (prevents noise storage)
+MAX_ITEMSET_SIZE: int = 4  # max signals in one rule (combinatorial explosion)
 
 
 def build_transaction_matrix(
@@ -97,7 +96,8 @@ def mine_rules(
     if n_transactions < 50:
         log.warning(
             "co-occurrence: only %d transactions for %s — results may be unreliable",
-            n_transactions, practice_area,
+            n_transactions,
+            practice_area,
         )
 
     try:
@@ -139,19 +139,23 @@ def mine_rules(
     for _, row in rules.iterrows():
         antecedents = sorted(list(row["antecedents"]))
         consequents = sorted(list(row["consequents"]))
-        output_rules.append({
-            "practice_area": practice_area,
-            "antecedent_signals": antecedents,
-            "consequent_signals": consequents,
-            "support": float(row["support"]),
-            "confidence": float(row["confidence"]),
-            "lift": float(row["lift"]),
-            "n_transactions": n_transactions,
-        })
+        output_rules.append(
+            {
+                "practice_area": practice_area,
+                "antecedent_signals": antecedents,
+                "consequent_signals": consequents,
+                "support": float(row["support"]),
+                "confidence": float(row["confidence"]),
+                "lift": float(row["lift"]),
+                "n_transactions": n_transactions,
+            }
+        )
 
     log.info(
         "co-occurrence: %d rules mined for %s (from %d transactions)",
-        len(output_rules), practice_area, n_transactions,
+        len(output_rules),
+        practice_area,
+        n_transactions,
     )
     return output_rules
 

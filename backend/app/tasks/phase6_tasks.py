@@ -19,8 +19,6 @@ Also implements support tasks:
 
 from __future__ import annotations
 
-import logging
-from datetime import datetime, timezone
 from typing import Any
 
 import structlog
@@ -31,6 +29,7 @@ log = structlog.get_logger(__name__)
 
 
 # ── Agent 023: Model Selector ─────────────────────────────────────────────────
+
 
 @celery_app.task(
     name="agents.refresh_model_orchestrator",
@@ -48,11 +47,13 @@ def refresh_model_orchestrator(self: Any) -> dict[str, Any]:
     Runs every 6 hours. Hot-reloads without API restart.
     """
     import asyncio
+
     from app.database import get_db
     from app.ml.orchestrator import get_orchestrator
     from app.training.model_registry import load_registry_from_db
 
     try:
+
         async def _run() -> dict[str, Any]:
             async with get_db() as db:
                 registry = await load_registry_from_db(db)
@@ -75,10 +76,11 @@ def refresh_model_orchestrator(self: Any) -> dict[str, Any]:
 
     except Exception as exc:
         log.exception("agent_023_model_selector_failed", error=str(exc))
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
 
 
 # ── Agent 024: Anomaly Escalation ─────────────────────────────────────────────
+
 
 @celery_app.task(
     name="agents.run_anomaly_escalation",
@@ -97,12 +99,15 @@ def run_anomaly_escalation(self: Any, anomaly_threshold: float = 0.7) -> dict[st
     Runs daily after scoring pipeline.
     """
     import asyncio
+
     from app.database import get_db
 
     try:
+
         async def _run() -> dict[str, Any]:
             async with get_db() as db:
                 from sqlalchemy import text
+
                 result = await db.execute(
                     text("""
                         SELECT company_id, anomaly_score, scored_at
@@ -141,10 +146,11 @@ def run_anomaly_escalation(self: Any, anomaly_threshold: float = 0.7) -> dict[st
 
     except Exception as exc:
         log.exception("agent_024_anomaly_escalation_failed", error=str(exc))
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
 
 
 # ── Agent 025: Score Decay ─────────────────────────────────────────────────────
+
 
 @celery_app.task(
     name="agents.clean_stale_scores",
@@ -161,12 +167,15 @@ def clean_stale_scores(self: Any, retention_days: int = 90) -> dict[str, Any]:
     Runs weekly. Prevents table bloat.
     """
     import asyncio
+
     from app.database import get_db
 
     try:
+
         async def _run() -> dict[str, Any]:
             async with get_db() as db:
                 from sqlalchemy import text
+
                 result = await db.execute(
                     text("""
                         DELETE FROM scoring_results
@@ -183,10 +192,11 @@ def clean_stale_scores(self: Any, retention_days: int = 90) -> dict[str, Any]:
 
     except Exception as exc:
         log.exception("agent_025_score_decay_failed", error=str(exc))
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
 
 
 # ── Agent 026: Sector Baseline ─────────────────────────────────────────────────
+
 
 @celery_app.task(
     name="agents.update_sector_baseline",
@@ -210,6 +220,7 @@ def update_sector_baseline(self: Any) -> dict[str, Any]:
 
 # ── Agent 027: CCAA Cascade ────────────────────────────────────────────────────
 
+
 @celery_app.task(
     name="agents.run_ccaa_cascade",
     bind=True,
@@ -229,12 +240,15 @@ def run_ccaa_cascade(self: Any) -> dict[str, Any]:
     - Employment (mass layoff follows restructuring)
     """
     import asyncio
+
     from app.database import get_db
 
     try:
+
         async def _run() -> dict[str, Any]:
             async with get_db() as db:
                 from sqlalchemy import text
+
                 # Find recent CCAA signals not yet cascaded
                 result = await db.execute(
                     text("""
@@ -286,10 +300,11 @@ def run_ccaa_cascade(self: Any) -> dict[str, Any]:
 
     except Exception as exc:
         log.exception("agent_027_ccaa_cascade_failed", error=str(exc))
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
 
 
 # ── Scoring batch task ─────────────────────────────────────────────────────────
+
 
 @celery_app.task(
     name="scoring.score_company_batch",
@@ -306,89 +321,93 @@ def score_company_batch(self: Any, company_ids: list[int]) -> dict[str, Any]:
     Score a batch of companies using the orchestrator.
     Stores results in scoring_results table.
     Triggered by live feed events and nightly batch.
+
+    Performance: one bulk SELECT → in-memory ML scoring → one bulk INSERT.
+    No per-company DB round-trips inside the scoring loop.
     """
     import asyncio
+    import json
+
     from app.database import get_db
     from app.ml.orchestrator import get_orchestrator
 
     try:
+
         async def _run() -> dict[str, Any]:
             orchestrator = get_orchestrator()
             if not orchestrator._loaded:
                 log.warning("scoring_batch: orchestrator not loaded, loading now")
                 orchestrator.load()
 
+            from app.ml.anomaly_detector import get_anomaly_detector
+            from app.ml.velocity_scorer import aggregate_company_velocity
+
             async with get_db() as db:
                 from sqlalchemy import text
 
-                scored = 0
+                # ── Phase A: Bulk fetch latest features for all companies ────
+                feat_result = await db.execute(
+                    text("""
+                        SELECT DISTINCT ON (company_id) *
+                        FROM company_features
+                        WHERE company_id = ANY(:ids)
+                        ORDER BY company_id, feature_date DESC
+                    """),
+                    {"ids": list(company_ids)},
+                )
+                feature_map: dict[int, dict] = {
+                    row["company_id"]: dict(row) for row in feat_result.mappings()
+                }
+
+                # ── Phase B: In-memory scoring (zero DB I/O) ────────────────
+                rows_to_insert: list[dict] = []
                 failed = 0
 
                 for company_id in company_ids:
+                    features = feature_map.get(company_id)
+                    if features is None:
+                        log.warning("score_company_batch: no features for company %d", company_id)
+                        failed += 1
+                        continue
                     try:
-                        # Fetch latest feature vector
-                        feat_result = await db.execute(
-                            text("""
-                                SELECT * FROM company_features
-                                WHERE company_id = :company_id
-                                ORDER BY feature_date DESC
-                                LIMIT 1
-                            """),
-                            {"company_id": company_id},
-                        )
-                        feat_row = feat_result.mappings().first()
-                        if feat_row is None:
-                            failed += 1
-                            continue
-
-                        features = dict(feat_row)
-
-                        # Score
                         horizon_scores = orchestrator.score_company(features)
-
-                        # Build scores JSON
-                        scores_json = {
-                            pa: hs.as_dict()
-                            for pa, hs in horizon_scores.items()
-                        }
-
-                        # Velocity + anomaly
-                        from app.ml.velocity_scorer import aggregate_company_velocity
-                        from app.ml.anomaly_detector import get_anomaly_detector
-
-                        velocity = aggregate_company_velocity({
-                            pa: {"30d": hs.score_30d} for pa, hs in horizon_scores.items()
-                        })
+                        scores_json = {pa: hs.as_dict() for pa, hs in horizon_scores.items()}
+                        velocity = aggregate_company_velocity(
+                            {pa: {"30d": hs.score_30d} for pa, hs in horizon_scores.items()}
+                        )
                         anomaly = get_anomaly_detector().score(features)
-
-                        # Store result
-                        await db.execute(
-                            text("""
-                                INSERT INTO scoring_results
-                                    (company_id, scored_at, scores, velocity_score,
-                                     anomaly_score, model_versions)
-                                VALUES (:company_id, NOW(), :scores::jsonb, :velocity,
-                                        :anomaly, :model_versions::jsonb)
-                            """),
+                        rows_to_insert.append(
                             {
                                 "company_id": company_id,
-                                "scores": __import__("json").dumps(scores_json),
-                                "velocity": velocity,
-                                "anomaly": anomaly,
-                                "model_versions": __import__("json").dumps({
-                                    pa: hs.model_version
-                                    for pa, hs in horizon_scores.items()
-                                }),
-                            },
+                                "scores": json.dumps(scores_json),
+                                "velocity_score": velocity,
+                                "anomaly_score": anomaly,
+                                "model_versions": json.dumps(
+                                    {pa: hs.model_version for pa, hs in horizon_scores.items()}
+                                ),
+                            }
                         )
-                        scored += 1
-
                     except Exception:
-                        log.exception("score_company_batch: failed for company %d", company_id)
+                        log.exception(
+                            "score_company_batch: scoring failed for company %d", company_id
+                        )
                         failed += 1
 
-                await db.commit()
+                # ── Phase C: Bulk INSERT (one executemany call) ──────────────
+                if rows_to_insert:
+                    await db.execute(
+                        text("""
+                            INSERT INTO scoring_results
+                                (company_id, scored_at, scores, velocity_score,
+                                 anomaly_score, model_versions)
+                            VALUES (:company_id, NOW(), :scores::jsonb, :velocity_score,
+                                    :anomaly_score, :model_versions::jsonb)
+                        """),
+                        rows_to_insert,
+                    )
+                    await db.commit()
 
+            scored = len(rows_to_insert)
             return {"scored": scored, "failed": failed, "total": len(company_ids)}
 
         result = asyncio.run(_run())
@@ -397,10 +416,11 @@ def score_company_batch(self: Any, company_ids: list[int]) -> dict[str, Any]:
 
     except Exception as exc:
         log.exception("scoring_batch_failed", error=str(exc))
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
 
 
 # ── Active learning task ───────────────────────────────────────────────────────
+
 
 @celery_app.task(
     name="agents.run_active_learning",
@@ -415,13 +435,19 @@ def run_active_learning(self: Any) -> dict[str, Any]:
     """Weekly: identify uncertain companies and queue for priority scraping."""
     import asyncio
     import json
+
     from app.database import get_db
-    from app.ml.active_learning import identify_uncertain_companies, build_active_learning_queue_rows
+    from app.ml.active_learning import (
+        build_active_learning_queue_rows,
+        identify_uncertain_companies,
+    )
 
     try:
+
         async def _run() -> dict[str, Any]:
             async with get_db() as db:
                 from sqlalchemy import text
+
                 result = await db.execute(
                     text("""
                         SELECT company_id, scores
@@ -437,8 +463,7 @@ def run_active_learning(self: Any) -> dict[str, Any]:
                     scores = json.loads(row[1]) if isinstance(row[1], str) else row[1]
                     # Convert string keys to int
                     company_scores[cid] = {
-                        pa: {int(k): v for k, v in hs.items()}
-                        for pa, hs in scores.items()
+                        pa: {int(k): v for k, v in hs.items()} for pa, hs in scores.items()
                     }
 
                 uncertain = identify_uncertain_companies(company_scores)
@@ -467,10 +492,11 @@ def run_active_learning(self: Any) -> dict[str, Any]:
 
     except Exception as exc:
         log.exception("active_learning_failed", error=str(exc))
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
 
 
 # ── Seed decay config (one-time) ──────────────────────────────────────────────
+
 
 @celery_app.task(
     name="agents.seed_decay_config",
@@ -488,14 +514,17 @@ def seed_decay_config(self: Any) -> dict[str, Any]:
     Subsequent calibrations come from Azure training jobs.
     """
     import asyncio
+
     from app.database import get_db
     from app.ml.temporal_decay import build_default_decay_config_rows
 
     try:
+
         async def _run() -> dict[str, Any]:
             rows = build_default_decay_config_rows()
             async with get_db() as db:
                 from sqlalchemy import text
+
                 inserted = 0
                 for row in rows:
                     result = await db.execute(
@@ -519,4 +548,4 @@ def seed_decay_config(self: Any) -> dict[str, Any]:
 
     except Exception as exc:
         log.exception("seed_decay_config_failed", error=str(exc))
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc

@@ -17,15 +17,15 @@ from __future__ import annotations
 
 import asyncio
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from types import ModuleType
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
-
+from unittest.mock import AsyncMock, MagicMock
 
 # ── Inject stubs for problematic transitively-imported modules ─────────────────
 # This prevents the pyo3/cryptography panic caused by the pymongo conflict
 # (same known env issue documented in Phase 1B commit).
+
 
 def _inject_module_stubs() -> None:
     """
@@ -153,9 +153,7 @@ class TestConstants:
         pa_set = set(PRACTICE_AREAS)
         for signal_type, practice_areas in SIGNAL_TYPE_TO_PRACTICE_AREAS.items():
             for pa in practice_areas:
-                assert pa in pa_set, (
-                    f"Unknown practice area '{pa}' in mapping for '{signal_type}'"
-                )
+                assert pa in pa_set, f"Unknown practice area '{pa}' in mapping for '{signal_type}'"
 
     def test_insolvency_signals_map_correctly(self) -> None:
         from app.ground_truth.constants import SIGNAL_TYPE_TO_PRACTICE_AREAS
@@ -239,7 +237,7 @@ class TestLabelingRunModel:
         from app.models.ground_truth import LabelingRun
 
         run = LabelingRun()
-        run.started_at = datetime(2026, 3, 24, 10, 0, 0, tzinfo=timezone.utc)
+        run.started_at = datetime(2026, 3, 24, 10, 0, 0, tzinfo=UTC)
         run.completed_at = run.started_at + timedelta(seconds=150)
         assert run.duration_seconds == 150.0
 
@@ -247,7 +245,7 @@ class TestLabelingRunModel:
         from app.models.ground_truth import LabelingRun
 
         run = LabelingRun()
-        run.started_at = datetime(2026, 3, 24, 10, 0, 0, tzinfo=timezone.utc)
+        run.started_at = datetime(2026, 3, 24, 10, 0, 0, tzinfo=UTC)
         run.completed_at = None
         assert run.duration_seconds is None
 
@@ -291,7 +289,7 @@ class TestRetrospectiveLabeler:
 
         db = _make_mock_db_with_rows([])
         labeler = RetrospectiveLabeler()
-        now = datetime(2026, 3, 24, 12, 0, 0, tzinfo=timezone.utc)
+        now = datetime(2026, 3, 24, 12, 0, 0, tzinfo=UTC)
         labels = _run(labeler.label_company(company_id=1, run_id=1, now=now, db=db))
         assert labels == []
 
@@ -300,7 +298,7 @@ class TestRetrospectiveLabeler:
 
         db = _make_mock_db_with_rows([(42, "ccaa_filing")])
         labeler = RetrospectiveLabeler()
-        now = datetime(2026, 3, 24, 12, 0, 0, tzinfo=timezone.utc)
+        now = datetime(2026, 3, 24, 12, 0, 0, tzinfo=UTC)
         labels = _run(labeler.label_company(company_id=5, run_id=1, now=now, db=db))
 
         # ccaa_filing → Insolvency/Restructuring, across 3 horizons
@@ -315,7 +313,7 @@ class TestRetrospectiveLabeler:
 
         db = _make_mock_db_with_rows([(99, "insolvency_filing")])
         labeler = RetrospectiveLabeler()
-        now = datetime(2026, 3, 24, 12, 0, 0, tzinfo=timezone.utc)
+        now = datetime(2026, 3, 24, 12, 0, 0, tzinfo=UTC)
         labels = _run(labeler.label_company(company_id=1, run_id=1, now=now, db=db))
         assert all(99 in (lbl.evidence_signal_ids or []) for lbl in labels)
 
@@ -324,7 +322,7 @@ class TestRetrospectiveLabeler:
 
         db = _make_mock_db_with_rows([(1, "enforcement_action")])
         labeler = RetrospectiveLabeler()
-        now = datetime(2026, 3, 24, 12, 0, 0, tzinfo=timezone.utc)
+        now = datetime(2026, 3, 24, 12, 0, 0, tzinfo=UTC)
         labels = _run(labeler.label_company(company_id=1, run_id=1, now=now, db=db))
         horizons = sorted({lbl.horizon_days for lbl in labels})
         assert horizons == [30, 60, 90]
@@ -335,7 +333,7 @@ class TestRetrospectiveLabeler:
         db = AsyncMock()
         db.execute = AsyncMock(side_effect=Exception("DB connection failed"))
         labeler = RetrospectiveLabeler()
-        now = datetime(2026, 3, 24, 12, 0, 0, tzinfo=timezone.utc)
+        now = datetime(2026, 3, 24, 12, 0, 0, tzinfo=UTC)
         labels = _run(labeler.label_company(company_id=1, run_id=1, now=now, db=db))
         assert labels == []
 
@@ -345,7 +343,7 @@ class TestRetrospectiveLabeler:
         # receivership maps to Insolvency/Restructuring + Banking/Finance
         db = _make_mock_db_with_rows([(10, "receivership")])
         labeler = RetrospectiveLabeler()
-        now = datetime(2026, 3, 24, 12, 0, 0, tzinfo=timezone.utc)
+        now = datetime(2026, 3, 24, 12, 0, 0, tzinfo=UTC)
         labels = _run(labeler.label_company(company_id=1, run_id=1, now=now, db=db))
 
         practice_areas = {lbl.practice_area for lbl in labels}
@@ -357,7 +355,7 @@ class TestRetrospectiveLabeler:
 
         db = _make_mock_db_with_rows([(1, "ccaa_filing")])
         labeler = RetrospectiveLabeler()
-        now = datetime(2026, 3, 24, 12, 0, 0, tzinfo=timezone.utc)
+        now = datetime(2026, 3, 24, 12, 0, 0, tzinfo=UTC)
         result = _run(labeler.run_batch(run_id=1, company_ids=[1, 2], db=db, now=now))
         assert "companies_processed" in result
         assert result["companies_processed"] == 2
@@ -387,7 +385,7 @@ class TestRetrospectiveLabeler:
 
         db = _make_mock_db_with_rows([(1, "ccaa_filing")])
         labeler = RetrospectiveLabeler()
-        now = datetime(2026, 3, 24, 12, 0, 0, tzinfo=timezone.utc)
+        now = datetime(2026, 3, 24, 12, 0, 0, tzinfo=UTC)
         labels = _run(labeler.label_company(company_id=1, run_id=1, now=now, db=db))
         for lbl in labels:
             assert lbl.confidence_score == DEFAULT_LABEL_CONFIDENCE
@@ -397,7 +395,7 @@ class TestRetrospectiveLabeler:
 
         db = _make_mock_db_with_rows([(1, "enforcement_action")])
         labeler = RetrospectiveLabeler()
-        now = datetime(2026, 3, 24, 12, 0, 0, tzinfo=timezone.utc)
+        now = datetime(2026, 3, 24, 12, 0, 0, tzinfo=UTC)
         labels = _run(labeler.label_company(company_id=1, run_id=1, now=now, db=db))
         for lbl in labels:
             assert lbl.label_source == "retrospective"
@@ -407,7 +405,7 @@ class TestRetrospectiveLabeler:
 
         db = _make_mock_db_with_rows([(1, "enforcement_action")])
         labeler = RetrospectiveLabeler()
-        now = datetime(2026, 3, 24, 12, 0, 0, tzinfo=timezone.utc)
+        now = datetime(2026, 3, 24, 12, 0, 0, tzinfo=UTC)
         labels = _run(labeler.label_company(company_id=1, run_id=1, now=now, db=db))
         for lbl in labels:
             assert lbl.is_validated is False
@@ -422,7 +420,7 @@ class TestNegativeSampler:
 
         db = _make_mock_db_with_rows([])
         sampler = NegativeSampler()
-        now = datetime(2026, 3, 24, 12, 0, 0, tzinfo=timezone.utc)
+        now = datetime(2026, 3, 24, 12, 0, 0, tzinfo=UTC)
         result = _run(sampler.sample(run_id=1, db=db, now=now))
         assert result["negative_labels_created"] == 0
 
@@ -431,7 +429,7 @@ class TestNegativeSampler:
 
         db = _make_mock_db_with_rows([(7, "Technology", [1, 2])])
         sampler = NegativeSampler(seed=0)
-        now = datetime(2026, 3, 24, 12, 0, 0, tzinfo=timezone.utc)
+        now = datetime(2026, 3, 24, 12, 0, 0, tzinfo=UTC)
         result = _run(sampler.sample(run_id=1, db=db, now=now))
         assert result["negative_labels_created"] == 1
 
@@ -441,7 +439,7 @@ class TestNegativeSampler:
         rows = [(i, "Finance", [i * 10]) for i in range(1, 11)]
         db = _make_mock_db_with_rows(rows)
         sampler = NegativeSampler(seed=42)
-        now = datetime(2026, 3, 24, 12, 0, 0, tzinfo=timezone.utc)
+        now = datetime(2026, 3, 24, 12, 0, 0, tzinfo=UTC)
         result = _run(sampler.sample(run_id=1, db=db, now=now, max_per_sector=3))
         assert result["negative_labels_created"] == 3
 
@@ -452,7 +450,7 @@ class TestNegativeSampler:
         rows += [(i + 10, "Mining", [i + 10]) for i in range(1, 6)]
         db = _make_mock_db_with_rows(rows)
         sampler = NegativeSampler(seed=42)
-        now = datetime(2026, 3, 24, 12, 0, 0, tzinfo=timezone.utc)
+        now = datetime(2026, 3, 24, 12, 0, 0, tzinfo=UTC)
         result = _run(sampler.sample(run_id=1, db=db, now=now, max_per_sector=3))
         assert result["negative_labels_created"] == 6
 
@@ -462,7 +460,7 @@ class TestNegativeSampler:
 
         db = _make_mock_db_with_rows([(1, "Energy", [5])])
         sampler = NegativeSampler(seed=0)
-        now = datetime(2026, 3, 24, 12, 0, 0, tzinfo=timezone.utc)
+        now = datetime(2026, 3, 24, 12, 0, 0, tzinfo=UTC)
 
         added_labels: list[GroundTruthLabel] = []
         db.add = lambda lbl: added_labels.append(lbl)
@@ -478,7 +476,7 @@ class TestNegativeSampler:
         rows = [(1, "Finance", [1]), (2, "Mining", [2])]
         db = _make_mock_db_with_rows(rows)
         sampler = NegativeSampler(seed=0)
-        now = datetime(2026, 3, 24, 12, 0, 0, tzinfo=timezone.utc)
+        now = datetime(2026, 3, 24, 12, 0, 0, tzinfo=UTC)
         result = _run(sampler.sample(run_id=1, db=db, now=now))
         assert result["sectors_sampled"] == 2
 
@@ -487,7 +485,7 @@ class TestNegativeSampler:
 
         db = _make_mock_db_with_rows([(1, "Finance", [1])])
         sampler = NegativeSampler(seed=0)
-        now = datetime(2026, 3, 24, 12, 0, 0, tzinfo=timezone.utc)
+        now = datetime(2026, 3, 24, 12, 0, 0, tzinfo=UTC)
         result = _run(sampler.sample(run_id=1, db=db, now=now))
         assert result["errors"] == 0
 
@@ -497,7 +495,7 @@ class TestNegativeSampler:
         rows = [(1, None, [1])]  # None sector → "Unknown"
         db = _make_mock_db_with_rows(rows)
         sampler = NegativeSampler(seed=0)
-        now = datetime(2026, 3, 24, 12, 0, 0, tzinfo=timezone.utc)
+        now = datetime(2026, 3, 24, 12, 0, 0, tzinfo=UTC)
         result = _run(sampler.sample(run_id=1, db=db, now=now))
         assert result["negative_labels_created"] == 1
 
@@ -561,11 +559,11 @@ class TestRouteSerializers:
         label.label_source = "retrospective"
         label.confidence_score = 0.75
         label.is_validated = False
-        label.signal_window_start = datetime(2026, 1, 1, tzinfo=timezone.utc)
-        label.signal_window_end = datetime(2026, 2, 1, tzinfo=timezone.utc)
+        label.signal_window_start = datetime(2026, 1, 1, tzinfo=UTC)
+        label.signal_window_end = datetime(2026, 2, 1, tzinfo=UTC)
         label.evidence_signal_ids = [1, 2, 3]
         label.labeling_run_id = 5
-        label.created_at = datetime(2026, 3, 1, tzinfo=timezone.utc)
+        label.created_at = datetime(2026, 3, 1, tzinfo=UTC)
 
         d = _label_to_dict(label)
         assert d["id"] == 1
@@ -585,13 +583,13 @@ class TestRouteSerializers:
         run.id = 42
         run.run_type = "full"
         run.status = "completed"
-        run.started_at = datetime(2026, 3, 24, 2, 0, tzinfo=timezone.utc)
-        run.completed_at = datetime(2026, 3, 24, 2, 5, tzinfo=timezone.utc)
+        run.started_at = datetime(2026, 3, 24, 2, 0, tzinfo=UTC)
+        run.completed_at = datetime(2026, 3, 24, 2, 5, tzinfo=UTC)
         run.companies_processed = 100
         run.positive_labels_created = 50
         run.negative_labels_created = 200
         run.error_message = None
-        run.created_at = datetime(2026, 3, 24, 2, 0, tzinfo=timezone.utc)
+        run.created_at = datetime(2026, 3, 24, 2, 0, tzinfo=UTC)
 
         d = _run_to_dict(run)
         assert d["id"] == 42
@@ -638,8 +636,8 @@ class TestRouteSerializers:
         label.label_source = "manual"
         label.confidence_score = 0.5
         label.is_validated = True
-        label.signal_window_start = datetime(2026, 1, 1, tzinfo=timezone.utc)
-        label.signal_window_end = datetime(2026, 2, 1, tzinfo=timezone.utc)
+        label.signal_window_start = datetime(2026, 1, 1, tzinfo=UTC)
+        label.signal_window_end = datetime(2026, 2, 1, tzinfo=UTC)
         label.evidence_signal_ids = []
         label.labeling_run_id = 1
         label.created_at = None

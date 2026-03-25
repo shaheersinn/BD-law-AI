@@ -16,15 +16,15 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import joblib
 import numpy as np
 
 log = logging.getLogger(__name__)
 
-ANOMALY_STD_THRESHOLD: float = 2.0    # flag if reconstruction error > mean + 2*std
-AUTOENCODER_HIDDEN_DIMS: list[int] = [64, 32, 16, 32, 64]   # symmetric bottleneck at 16
+ANOMALY_STD_THRESHOLD: float = 2.0  # flag if reconstruction error > mean + 2*std
+AUTOENCODER_HIDDEN_DIMS: list[int] = [64, 32, 16, 32, 64]  # symmetric bottleneck at 16
 TRAINING_EPOCHS: int = 50
 BATCH_SIZE: int = 128
 LEARNING_RATE: float = 1e-3
@@ -32,7 +32,6 @@ LEARNING_RATE: float = 1e-3
 
 def _build_autoencoder(n_features: int):  # type: ignore[return]
     """Build PyTorch autoencoder. Imported lazily to keep startup fast."""
-    import torch
     import torch.nn as nn
 
     dims = [n_features] + AUTOENCODER_HIDDEN_DIMS + [n_features]
@@ -58,19 +57,20 @@ class AnomalyDetector:
     """
 
     def __init__(self) -> None:
-        self._model: Optional[Any] = None    # torch.nn.Module
-        self._scaler: Optional[Any] = None   # sklearn StandardScaler
-        self._threshold: float = 0.0         # mean + 2*std reconstruction error
+        self._model: Any | None = None  # torch.nn.Module
+        self._scaler: Any | None = None  # sklearn StandardScaler
+        self._threshold: float = 0.0  # mean + 2*std reconstruction error
         self._mean_error: float = 0.0
         self._std_error: float = 0.0
         self._loaded = False
 
-    def load(self, model_dir: Optional[Path] = None) -> None:
+    def load(self, model_dir: Path | None = None) -> None:
         """Load trained autoencoder from disk."""
         import torch
 
         if model_dir is None:
             from app.config import get_settings
+
             settings = get_settings()
             model_dir = Path(settings.models_dir) / "anomaly"
 
@@ -83,11 +83,10 @@ class AnomalyDetector:
             return
 
         from app.ml.bayesian_engine import FEATURE_COLUMNS
+
         n_features = len(FEATURE_COLUMNS)
         self._model = _build_autoencoder(n_features)
-        self._model.load_state_dict(
-            torch.load(weights_path, map_location=torch.device("cpu"))
-        )
+        self._model.load_state_dict(torch.load(weights_path, map_location=torch.device("cpu")))
         self._model.eval()  # type: ignore[union-attr]
 
         if scaler_path.exists():
@@ -102,7 +101,9 @@ class AnomalyDetector:
         self._loaded = True
         log.info(
             "AnomalyDetector loaded. threshold=%.4f (mean=%.4f, std=%.4f)",
-            self._threshold, self._mean_error, self._std_error,
+            self._threshold,
+            self._mean_error,
+            self._std_error,
         )
 
     def score(self, features: dict[str, float]) -> float:
@@ -120,6 +121,7 @@ class AnomalyDetector:
             return 0.0
 
         import torch
+
         from app.ml.bayesian_engine import FEATURE_COLUMNS
 
         x = np.array(
@@ -138,9 +140,7 @@ class AnomalyDetector:
         with torch.no_grad():
             reconstructed = self._model(x_tensor)
 
-        reconstruction_error = float(
-            torch.mean((x_tensor - reconstructed) ** 2).item()
-        )
+        reconstruction_error = float(torch.mean((x_tensor - reconstructed) ** 2).item())
 
         if self._std_error < 1e-8:
             return 0.0
@@ -158,6 +158,7 @@ class AnomalyDetector:
             return [0.0] * len(feature_rows)
 
         import torch
+
         from app.ml.bayesian_engine import FEATURE_COLUMNS
 
         X = np.array(
@@ -188,7 +189,7 @@ class AnomalyDetector:
 
     @staticmethod
     def train(
-        X_clean: np.ndarray,    # Feature matrix from companies with NO mandate labels
+        X_clean: np.ndarray,  # Feature matrix from companies with NO mandate labels
         output_dir: Path,
         n_epochs: int = TRAINING_EPOCHS,
     ) -> dict[str, Any]:
@@ -213,9 +214,7 @@ class AnomalyDetector:
         output_dir.mkdir(parents=True, exist_ok=True)
 
         if len(X_clean) < 100:
-            raise ValueError(
-                f"AnomalyDetector.train: need ≥ 100 clean samples, got {len(X_clean)}"
-            )
+            raise ValueError(f"AnomalyDetector.train: need ≥ 100 clean samples, got {len(X_clean)}")
 
         # Normalise features
         scaler = StandardScaler()
@@ -247,7 +246,12 @@ class AnomalyDetector:
                 epoch_loss += loss.item()
 
             if (epoch + 1) % 10 == 0:
-                log.info("AnomalyDetector epoch %d/%d loss=%.5f", epoch + 1, n_epochs, epoch_loss / len(loader))
+                log.info(
+                    "AnomalyDetector epoch %d/%d loss=%.5f",
+                    epoch + 1,
+                    n_epochs,
+                    epoch_loss / len(loader),
+                )
 
         # Compute reconstruction error stats on training set (for threshold)
         model.eval()
@@ -262,7 +266,9 @@ class AnomalyDetector:
 
         log.info(
             "AnomalyDetector: mean_err=%.5f std=%.5f threshold=%.5f",
-            mean_err, std_err, threshold,
+            mean_err,
+            std_err,
+            threshold,
         )
 
         # Save model + stats
@@ -283,7 +289,7 @@ class AnomalyDetector:
 
 
 # Module-level singleton
-_ANOMALY_DETECTOR: Optional[AnomalyDetector] = None
+_ANOMALY_DETECTOR: AnomalyDetector | None = None
 
 
 def get_anomaly_detector() -> AnomalyDetector:

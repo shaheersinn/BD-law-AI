@@ -12,7 +12,7 @@ Celery task: agents.run_active_learning — weekly.
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 log = logging.getLogger(__name__)
@@ -50,13 +50,15 @@ def identify_uncertain_companies(
                 uncertainty_scores.append(1.0 - 2.0 * abs(prob_30 - 0.5))
 
         if len(uncertain_areas) >= min_uncertain_areas:
-            uncertain.append({
-                "company_id": company_id,
-                "uncertain_areas": uncertain_areas,
-                "n_uncertain": len(uncertain_areas),
-                "max_uncertainty": max(uncertainty_scores) if uncertainty_scores else 0.0,
-                "queued_at": datetime.now(tz=timezone.utc).isoformat(),
-            })
+            uncertain.append(
+                {
+                    "company_id": company_id,
+                    "uncertain_areas": uncertain_areas,
+                    "n_uncertain": len(uncertain_areas),
+                    "max_uncertainty": max(uncertainty_scores) if uncertainty_scores else 0.0,
+                    "queued_at": datetime.now(tz=UTC).isoformat(),
+                }
+            )
 
     return sorted(uncertain, key=lambda x: x["n_uncertain"], reverse=True)
 
@@ -72,11 +74,13 @@ def build_active_learning_queue_rows(
     for item in uncertain_companies:
         company_id = item["company_id"]
         for pa in item.get("uncertain_areas", []):
-            rows.append({
-                "company_id": company_id,
-                "practice_area": pa,
-                "priority_score": item["max_uncertainty"],
-                "queued_at": item["queued_at"],
-                "status": "pending",  # pending → scraping → resolved
-            })
+            rows.append(
+                {
+                    "company_id": company_id,
+                    "practice_area": pa,
+                    "priority_score": item["max_uncertainty"],
+                    "queued_at": item["queued_at"],
+                    "status": "pending",  # pending → scraping → resolved
+                }
+            )
     return rows

@@ -21,11 +21,10 @@ import json
 import os
 import sys
 import tempfile
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from types import ModuleType
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
-
+from unittest.mock import AsyncMock, MagicMock
 
 # ── Inject stubs BEFORE any app imports ───────────────────────────────────────
 
@@ -114,11 +113,20 @@ class TestGroqClient:
         from app.training.groq_client import GroqClient, SignalInput
 
         client = GroqClient(api_key="test")
-        batch = [SignalInput(signal_id=1, signal_type="ccaa_filing", signal_text="test", company_id=10)]
-        raw = json.dumps([
-            {"signal_id": 1, "label_type": "positive",
-             "practice_areas": ["Insolvency/Restructuring"], "confidence": 0.95, "reasoning": "CCAA"}
-        ])
+        batch = [
+            SignalInput(signal_id=1, signal_type="ccaa_filing", signal_text="test", company_id=10)
+        ]
+        raw = json.dumps(
+            [
+                {
+                    "signal_id": 1,
+                    "label_type": "positive",
+                    "practice_areas": ["Insolvency/Restructuring"],
+                    "confidence": 0.95,
+                    "reasoning": "CCAA",
+                }
+            ]
+        )
         results = client._parse_response(raw, batch)
         assert len(results) == 1
         assert results[0].signal_id == 1
@@ -140,8 +148,12 @@ class TestGroqClient:
         from app.training.groq_client import GroqClient, SignalInput
 
         client = GroqClient(api_key="test")
-        batch = [SignalInput(signal_id=2, signal_type="job_posting", signal_text="dev role", company_id=1)]
-        raw = "```json\n[{\"signal_id\": 2, \"label_type\": \"negative\", \"practice_areas\": [], \"confidence\": 0.9, \"reasoning\": \"tech role\"}]\n```"
+        batch = [
+            SignalInput(
+                signal_id=2, signal_type="job_posting", signal_text="dev role", company_id=1
+            )
+        ]
+        raw = '```json\n[{"signal_id": 2, "label_type": "negative", "practice_areas": [], "confidence": 0.9, "reasoning": "tech role"}]\n```'
         results = client._parse_response(raw, batch)
         assert len(results) == 1
         assert results[0].label_type == "negative"
@@ -155,9 +167,17 @@ class TestGroqClient:
             SignalInput(signal_id=11, signal_type="b", signal_text="b", company_id=1),
         ]
         # Groq only returned signal 10
-        raw = json.dumps([
-            {"signal_id": 10, "label_type": "negative", "practice_areas": [], "confidence": 0.8, "reasoning": ""}
-        ])
+        raw = json.dumps(
+            [
+                {
+                    "signal_id": 10,
+                    "label_type": "negative",
+                    "practice_areas": [],
+                    "confidence": 0.8,
+                    "reasoning": "",
+                }
+            ]
+        )
         results = client._parse_response(raw, batch)
         assert len(results) == 2
         ids = {r.signal_id for r in results}
@@ -172,7 +192,17 @@ class TestGroqClient:
 
         client = GroqClient(api_key="test")
         batch = [SignalInput(signal_id=3, signal_type="x", signal_text="x", company_id=1)]
-        raw = json.dumps([{"signal_id": 3, "label_type": "positive", "practice_areas": [], "confidence": 1.5, "reasoning": ""}])
+        raw = json.dumps(
+            [
+                {
+                    "signal_id": 3,
+                    "label_type": "positive",
+                    "practice_areas": [],
+                    "confidence": 1.5,
+                    "reasoning": "",
+                }
+            ]
+        )
         results = client._parse_response(raw, batch)
         assert results[0].confidence == 1.0
 
@@ -181,7 +211,17 @@ class TestGroqClient:
 
         client = GroqClient(api_key="test")
         batch = [SignalInput(signal_id=4, signal_type="x", signal_text="x", company_id=1)]
-        raw = json.dumps([{"signal_id": 4, "label_type": "MAYBE", "practice_areas": [], "confidence": 0.7, "reasoning": ""}])
+        raw = json.dumps(
+            [
+                {
+                    "signal_id": 4,
+                    "label_type": "MAYBE",
+                    "practice_areas": [],
+                    "confidence": 0.7,
+                    "reasoning": "",
+                }
+            ]
+        )
         results = client._parse_response(raw, batch)
         assert results[0].label_type == "uncertain"
 
@@ -232,7 +272,9 @@ class TestPrompts:
         from app.training.prompts import build_classification_prompt
 
         signals = [
-            SignalInput(signal_id=42, signal_type="ccaa_filing", signal_text="CCAA protection", company_id=1),
+            SignalInput(
+                signal_id=42, signal_type="ccaa_filing", signal_text="CCAA protection", company_id=1
+            ),
         ]
         prompt = build_classification_prompt(signals)
         assert "42" in prompt
@@ -269,7 +311,9 @@ class TestPrompts:
         from app.training.groq_client import SignalInput
         from app.training.prompts import build_classification_prompt
 
-        signals = [SignalInput(signal_id=7, signal_type="no_text_type", signal_text=None, company_id=1)]
+        signals = [
+            SignalInput(signal_id=7, signal_type="no_text_type", signal_text=None, company_id=1)
+        ]
         prompt = build_classification_prompt(signals)
         assert "no text" in prompt.lower() or "signal_type only" in prompt.lower()
 
@@ -304,19 +348,23 @@ class TestPseudoLabeler:
         from app.training.groq_client import ClassificationResult, GroqClient
         from app.training.pseudo_labeler import PseudoLabeler
 
-        db = _make_mock_db(rows=[
-            (101, 5, "ccaa_filing", "CCAA protection filing text", None),
-        ])
+        db = _make_mock_db(
+            rows=[
+                (101, 5, "ccaa_filing", "CCAA protection filing text", None),
+            ]
+        )
 
         mock_groq = MagicMock(spec=GroqClient)
-        mock_groq.classify_signals = AsyncMock(return_value=[
-            ClassificationResult(
-                signal_id=101,
-                label_type="positive",
-                practice_areas=["Insolvency/Restructuring"],
-                confidence=0.92,
-            )
-        ])
+        mock_groq.classify_signals = AsyncMock(
+            return_value=[
+                ClassificationResult(
+                    signal_id=101,
+                    label_type="positive",
+                    practice_areas=["Insolvency/Restructuring"],
+                    confidence=0.92,
+                )
+            ]
+        )
 
         labeler = PseudoLabeler(groq_client=mock_groq)
         result = _run(labeler.run(run_id=1, db=db))
@@ -329,19 +377,23 @@ class TestPseudoLabeler:
         from app.training.groq_client import ClassificationResult, GroqClient
         from app.training.pseudo_labeler import PSEUDO_LABEL_CONFIDENCE_FLOOR, PseudoLabeler
 
-        db = _make_mock_db(rows=[
-            (200, 5, "news_article", "Some news", None),
-        ])
+        db = _make_mock_db(
+            rows=[
+                (200, 5, "news_article", "Some news", None),
+            ]
+        )
 
         mock_groq = MagicMock(spec=GroqClient)
-        mock_groq.classify_signals = AsyncMock(return_value=[
-            ClassificationResult(
-                signal_id=200,
-                label_type="uncertain",
-                practice_areas=[],
-                confidence=PSEUDO_LABEL_CONFIDENCE_FLOOR - 0.01,  # just below floor
-            )
-        ])
+        mock_groq.classify_signals = AsyncMock(
+            return_value=[
+                ClassificationResult(
+                    signal_id=200,
+                    label_type="uncertain",
+                    practice_areas=[],
+                    confidence=PSEUDO_LABEL_CONFIDENCE_FLOOR - 0.01,  # just below floor
+                )
+            ]
+        )
 
         result = _run(PseudoLabeler(groq_client=mock_groq).run(run_id=1, db=db))
         assert result["pseudo_labels_created"] == 0
@@ -351,22 +403,26 @@ class TestPseudoLabeler:
         from app.training.groq_client import ClassificationResult, GroqClient
         from app.training.pseudo_labeler import PseudoLabeler
 
-        db = _make_mock_db(rows=[
-            (300, 5, "job_posting", "Developer job", None),
-        ])
+        db = _make_mock_db(
+            rows=[
+                (300, 5, "job_posting", "Developer job", None),
+            ]
+        )
 
         added_labels: list[Any] = []
         db.add = lambda x: added_labels.append(x)
 
         mock_groq = MagicMock(spec=GroqClient)
-        mock_groq.classify_signals = AsyncMock(return_value=[
-            ClassificationResult(
-                signal_id=300,
-                label_type="negative",
-                practice_areas=[],
-                confidence=0.88,
-            )
-        ])
+        mock_groq.classify_signals = AsyncMock(
+            return_value=[
+                ClassificationResult(
+                    signal_id=300,
+                    label_type="negative",
+                    practice_areas=[],
+                    confidence=0.88,
+                )
+            ]
+        )
 
         _run(PseudoLabeler(groq_client=mock_groq).run(run_id=2, db=db))
         assert len(added_labels) == 1
@@ -377,22 +433,26 @@ class TestPseudoLabeler:
         from app.training.groq_client import ClassificationResult, GroqClient
         from app.training.pseudo_labeler import PseudoLabeler
 
-        db = _make_mock_db(rows=[
-            (400, 5, "enforcement_action", "SEC + Privacy violation", None),
-        ])
+        db = _make_mock_db(
+            rows=[
+                (400, 5, "enforcement_action", "SEC + Privacy violation", None),
+            ]
+        )
 
         added_labels: list[Any] = []
         db.add = lambda x: added_labels.append(x)
 
         mock_groq = MagicMock(spec=GroqClient)
-        mock_groq.classify_signals = AsyncMock(return_value=[
-            ClassificationResult(
-                signal_id=400,
-                label_type="positive",
-                practice_areas=["Securities/Capital Markets", "Privacy/Cybersecurity"],
-                confidence=0.85,
-            )
-        ])
+        mock_groq.classify_signals = AsyncMock(
+            return_value=[
+                ClassificationResult(
+                    signal_id=400,
+                    label_type="positive",
+                    practice_areas=["Securities/Capital Markets", "Privacy/Cybersecurity"],
+                    confidence=0.85,
+                )
+            ]
+        )
 
         _run(PseudoLabeler(groq_client=mock_groq).run(run_id=3, db=db))
         assert len(added_labels) == 2
@@ -419,20 +479,26 @@ class TestPseudoLabeler:
         from app.training.groq_client import ClassificationResult, GroqClient
         from app.training.pseudo_labeler import PseudoLabeler
 
-        db = _make_mock_db(rows=[
-            (500, 5, "ccaa_filing", "CCAA", None),
-        ])
+        db = _make_mock_db(
+            rows=[
+                (500, 5, "ccaa_filing", "CCAA", None),
+            ]
+        )
 
         added_labels: list[Any] = []
         db.add = lambda x: added_labels.append(x)
 
         mock_groq = MagicMock(spec=GroqClient)
-        mock_groq.classify_signals = AsyncMock(return_value=[
-            ClassificationResult(
-                signal_id=500, label_type="positive",
-                practice_areas=["Insolvency/Restructuring"], confidence=0.9,
-            )
-        ])
+        mock_groq.classify_signals = AsyncMock(
+            return_value=[
+                ClassificationResult(
+                    signal_id=500,
+                    label_type="positive",
+                    practice_areas=["Insolvency/Restructuring"],
+                    confidence=0.9,
+                )
+            ]
+        )
 
         _run(PseudoLabeler(groq_client=mock_groq).run(run_id=4, db=db))
         assert added_labels[0].label_source == "pseudo_label"
@@ -442,9 +508,11 @@ class TestPseudoLabeler:
         from app.training.groq_client import GroqClient
         from app.training.pseudo_labeler import PseudoLabeler
 
-        db = _make_mock_db(rows=[
-            (600, 5, "ccaa_filing", "CCAA", None),
-        ])
+        db = _make_mock_db(
+            rows=[
+                (600, 5, "ccaa_filing", "CCAA", None),
+            ]
+        )
 
         mock_groq = MagicMock(spec=GroqClient)
         mock_groq.classify_signals = AsyncMock(side_effect=RuntimeError("Groq down"))
@@ -478,10 +546,22 @@ class TestTrainingDataCurator:
 
         curator = TrainingDataCurator.__new__(TrainingDataCurator)
         rows = [
-            {"company_id": 1, "practice_area": "M&A/Corporate", "horizon_days": 30,
-             "label_type": "positive", "confidence_score": 0.75, "label_source": "retrospective"},
-            {"company_id": 1, "practice_area": "M&A/Corporate", "horizon_days": 30,
-             "label_type": "positive", "confidence_score": 0.90, "label_source": "pseudo_label"},
+            {
+                "company_id": 1,
+                "practice_area": "M&A/Corporate",
+                "horizon_days": 30,
+                "label_type": "positive",
+                "confidence_score": 0.75,
+                "label_source": "retrospective",
+            },
+            {
+                "company_id": 1,
+                "practice_area": "M&A/Corporate",
+                "horizon_days": 30,
+                "label_type": "positive",
+                "confidence_score": 0.90,
+                "label_source": "pseudo_label",
+            },
         ]
         result = curator._deduplicate(rows)
         assert len(result) == 1
@@ -492,10 +572,22 @@ class TestTrainingDataCurator:
 
         curator = TrainingDataCurator.__new__(TrainingDataCurator)
         rows = [
-            {"company_id": 1, "practice_area": "Tax", "horizon_days": 30,
-             "label_type": "positive", "confidence_score": 0.8, "label_source": "retrospective"},
-            {"company_id": 1, "practice_area": "Tax", "horizon_days": 60,  # different horizon
-             "label_type": "positive", "confidence_score": 0.7, "label_source": "retrospective"},
+            {
+                "company_id": 1,
+                "practice_area": "Tax",
+                "horizon_days": 30,
+                "label_type": "positive",
+                "confidence_score": 0.8,
+                "label_source": "retrospective",
+            },
+            {
+                "company_id": 1,
+                "practice_area": "Tax",
+                "horizon_days": 60,  # different horizon
+                "label_type": "positive",
+                "confidence_score": 0.7,
+                "label_source": "retrospective",
+            },
         ]
         result = curator._deduplicate(rows)
         assert len(result) == 2
@@ -505,12 +597,30 @@ class TestTrainingDataCurator:
 
         curator = TrainingDataCurator.__new__(TrainingDataCurator)
         rows = [
-            {"company_id": 1, "practice_area": "Tax", "horizon_days": 30,
-             "label_type": "positive", "confidence_score": 0.8, "label_source": "retrospective"},
-            {"company_id": 2, "practice_area": "Tax", "horizon_days": 30,
-             "label_type": "negative", "confidence_score": 0.8, "label_source": "retrospective"},
-            {"company_id": 3, "practice_area": "Tax", "horizon_days": 30,
-             "label_type": "uncertain", "confidence_score": 0.8, "label_source": "pseudo_label"},
+            {
+                "company_id": 1,
+                "practice_area": "Tax",
+                "horizon_days": 30,
+                "label_type": "positive",
+                "confidence_score": 0.8,
+                "label_source": "retrospective",
+            },
+            {
+                "company_id": 2,
+                "practice_area": "Tax",
+                "horizon_days": 30,
+                "label_type": "negative",
+                "confidence_score": 0.8,
+                "label_source": "retrospective",
+            },
+            {
+                "company_id": 3,
+                "practice_area": "Tax",
+                "horizon_days": 30,
+                "label_type": "uncertain",
+                "confidence_score": 0.8,
+                "label_source": "pseudo_label",
+            },
         ]
         result = curator._deduplicate(rows)
         by_company = {r["company_id"]: r for r in result}
@@ -524,8 +634,15 @@ class TestTrainingDataCurator:
         with tempfile.TemporaryDirectory() as tmpdir:
             curator = TrainingDataCurator(export_dir=tmpdir)
             rows = [
-                {"company_id": 1, "practice_area": "Tax", "horizon_days": 30,
-                 "label_type": "positive", "label_int": 1, "confidence_score": 0.8, "label_source": "retrospective"},
+                {
+                    "company_id": 1,
+                    "practice_area": "Tax",
+                    "horizon_days": 30,
+                    "label_type": "positive",
+                    "label_int": 1,
+                    "confidence_score": 0.8,
+                    "label_source": "retrospective",
+                },
             ]
             path = curator._export(rows, fmt="csv")
             assert os.path.exists(path)
@@ -613,7 +730,7 @@ class TestTrainingDatasetModel:
         from app.models.training import TrainingDataset
 
         ds = TrainingDataset()
-        ds.created_at = datetime(2026, 3, 24, 5, 0, 0, tzinfo=timezone.utc)
+        ds.created_at = datetime(2026, 3, 24, 5, 0, 0, tzinfo=UTC)
         ds.completed_at = ds.created_at + timedelta(seconds=120)
         assert ds.duration_seconds == 120.0
 
@@ -677,8 +794,8 @@ class TestRouteSerializers:
         ds.export_path = "/data/training/training_20260324_050000.csv"
         ds.export_format = "csv"
         ds.error_message = None
-        ds.created_at = datetime(2026, 3, 24, 5, 0, 0, tzinfo=timezone.utc)
-        ds.completed_at = datetime(2026, 3, 24, 5, 2, 0, tzinfo=timezone.utc)
+        ds.created_at = datetime(2026, 3, 24, 5, 0, 0, tzinfo=UTC)
+        ds.completed_at = datetime(2026, 3, 24, 5, 2, 0, tzinfo=UTC)
 
         d = _dataset_to_dict(ds)
         assert d["id"] == 1

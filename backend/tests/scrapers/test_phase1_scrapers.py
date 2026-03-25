@@ -15,13 +15,14 @@ Tests:
 
 Mocks all external HTTP calls — no real network traffic in tests.
 """
+
 from __future__ import annotations
+
 import asyncio
-import json
-from datetime import datetime, timezone
-from unittest.mock import AsyncMock, MagicMock, patch
+from datetime import UTC, datetime
 
 import pytest
+
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────
 @pytest.fixture
@@ -35,13 +36,23 @@ def event_loop():
 def test_all_scrapers_registered():
     """Every scraper module must register via @register decorator."""
     # Import all scraper modules to trigger registration
-    import importlib, os
+    import importlib
+    import os
 
     base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     scraper_root = os.path.join(base, "app", "scrapers")
 
-    categories = ["corporate", "legal", "regulatory", "jobs", "market",
-                  "news", "social", "geo", "law_blogs"]
+    categories = [
+        "corporate",
+        "legal",
+        "regulatory",
+        "jobs",
+        "market",
+        "news",
+        "social",
+        "geo",
+        "law_blogs",
+    ]
 
     for cat in categories:
         cat_path = os.path.join(scraper_root, cat)
@@ -56,6 +67,7 @@ def test_all_scrapers_registered():
                     pytest.fail(f"Failed to import {module_path}: {e}")
 
     from app.scrapers.registry import ScraperRegistry
+
     count = ScraperRegistry.count()
     # We expect at least 40 scrapers registered (many are multi-file)
     assert count >= 40, f"Expected >= 40 scrapers, got {count}"
@@ -65,12 +77,15 @@ def test_all_scrapers_registered():
 def test_base_scraper_contract():
     """Every registered scraper must have source_id, source_name, signal_types."""
     from app.scrapers.registry import ScraperRegistry
+
     scrapers = ScraperRegistry.all_scrapers()
     for scraper in scrapers:
         assert scraper.source_id, f"{scraper.__class__.__name__} missing source_id"
         assert scraper.source_name, f"{scraper.__class__.__name__} missing source_name"
         assert scraper.signal_types, f"{scraper.__class__.__name__} missing signal_types"
-        assert scraper.rate_limit_rps > 0, f"{scraper.__class__.__name__} rate_limit_rps must be > 0"
+        assert scraper.rate_limit_rps > 0, (
+            f"{scraper.__class__.__name__} rate_limit_rps must be > 0"
+        )
         assert scraper.concurrency >= 1, f"{scraper.__class__.__name__} concurrency must be >= 1"
 
 
@@ -93,6 +108,7 @@ def test_base_scraper_requires_source_id():
 # ── 3. Entity resolver — normalize_company_name ────────────────────────────────
 def test_normalize_company_name_basic():
     from app.scrapers.entity_resolver import normalize_company_name
+
     assert normalize_company_name("Royal Bank of Canada Inc.") == "royal bank"
     assert normalize_company_name("Shopify Inc.") == "shopify"
     assert normalize_company_name("BCE Corp.") == "bce"
@@ -101,6 +117,7 @@ def test_normalize_company_name_basic():
 
 def test_normalize_company_name_unicode():
     from app.scrapers.entity_resolver import normalize_company_name
+
     result = normalize_company_name("Hydro-Québec")
     assert "hydro" in result
     # No non-ASCII chars
@@ -109,6 +126,7 @@ def test_normalize_company_name_unicode():
 
 def test_normalize_company_name_legal_suffixes():
     from app.scrapers.entity_resolver import normalize_company_name
+
     cases = [
         ("Apple Inc.", "apple"),
         ("Microsoft Corporation", "microsoft"),
@@ -117,12 +135,15 @@ def test_normalize_company_name_legal_suffixes():
     ]
     for raw, expected in cases:
         result = normalize_company_name(raw)
-        assert expected in result, f"normalize({raw!r}) = {result!r}, expected {expected!r} in result"
+        assert expected in result, (
+            f"normalize({raw!r}) = {result!r}, expected {expected!r} in result"
+        )
 
 
 # ── 4. ScraperResult dataclass ─────────────────────────────────────────────────
 def test_scraper_result_defaults():
     from app.scrapers.base import ScraperResult
+
     result = ScraperResult(
         source_id="test_source",
         signal_type="test_signal",
@@ -139,6 +160,7 @@ def test_scraper_result_defaults():
 
 def test_scraper_result_with_values():
     from app.scrapers.base import ScraperResult
+
     result = ScraperResult(
         source_id="corporate_sedar",
         signal_type="filing_material_change",
@@ -146,7 +168,7 @@ def test_scraper_result_with_values():
         confidence_score=0.95,
         practice_area_hints=["securities", "ma"],
         signal_value={"filing_type": "MCR", "date": "2024-01-15"},
-        published_at=datetime(2024, 1, 15, tzinfo=timezone.utc),
+        published_at=datetime(2024, 1, 15, tzinfo=UTC),
     )
     assert result.raw_company_name == "Shopify Inc."
     assert "securities" in result.practice_area_hints
@@ -157,6 +179,7 @@ def test_scraper_result_with_values():
 def test_rate_limit_rps_values():
     """Verify all scrapers have sensible rate limits (not accidentally 0 or 100)."""
     from app.scrapers.registry import ScraperRegistry
+
     for scraper in ScraperRegistry.all_scrapers():
         assert 0 < scraper.rate_limit_rps <= 10, (
             f"{scraper.source_id}: rate_limit_rps={scraper.rate_limit_rps} out of bounds"
@@ -167,6 +190,7 @@ def test_rate_limit_rps_values():
 def test_law_blog_27_firms():
     """Verify all 27 Canadian law firm scrapers are configured and registered."""
     from app.scrapers.law_blogs.firm_blogs import ALL_FIRMS
+
     assert len(ALL_FIRMS) == 27, f"Expected 27 firms, got {len(ALL_FIRMS)}"
 
     tier1_firms = [f for f in ALL_FIRMS if f.tier == 1]
@@ -175,8 +199,8 @@ def test_law_blog_27_firms():
     assert len(tier2_firms) == 12, f"Expected 12 Tier 2 firms, got {len(tier2_firms)}"
 
     for firm in ALL_FIRMS:
-        assert firm.firm_id, f"Firm missing firm_id"
-        assert firm.firm_name, f"Firm missing firm_name"
+        assert firm.firm_id, "Firm missing firm_id"
+        assert firm.firm_name, "Firm missing firm_name"
         assert firm.rss_url.startswith("http"), f"{firm.firm_id} invalid rss_url: {firm.rss_url}"
         assert len(firm.practice_focus) >= 1, f"{firm.firm_id} missing practice_focus"
 
@@ -222,6 +246,7 @@ def test_circuit_breaker_opens_after_threshold():
 def test_circuit_breaker_recovers_after_timeout():
     """Circuit breaker must move to half-open after recovery timeout."""
     import time
+
     from app.scrapers.base import BaseScraper
 
     class TestScraper2(BaseScraper):
@@ -246,6 +271,7 @@ def test_circuit_breaker_recovers_after_timeout():
 # ── 8. Registry filtering ─────────────────────────────────────────────────────
 def test_registry_by_category():
     from app.scrapers.registry import ScraperRegistry
+
     corporate = ScraperRegistry.by_category("corporate")
     legal = ScraperRegistry.by_category("legal")
     regulatory = ScraperRegistry.by_category("regulatory")
@@ -266,11 +292,13 @@ def test_parse_date_formats():
         source_id = "test_date"
         source_name = "Test Date"
         signal_types = ["test"]
-        async def scrape(self): return []
+
+        async def scrape(self):
+            return []
 
     scraper = _TestScraper()
-    assert scraper._parse_date("2024-01-15") == datetime(2024, 1, 15, tzinfo=timezone.utc)
-    assert scraper._parse_date("2024-01-15T10:30:00") == datetime(2024, 1, 15, 10, 30, tzinfo=timezone.utc)
+    assert scraper._parse_date("2024-01-15") == datetime(2024, 1, 15, tzinfo=UTC)
+    assert scraper._parse_date("2024-01-15T10:30:00") == datetime(2024, 1, 15, 10, 30, tzinfo=UTC)
     assert scraper._parse_date("") is None
     assert scraper._parse_date(None) is None
     assert scraper._parse_date("not-a-date") is None
@@ -279,6 +307,7 @@ def test_parse_date_formats():
 # ── 10. HTTP header generation ────────────────────────────────────────────────
 def test_browser_headers_no_python_ua():
     from app.scrapers.base import _browser_headers
+
     headers = _browser_headers()
     ua = headers.get("User-Agent", "")
     assert "python" not in ua.lower(), "User-Agent must not expose Python"
@@ -290,6 +319,7 @@ def test_browser_headers_no_python_ua():
 
 def test_browser_headers_extra_merge():
     from app.scrapers.base import _browser_headers
+
     headers = _browser_headers({"Authorization": "Bearer test123"})
     assert headers["Authorization"] == "Bearer test123"
     assert "Mozilla" in headers.get("User-Agent", "")
@@ -298,6 +328,7 @@ def test_browser_headers_extra_merge():
 # ── 11. ScraperRegistry count ─────────────────────────────────────────────────
 def test_registry_all_ids_sorted():
     from app.scrapers.registry import ScraperRegistry
+
     ids = ScraperRegistry.all_ids()
     assert ids == sorted(ids), "Registry IDs must be returned sorted"
     assert len(ids) >= 40
@@ -305,10 +336,14 @@ def test_registry_all_ids_sorted():
 
 # ── 12. Migration syntax check ────────────────────────────────────────────────
 def test_alembic_migration_syntax():
-    import ast, os
+    import ast
+    import os
+
     migration_path = os.path.join(
         os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-        "alembic", "versions", "0002_phase1_scrapers.py"
+        "alembic",
+        "versions",
+        "0002_phase1_scrapers.py",
     )
     if os.path.exists(migration_path):
         with open(migration_path) as f:

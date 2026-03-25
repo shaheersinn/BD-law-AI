@@ -241,3 +241,28 @@ export const system = {
   health: () => get("/health"),
   ready:  () => get("/ready"),
 };
+
+// ── Phase 7 — ORACLE Scoring API ──────────────────────────────────────────────
+
+export const scores = {
+  get:     (companyId)                    => get(`/v1/scores/${companyId}`),
+  explain: (companyId)                    => get(`/v1/scores/${companyId}/explain`),
+  batch:   (companyIds, practiceAreas)    => post("/v1/scores/batch", {
+    company_ids: companyIds,
+    ...(practiceAreas ? { practice_areas: practiceAreas } : {}),
+  }),
+};
+
+export const companies = {
+  search: (q, limit = 10) => get(`/v1/companies/search?q=${encodeURIComponent(q)}&limit=${limit}`),
+  get:    (companyId)     => get(`/v1/companies/${companyId}`),
+};
+
+export const signals = {
+  list: (companyId, params = {}) =>
+    get(`/v1/signals/${companyId}?${new URLSearchParams(params)}`),
+};
+
+export const trends = {
+  practiceAreas: () => get("/v1/trends/practice_areas"),
+};
