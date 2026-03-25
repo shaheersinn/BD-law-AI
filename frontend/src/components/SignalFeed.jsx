@@ -1,61 +1,210 @@
 /**
- * components/SignalFeed.jsx
+ * components/SignalFeed.jsx — ConstructLex Pro signal feed.
  *
- * Paginated list of signals, newest first.
- * Filter controls: signal_type, practice_area, company (via props).
+ * Changes from Phase 8A:
+ * - Design tokens throughout (no hardcoded colours)
+ * - Confidence badge uses 3 colour bands
+ * - Loading skeleton state
+ * - Empty state with contextual messaging
+ * - Signal card border-left accent per confidence band
  */
 
 import { useState } from 'react'
+import { Skeleton } from './Skeleton'
 
 const PAGE_SIZE = 20
 
-function ConfidenceBadge({ score }) {
-  if (score == null) return null
+function confidenceBand(score) {
+  if (score == null) return { color: 'var(--text-tertiary)', bg: 'var(--surface-raised)', label: 'N/A' }
   const pct = Math.round(score * 100)
-  const color = pct >= 80 ? '#059669' : pct >= 50 ? '#d97706' : '#ef4444'
+  if (pct >= 80) return { color: 'var(--success)', bg: 'var(--success-bg)', label: `${pct}%`, accent: 'var(--success)' }
+  if (pct >= 50) return { color: 'var(--warning)', bg: 'var(--warning-bg)', label: `${pct}%`, accent: '#D97706' }
+  return               { color: 'var(--error)',   bg: 'var(--error-bg)',   label: `${pct}%`, accent: '#DC2626' }
+}
+
+function ConfidenceBadge({ score }) {
+  const { color, bg, label } = confidenceBand(score)
   return (
     <span style={{
-      fontSize: '0.7rem',
-      fontFamily: 'JetBrains Mono, monospace',
+      fontSize: 11,
+      fontFamily: 'var(--font-mono)',
+      fontWeight: 500,
       color,
-      background: `${color}15`,
-      padding: '1px 6px',
-      borderRadius: 4,
-      marginLeft: 6,
+      background: bg,
+      padding: '2px 7px',
+      borderRadius: 999,
+      marginLeft: 8,
+      border: `1px solid ${color}22`,
+      letterSpacing: '0.02em',
     }}>
-      {pct}%
+      {label}
     </span>
   )
 }
 
-export default function SignalFeed({ signals = [], filterControls = true }) {
+function SignalCard({ signal }) {
+  const { accent } = confidenceBand(signal.confidence_score)
+  return (
+    <div style={{
+      background: 'var(--surface)',
+      border: '1px solid var(--border)',
+      borderLeft: `3px solid ${accent || 'var(--border)'}`,
+      borderRadius: 'var(--radius-md)',
+      padding: '12px 16px',
+    }}>
+      {/* Header row */}
+      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4, marginBottom: 6 }}>
+        <span style={{
+          fontSize: 11,
+          fontWeight: 700,
+          color: 'var(--accent)',
+          textTransform: 'uppercase',
+          letterSpacing: '0.07em',
+          fontFamily: 'var(--font-mono)',
+        }}>
+          {signal.signal_type}
+        </span>
+        <ConfidenceBadge score={signal.confidence_score} />
+        {signal.practice_area_hints && (
+          <span style={{
+            marginLeft: 'auto',
+            fontSize: 10,
+            color: 'var(--text-tertiary)',
+            background: 'var(--surface-raised)',
+            border: '1px solid var(--border)',
+            padding: '1px 7px',
+            borderRadius: 4,
+            fontFamily: 'var(--font-body)',
+            letterSpacing: '0.04em',
+          }}>
+            {signal.practice_area_hints}
+          </span>
+        )}
+      </div>
+
+      {/* Signal text */}
+      {signal.signal_text && (
+        <p style={{
+          fontSize: 13,
+          color: 'var(--text)',
+          margin: '0 0 8px',
+          lineHeight: 1.55,
+        }}>
+          {signal.signal_text.length > 240
+            ? signal.signal_text.slice(0, 240) + '…'
+            : signal.signal_text}
+        </p>
+      )}
+
+      {/* Footer */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 10,
+        fontSize: 11, color: 'var(--text-tertiary)',
+      }}>
+        {signal.scraped_at && (
+          <span>{new Date(signal.scraped_at).toLocaleString('en-CA', { dateStyle: 'medium', timeStyle: 'short' })}</span>
+        )}
+        {signal.source_id && (
+          <span style={{ color: 'var(--border-strong)' }}>·</span>
+        )}
+        {signal.source_id && (
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10 }}>{signal.source_id}</span>
+        )}
+        {signal.source_url && (
+          <a
+            href={signal.source_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              marginLeft: 'auto', color: 'var(--accent)',
+              fontSize: 11, fontWeight: 500,
+              transition: 'opacity var(--transition)',
+            }}
+            onMouseEnter={e => e.currentTarget.style.opacity = '0.7'}
+            onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+          >
+            Source ↗
+          </a>
+        )}
+      </div>
+    </div>
+  )
+}
+
+export default function SignalFeed({ signals = [], loading = false, filterControls = true }) {
   const [page, setPage] = useState(0)
   const [typeFilter, setTypeFilter] = useState('')
 
-  const filtered = typeFilter
-    ? signals.filter((s) => s.signal_type === typeFilter)
-    : signals
+  // Loading state
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} style={{
+            background: 'var(--surface)', border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-md)', padding: '14px 16px',
+          }}>
+            <Skeleton width="30%" height={12} style={{ marginBottom: 10 }} />
+            <Skeleton height={12} style={{ marginBottom: 6 }} />
+            <Skeleton width="70%" height={12} />
+          </div>
+        ))}
+      </div>
+    )
+  }
 
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
-  const page_items = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
+  // Empty state
+  if (!signals.length) {
+    return (
+      <div style={{
+        padding: '3rem 2rem', textAlign: 'center',
+        color: 'var(--text-tertiary)',
+      }}>
+        <div style={{ fontSize: 28, marginBottom: 8 }}>📡</div>
+        <div style={{ fontSize: 13, fontWeight: 500 }}>No signals yet</div>
+        <div style={{ fontSize: 12, marginTop: 4 }}>
+          Signals appear here as scrapers collect new data.
+        </div>
+      </div>
+    )
+  }
 
-  // Unique signal types for filter dropdown
   const signalTypes = [...new Set(signals.map((s) => s.signal_type))].sort()
+  const filtered = typeFilter ? signals.filter((s) => s.signal_type === typeFilter) : signals
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE)
+  const pageItems = filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
+
+  const selectStyle = {
+    padding: '7px 12px',
+    border: '1px solid var(--border)',
+    borderRadius: 'var(--radius-md)',
+    fontSize: 13,
+    color: 'var(--text)',
+    background: 'var(--surface)',
+    fontFamily: 'var(--font-body)',
+    cursor: 'pointer',
+    outline: 'none',
+  }
+
+  const btnStyle = (disabled) => ({
+    padding: '6px 14px',
+    border: '1px solid var(--border)',
+    borderRadius: 'var(--radius-md)',
+    background: disabled ? 'var(--surface-raised)' : 'var(--surface)',
+    color: disabled ? 'var(--text-tertiary)' : 'var(--text)',
+    cursor: disabled ? 'default' : 'pointer',
+    fontSize: 12,
+    fontFamily: 'var(--font-body)',
+  })
 
   return (
     <div>
-      {filterControls && signalTypes.length > 0 && (
-        <div style={{ marginBottom: 12 }}>
+      {filterControls && signalTypes.length > 1 && (
+        <div style={{ marginBottom: 14 }}>
           <select
             value={typeFilter}
             onChange={(e) => { setTypeFilter(e.target.value); setPage(0) }}
-            style={{
-              padding: '6px 10px',
-              border: '1px solid #e5e7eb',
-              borderRadius: 6,
-              fontSize: '0.875rem',
-              color: '#374151',
-            }}
+            style={selectStyle}
           >
             <option value="">All signal types</option>
             {signalTypes.map((t) => (
@@ -65,94 +214,28 @@ export default function SignalFeed({ signals = [], filterControls = true }) {
         </div>
       )}
 
-      {page_items.length === 0 ? (
-        <p style={{ color: '#9ca3af', fontSize: '0.875rem' }}>No signals found.</p>
-      ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {page_items.map((s, i) => (
-            <div key={`${s.source_id}-${i}`} style={{
-              background: '#fff',
-              border: '1px solid #e5e7eb',
-              borderRadius: 8,
-              padding: '12px 16px',
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
-                <span style={{
-                  fontSize: '0.75rem',
-                  fontWeight: 600,
-                  color: '#0C9182',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                }}>
-                  {s.signal_type}
-                </span>
-                <ConfidenceBadge score={s.confidence_score} />
-                {s.practice_area_hints && (
-                  <span style={{
-                    marginLeft: 'auto',
-                    fontSize: '0.7rem',
-                    color: '#6b7280',
-                    background: '#f3f4f6',
-                    padding: '1px 6px',
-                    borderRadius: 4,
-                  }}>
-                    {s.practice_area_hints}
-                  </span>
-                )}
-              </div>
-              {s.signal_text && (
-                <p style={{ fontSize: '0.875rem', color: '#374151', margin: '4px 0', lineHeight: 1.5 }}>
-                  {s.signal_text.length > 200 ? s.signal_text.slice(0, 200) + '…' : s.signal_text}
-                </p>
-              )}
-              <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: 4 }}>
-                {s.scraped_at ? new Date(s.scraped_at).toLocaleString() : ''}
-                {s.source_url && (
-                  <a
-                    href={s.source_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ marginLeft: 8, color: '#0C9182' }}
-                  >
-                    Source ↗
-                  </a>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {pageItems.map((s, i) => (
+          <SignalCard key={`${s.source_id}-${i}`} signal={s} />
+        ))}
+      </div>
 
       {totalPages > 1 && (
-        <div style={{ display: 'flex', gap: 8, marginTop: 16, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 8, marginTop: 18, alignItems: 'center' }}>
           <button
             onClick={() => setPage((p) => Math.max(0, p - 1))}
             disabled={page === 0}
-            style={{
-              padding: '6px 14px',
-              border: '1px solid #e5e7eb',
-              borderRadius: 6,
-              background: page === 0 ? '#f9fafb' : '#fff',
-              cursor: page === 0 ? 'default' : 'pointer',
-              fontSize: '0.875rem',
-            }}
+            style={btnStyle(page === 0)}
           >
             ← Prev
           </button>
-          <span style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+          <span style={{ fontSize: 12, color: 'var(--text-secondary)', minWidth: 60, textAlign: 'center' }}>
             {page + 1} / {totalPages}
           </span>
           <button
             onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
             disabled={page >= totalPages - 1}
-            style={{
-              padding: '6px 14px',
-              border: '1px solid #e5e7eb',
-              borderRadius: 6,
-              background: page >= totalPages - 1 ? '#f9fafb' : '#fff',
-              cursor: page >= totalPages - 1 ? 'default' : 'pointer',
-              fontSize: '0.875rem',
-            }}
+            style={btnStyle(page >= totalPages - 1)}
           >
             Next →
           </button>

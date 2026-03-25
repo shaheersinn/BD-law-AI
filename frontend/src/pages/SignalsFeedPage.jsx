@@ -1,71 +1,67 @@
 /**
- * pages/SignalsFeedPage.jsx — Global recent signals feed.
+ * pages/SignalsFeedPage.jsx — ConstructLex Pro global signal feed.
  */
 
 import { useEffect, useState } from 'react'
 import { signals as signalsApi } from '../api/client'
 import SignalFeed from '../components/SignalFeed'
-
-const S = {
-  page: { minHeight: '100vh', background: '#F8F7F4', fontFamily: 'Plus Jakarta Sans, system-ui, sans-serif' },
-  main: { maxWidth: 900, margin: '0 auto', padding: '2rem 1.5rem' },
-  back: { color: '#6b7280', fontSize: '0.875rem', textDecoration: 'none', display: 'inline-block', marginBottom: '1.25rem' },
-  h1:   { fontSize: '1.4rem', fontWeight: 700, color: '#111827', marginBottom: '0.25rem' },
-  sub:  { color: '#6b7280', fontSize: '0.875rem', marginBottom: '1.5rem' },
-  row:  { display: 'flex', gap: 10, marginBottom: '1.5rem', alignItems: 'center' },
-  input:{ flex: 1, padding: '9px 14px', border: '1px solid #d1d5db', borderRadius: 8, fontSize: '0.875rem', outline: 'none' },
-  btn:  { padding: '9px 18px', background: 'linear-gradient(135deg,#0C9182,#059669)', color: '#fff', border: 'none', borderRadius: 8, fontWeight: 600, cursor: 'pointer', fontSize: '0.875rem' },
-}
+import AppShell  from '../components/layout/AppShell'
 
 export default function SignalsFeedPage() {
-  const [companyId, setCompanyId] = useState('')
-  const [signals, setSignals]     = useState([])
-  const [loading, setLoading]     = useState(false)
-  const [searched, setSearched]   = useState(false)
+  const [signals, setSignals]   = useState([])
+  const [loading, setLoading]   = useState(true)
+  const [error, setError]       = useState(null)
+  const [limit, setLimit]       = useState(100)
 
-  const fetchSignals = async (e) => {
-    e && e.preventDefault()
-    if (!companyId) return
+  const load = (lim) => {
     setLoading(true)
-    try {
-      const data = await signalsApi.list(companyId, { limit: 200 })
-      setSignals(data || [])
-    } catch {
-      setSignals([])
-    } finally {
-      setLoading(false)
-      setSearched(true)
-    }
+    signalsApi.list(null, { limit: lim })
+      .then(setSignals)
+      .catch((err) => setError(err.message || 'Failed to load signals'))
+      .finally(() => setLoading(false))
   }
 
+  useEffect(() => { load(limit) }, [])
+
   return (
-    <div style={S.page}>
-      <main style={S.main}>
-        <a href="/dashboard" style={S.back}>← Dashboard</a>
-        <h1 style={S.h1}>Signal Feed</h1>
-        <p style={S.sub}>Recent signals for a company (last 90 days)</p>
+    <AppShell>
+      <div style={{ maxWidth: 860, margin: '0 auto', padding: '2.5rem 2rem' }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '0.5rem', flexWrap: 'wrap', gap: 12 }}>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 30, color: 'var(--text)', margin: 0 }}>
+            Signal Feed
+          </h1>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            {[50, 100, 200].map((n) => (
+              <button
+                key={n}
+                onClick={() => { setLimit(n); load(n) }}
+                style={{
+                  padding: '5px 12px',
+                  border: '1px solid',
+                  borderColor: limit === n ? 'var(--accent)' : 'var(--border)',
+                  borderRadius: 'var(--radius-md)',
+                  background: limit === n ? 'var(--accent-light)' : 'var(--surface)',
+                  color: limit === n ? 'var(--accent)' : 'var(--text-secondary)',
+                  fontSize: 12, cursor: 'pointer', fontFamily: 'var(--font-body)',
+                }}
+              >
+                {n}
+              </button>
+            ))}
+          </div>
+        </div>
+        <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: '1.75rem', margin: '0 0 1.75rem' }}>
+          Latest signals across all companies and sources
+        </p>
 
-        <form onSubmit={fetchSignals} style={S.row}>
-          <input
-            type="number"
-            value={companyId}
-            onChange={(e) => setCompanyId(e.target.value)}
-            placeholder="Company ID (e.g. 42)"
-            style={S.input}
-          />
-          <button type="submit" disabled={loading || !companyId} style={S.btn}>
-            {loading ? '…' : 'Fetch'}
-          </button>
-        </form>
-
-        {searched && (
-          loading ? (
-            <p style={{ color: '#9ca3af' }}>Loading…</p>
-          ) : (
-            <SignalFeed signals={signals} />
-          )
+        {error && (
+          <div style={{ color: 'var(--error)', background: 'var(--error-bg)', border: '1px solid var(--error)', borderRadius: 'var(--radius-md)', padding: '10px 14px', fontSize: 13, marginBottom: '1rem' }}>
+            {error}
+          </div>
         )}
-      </main>
-    </div>
+
+        <SignalFeed signals={signals} loading={loading} />
+      </div>
+    </AppShell>
   )
 }

@@ -1,28 +1,18 @@
 /**
- * App.jsx — ORACLE Phase 8A functional frontend.
+ * App.jsx — ORACLE Phase 8B (ConstructLex Pro design system applied).
  *
- * Routes:
- *   /login                  — JWT login form (public)
- *   /dashboard              — Score dashboard + trend charts (auth)
- *   /search                 — Fuzzy company search (auth)
- *   /companies/:id          — Company detail + score matrix + signals (auth)
- *   /companies/:id/explain  — SHAP explanations (auth)
- *   /signals                — Global signal feed (auth)
- *   /admin/scrapers         — Scraper health (admin only)
- *   /admin/users            — User management (admin only)
- *
- * Design system (Phase 8B — ConstructLex Pro):
- *   Background:  #F8F7F4 (warm off-white)
- *   Accent:      teal-emerald #0C9182 → #059669 gradient
- *   Display/nums: Cormorant Garamond
- *   Body:         Plus Jakarta Sans
- *   Data/mono:    JetBrains Mono
+ * Changes from Phase 8A:
+ * - Imports design-system.css (CSS variables, fonts, skeleton animation)
+ * - LoginPage has NO AppShell (full-screen split layout)
+ * - All authenticated pages wrap with AppShell internally
+ * - Same routes as Phase 8A — no routing changes
  */
 
 import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import './styles/design-system.css'
 
-import PrivateRoute from './components/PrivateRoute'
+import PrivateRoute       from './components/PrivateRoute'
 import LoginPage          from './pages/LoginPage'
 import DashboardPage      from './pages/DashboardPage'
 import SearchPage         from './pages/SearchPage'
@@ -45,7 +35,7 @@ function AppRoutes() {
       {/* Public */}
       <Route path="/login" element={<LoginPage />} />
 
-      {/* Authenticated */}
+      {/* Authenticated — AppShell is applied inside each page */}
       <Route path="/dashboard" element={
         <PrivateRoute><DashboardPage /></PrivateRoute>
       } />

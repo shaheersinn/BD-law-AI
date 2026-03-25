@@ -1,76 +1,121 @@
 /**
- * pages/admin/UsersAdminPage.jsx — User management (admin only).
+ * pages/admin/UsersAdminPage.jsx — ConstructLex Pro user management.
  */
 
 import { useEffect, useState } from 'react'
-import { authApi } from '../../api/client'
+import AppShell from '../../components/layout/AppShell'
+import { Skeleton } from '../../components/Skeleton'
 
-const S = {
-  page:  { minHeight: '100vh', background: '#F8F7F4', fontFamily: 'Plus Jakarta Sans, system-ui, sans-serif' },
-  main:  { maxWidth: 900, margin: '0 auto', padding: '2rem 1.5rem' },
-  back:  { color: '#6b7280', fontSize: '0.875rem', textDecoration: 'none', display: 'inline-block', marginBottom: '1.25rem' },
-  h1:    { fontSize: '1.4rem', fontWeight: 700, color: '#111827', marginBottom: '1.5rem' },
-  table: { width: '100%', background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, borderCollapse: 'collapse', overflow: 'hidden' },
-  th:    { padding: '10px 14px', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase', borderBottom: '1px solid #e5e7eb', background: '#f9fafb' },
-  td:    { padding: '10px 14px', fontSize: '0.85rem', color: '#374151', borderBottom: '1px solid #f3f4f6' },
-  badge: (role) => ({
-    fontSize: '0.7rem',
-    fontWeight: 600,
-    padding: '2px 8px',
-    borderRadius: 999,
-    background: role === 'admin' ? '#dbeafe' : role === 'partner' ? '#ecfdf5' : '#f3f4f6',
-    color:      role === 'admin' ? '#1e40af' : role === 'partner' ? '#065f46' : '#374151',
-  }),
+const ROLE_COLORS = {
+  admin:    { bg: '#FEF3C7', color: '#92400E' },
+  partner:  { bg: 'var(--accent-light)', color: 'var(--accent-dark)' },
+  associate:{ bg: 'var(--surface-raised)', color: 'var(--text-secondary)' },
+  readonly: { bg: 'var(--surface-raised)', color: 'var(--text-tertiary)' },
+}
+
+function RoleBadge({ role }) {
+  const { bg, color } = ROLE_COLORS[role] || ROLE_COLORS.readonly
+  return (
+    <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: bg, color, textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+      {role}
+    </span>
+  )
 }
 
 export default function UsersAdminPage() {
-  const [users, setUsers]   = useState([])
+  const [users,   setUsers]   = useState([])
   const [loading, setLoading] = useState(true)
-  const [error, setError]   = useState(null)
+  const [error,   setError]   = useState(null)
 
   useEffect(() => {
-    authApi.listUsers()
-      .then((data) => setUsers(Array.isArray(data) ? data : data.users || []))
-      .catch((err) => setError(err.message))
+    fetch('/api/v1/auth/users', {
+      headers: { Authorization: `Bearer ${sessionStorage.getItem('oracle_token')}` },
+    })
+      .then(r => { if (!r.ok) throw new Error(`${r.status}`); return r.json() })
+      .then(d => setUsers(Array.isArray(d) ? d : d.users || []))
+      .catch(err => setError(err.message))
       .finally(() => setLoading(false))
   }, [])
 
+  const thStyle = {
+    padding: '9px 16px', fontSize: 10, fontWeight: 600,
+    color: 'var(--text-tertiary)', textTransform: 'uppercase',
+    letterSpacing: '0.08em', textAlign: 'left',
+    background: 'var(--surface-raised)', border: 'none',
+    borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap',
+  }
+
   return (
-    <div style={S.page}>
-      <main style={S.main}>
-        <a href="/dashboard" style={S.back}>← Dashboard</a>
-        <h1 style={S.h1}>User Management</h1>
+    <AppShell>
+      <div style={{ maxWidth: 900, margin: '0 auto', padding: '2.5rem 2rem' }}>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 30, color: 'var(--text)', marginBottom: '0.5rem' }}>
+          User Management
+        </h1>
+        <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: '2rem', margin: '0 0 2rem' }}>
+          All registered users and their access roles
+        </p>
 
-        {loading && <p style={{ color: '#9ca3af' }}>Loading…</p>}
-        {error   && <p style={{ color: '#ef4444' }}>Error: {error}</p>}
-
-        {!loading && !error && (
-          <table style={S.table}>
-            <thead>
-              <tr>
-                {['ID', 'Email', 'Role', 'Active', 'Created'].map((h) => (
-                  <th key={h} style={S.th}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {users.length === 0 ? (
-                <tr><td colSpan={5} style={{ ...S.td, textAlign: 'center', color: '#9ca3af' }}>No users</td></tr>
-              ) : (
-                users.map((u) => (
-                  <tr key={u.id}>
-                    <td style={S.td}>{u.id}</td>
-                    <td style={S.td}>{u.email}</td>
-                    <td style={S.td}><span style={S.badge(u.role)}>{u.role}</span></td>
-                    <td style={S.td}>{u.is_active ? '✓' : '✗'}</td>
-                    <td style={S.td}>{u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+        {error && (
+          <div style={{ color: 'var(--error)', background: 'var(--error-bg)', border: '1px solid var(--error)', borderRadius: 'var(--radius-md)', padding: '10px 14px', fontSize: 13, marginBottom: '1rem' }}>
+            {error}
+          </div>
         )}
-      </main>
-    </div>
+
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden', boxShadow: 'var(--shadow-sm)' }}>
+          {loading ? (
+            <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} height={40} />)}
+            </div>
+          ) : (
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr>
+                  <th style={thStyle}>Email</th>
+                  <th style={{ ...thStyle, textAlign: 'center' }}>Role</th>
+                  <th style={{ ...thStyle }}>Created</th>
+                  <th style={{ ...thStyle, textAlign: 'center' }}>Status</th>
+                  <th style={{ ...thStyle, textAlign: 'right' }}>Lockout Count</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((u, i) => (
+                  <tr key={u.id || u.email} style={{ borderBottom: '1px solid var(--surface-raised)', background: i % 2 === 0 ? 'transparent' : 'var(--surface-raised)' }}>
+                    <td style={{ padding: '10px 16px', fontSize: 13, color: 'var(--text)', fontWeight: 500 }}>
+                      {u.email}
+                    </td>
+                    <td style={{ padding: '10px 16px', textAlign: 'center' }}>
+                      <RoleBadge role={u.role} />
+                    </td>
+                    <td style={{ padding: '10px 16px', fontSize: 11, color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', whiteSpace: 'nowrap' }}>
+                      {u.created_at ? new Date(u.created_at).toLocaleDateString('en-CA') : '—'}
+                    </td>
+                    <td style={{ padding: '10px 16px', textAlign: 'center' }}>
+                      <span style={{
+                        fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 999,
+                        ...(u.is_active !== false
+                          ? { background: 'var(--success-bg)', color: 'var(--success)' }
+                          : { background: 'var(--error-bg)', color: 'var(--error)' })
+                      }}>
+                        {u.is_active !== false ? 'ACTIVE' : 'INACTIVE'}
+                      </span>
+                    </td>
+                    <td style={{ padding: '10px 16px', textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 12, color: u.failed_login_count > 0 ? 'var(--warning)' : 'var(--text-tertiary)' }}>
+                      {u.failed_login_count ?? 0}
+                    </td>
+                  </tr>
+                ))}
+                {!users.length && (
+                  <tr>
+                    <td colSpan={5} style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-tertiary)', fontSize: 13 }}>
+                      No users found.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+    </AppShell>
   )
 }

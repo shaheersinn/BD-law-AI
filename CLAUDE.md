@@ -32,8 +32,8 @@ Built for BigLaw BD teams. Zero external LLM dependency in production.
 | 6 — ML Training + 10 Enhancements | ✅ COMPLETE | March 2026 |
 | 7 — Scoring API | ✅ COMPLETE | March 2026 |
 | 8A — Functional Frontend | ✅ COMPLETE | March 2026 |
-| 8B — Production UI (ConstructLex) | ⏳ PENDING | — |
-| 9 — Feedback Loop | ⏳ PENDING | — |
+| 8B — Production UI (ConstructLex) | ✅ COMPLETE | March 2026 |
+| 9 — Feedback Loop | ⏳ NEXT | — |
 | 10 — Testing & Hardening | ⏳ PENDING | — |
 | 11 — Deployment | ⏳ PENDING | — |
 | 12 — Post-Launch Optimization | ⏳ PENDING | — |
@@ -341,8 +341,8 @@ seconds via Redis Streams instead of waiting for the next batch cycle.
 
 ---
 
-*Last updated: Phase 8A — March 2026*
-*Next update: Phase 8B completion*
+*Last updated: Phase 8B — March 2026**
+*Next update: Phase 9 completion**
 
 ---
 
@@ -531,3 +531,66 @@ present in `frontend/package.json`.
 | `/admin/scrapers` | `ScrapersAdminPage` | Admin only |
 | `/admin/users` | `UsersAdminPage` | Admin only |
 
+
+---
+
+## Phase 8B — What Was Built
+
+Phase 8B applies the ConstructLex Pro design system to every Phase 8A component. The functional frontend becomes a production-grade, brand-consistent UI. No routing changes, no new API endpoints except the top-velocity query for the dashboard.
+
+### Design System Applied
+
+**CSS tokens (defined once in `src/styles/design-system.css`, consumed everywhere via `var()`):**
+- Background: `#F8F7F4` (warm off-white)
+- Text: `#1A1A2E` / `#555566` / `#8888AA` (three tiers)
+- Accent: `#0C9182` → `#059669` gradient, dark `#065F5B`
+- Score heatmap: 5 bands (`#F0FAFA` → `#A7D9D4` → `#4DB8B0` → `#0C9182` → `#065F5B`)
+- Typography: Cormorant Garamond (display/headings) + Plus Jakarta Sans (body) + JetBrains Mono (data/scores)
+- Skeleton shimmer animation defined in CSS — no JS
+
+### Key Files Added / Replaced in Phase 8B
+
+**Design System**
+- `frontend/src/styles/design-system.css` — All CSS custom properties, base reset, skeleton keyframe, scrollbar styling
+- `frontend/index.html` — Google Fonts preload for all 3 typefaces
+
+**New Layout**
+- `frontend/src/components/layout/Sidebar.jsx` — Fixed 240px sidebar, collapsible to 64px icon-only, active route indicator, admin section, firm logo placeholder, sign-out button
+- `frontend/src/components/layout/AppShell.jsx` — Wraps sidebar + main content. Used by all authenticated pages (not LoginPage).
+
+**New Shared Components**
+- `frontend/src/components/Skeleton.jsx` — 6 skeleton variants: `Skeleton`, `SkeletonText`, `SkeletonCard`, `SkeletonRow`, `SkeletonTable`, `SkeletonCompanyHeader`. No spinners anywhere.
+- `frontend/src/components/Sparkline.jsx` — Inline SVG 7-day trend line. `viewBox="0 0 80 24"`, normalized to series min/max, area fill + end dot, colour matched to score heatmap.
+- `frontend/src/components/VelocityBadge.jsx` — Rising ↑ / Falling ↓ / Flat — badge. Green for rising, muted for falling.
+
+**Replaced Components (Phase 8A → 8B)**
+- `ScoreMatrix.jsx` — 5-band heatmap (was single RGB interpolation), Cormorant Garamond PA labels, sparklines column (optional), contrast-safe text (white text above 70%, dark below)
+- `SignalFeed.jsx` — Colour-coded confidence badges (green/amber/red), border-left accent per signal card, skeleton loading state, empty state with icon
+- `TrendCharts.jsx` — ConstructLex teal palette on Recharts BarChart, custom styled tooltip
+
+**Replaced Pages (Phase 8A → 8B)**
+- `LoginPage.jsx` — Split layout: left brand panel (teal gradient + italic quote) + right form. No AppShell.
+- `DashboardPage.jsx` — Top 20 velocity companies table (calls `/v1/scores/top-velocity`) + trend charts. Skeleton loading.
+- `SearchPage.jsx` — Skeleton loading list, branded empty state, focus-glow on input.
+- `CompanyDetailPage.jsx` — VelocityBadge + anomaly flag in header. Skeleton for matrix. SHAP link button.
+- `ExplainPage.jsx` — SHAP bar charts (inline CSS bars), green counterfactual cards.
+- `SignalsFeedPage.jsx` — Global feed with limit switcher (50/100/200).
+- `ScrapersAdminPage.jsx` — Status dot (green/amber/red), reliability % in heat-coloured mono, auto-refresh every 60s.
+- `UsersAdminPage.jsx` — Role badges per colour tier (admin=amber, partner=teal, associate/readonly=grey).
+
+**Updated**
+- `frontend/src/App.jsx` — Imports `./styles/design-system.css`. Routes unchanged.
+- `frontend/src/api/client.js` — Adds `scores.topVelocity(limit)` calling `GET /api/v1/scores/top-velocity`
+
+**Backend addition (`backend/app/routes/scores.py`)**
+- Add `GET /top-velocity?limit=N` route BEFORE `/{company_id}` to avoid path collision
+- SQL: `DISTINCT ON (company_id)` latest scoring_results → sort by velocity DESC
+- Cache: 15-min TTL under `top_velocity:{limit}`
+- Auth: `require_partner`
+- Instructions in `backend/app/routes/scores_8b_addition.py`
+
+### Agents Activated in Phase 8B
+- Agent 029 — Dashboard Freshness (monitors top-velocity cache staleness — no new Celery task; operates via existing cache TTL)
+
+*Last updated: Phase 8B — March 2026*
+*Next update: Phase 9 completion*

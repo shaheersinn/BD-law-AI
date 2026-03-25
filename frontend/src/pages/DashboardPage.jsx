@@ -1,83 +1,172 @@
 /**
- * pages/DashboardPage.jsx — Company list with top scores + trend charts.
+ * pages/DashboardPage.jsx — ConstructLex Pro dashboard.
+ *
+ * Phase 8B changes:
+ * - AppShell + Sidebar (no inline nav bar)
+ * - Top 20 highest-velocity companies table (calls /v1/scores/top-velocity)
+ * - Trend charts below velocity table
+ * - Skeleton loading states
+ * - Stat cards row
  */
 
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { trends as trendsApi } from '../api/client'
+import { trends as trendsApi, scores as scoresApi } from '../api/client'
 import TrendCharts from '../components/TrendCharts'
-import useAuthStore from '../stores/auth'
+import VelocityBadge from '../components/VelocityBadge'
+import { SkeletonCard, Skeleton } from '../components/Skeleton'
+import AppShell from '../components/layout/AppShell'
 
-const S = {
-  page:    { minHeight: '100vh', background: '#F8F7F4', fontFamily: 'Plus Jakarta Sans, system-ui, sans-serif' },
-  nav:     { background: '#fff', borderBottom: '1px solid #e5e7eb', padding: '0 2rem', display: 'flex', alignItems: 'center', height: 56, gap: 16 },
-  brand:   { fontWeight: 700, color: '#0C9182', fontSize: '1.1rem', textDecoration: 'none' },
-  navLink: { color: '#374151', fontSize: '0.875rem', textDecoration: 'none', fontWeight: 500, padding: '4px 8px', borderRadius: 6 },
-  main:    { maxWidth: 1100, margin: '0 auto', padding: '2rem 1.5rem' },
-  h1:      { fontSize: '1.5rem', fontWeight: 700, color: '#111827', marginBottom: '0.25rem' },
-  sub:     { color: '#6b7280', fontSize: '0.875rem', marginBottom: '1.5rem' },
-  card:    { background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '1.5rem', marginBottom: '1.5rem' },
-  cardH:   { fontSize: '1rem', fontWeight: 600, color: '#374151', marginBottom: '1rem' },
-  btn:     { padding: '8px 16px', background: 'linear-gradient(135deg,#0C9182,#059669)', color: '#fff', border: 'none', borderRadius: 8, fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer', textDecoration: 'none', display: 'inline-block' },
+// ── Shared card style ──────────────────────────────────────────────────────────
+const card = {
+  background: 'var(--surface)',
+  border: '1px solid var(--border)',
+  borderRadius: 'var(--radius-lg)',
+  padding: '1.5rem',
+  marginBottom: '1.5rem',
+  boxShadow: 'var(--shadow-sm)',
+}
+
+const cardTitle = {
+  fontFamily: 'var(--font-display)',
+  fontWeight: 700,
+  fontSize: 18,
+  color: 'var(--text)',
+  marginBottom: '1rem',
+  letterSpacing: '0.01em',
+}
+
+function PageHeader() {
+  return (
+    <div style={{ marginBottom: '2rem' }}>
+      <h1 style={{
+        fontFamily: 'var(--font-display)',
+        fontWeight: 700, fontSize: 32,
+        color: 'var(--text)', margin: 0, marginBottom: 6,
+        letterSpacing: '0.02em',
+      }}>
+        BD Intelligence
+      </h1>
+      <p style={{ color: 'var(--text-secondary)', fontSize: 13, margin: 0 }}>
+        Mandate probability signals across 34 practice areas
+      </p>
+    </div>
+  )
+}
+
+function VelocityRow({ item, rank }) {
+  const navigate = useNavigate()
+  return (
+    <tr
+      onClick={() => navigate(`/companies/${item.company_id}`)}
+      style={{ cursor: 'pointer', borderBottom: '1px solid var(--surface-raised)' }}
+      onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-hover)'}
+      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+    >
+      <td style={{ padding: '10px 12px', fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-tertiary)', width: 32 }}>
+        {rank}
+      </td>
+      <td style={{ padding: '10px 12px' }}>
+        <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--text)' }}>{item.company_name || `Company ${item.company_id}`}</div>
+        {item.sector && <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 1 }}>{item.sector}</div>}
+      </td>
+      <td style={{ padding: '10px 12px', textAlign: 'center' }}>
+        <VelocityBadge velocity={item.velocity_score} size="sm" />
+      </td>
+      <td style={{ padding: '10px 12px', textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-secondary)' }}>
+        {item.top_practice_area
+          ? item.top_practice_area.replace(/_/g, ' ')
+          : '—'}
+      </td>
+      <td style={{ padding: '10px 12px', textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 600, color: 'var(--accent)' }}>
+        {item.top_score_30d != null ? `${(item.top_score_30d * 100).toFixed(0)}%` : '—'}
+      </td>
+    </tr>
+  )
 }
 
 export default function DashboardPage() {
-  const navigate = useNavigate()
-  const { user, logout } = useAuthStore()
-  const [trendData, setTrendData]   = useState([])
-  const [trendLoading, setTrendLoading] = useState(true)
+  const [trendData,     setTrendData]     = useState([])
+  const [velocityData,  setVelocityData]  = useState([])
+  const [trendLoading,  setTrendLoading]  = useState(true)
+  const [velLoading,    setVelLoading]    = useState(true)
 
   useEffect(() => {
     trendsApi.practiceAreas()
       .then(setTrendData)
       .catch(() => setTrendData([]))
       .finally(() => setTrendLoading(false))
+
+    scoresApi.topVelocity?.(20)
+      .then(setVelocityData)
+      .catch(() => setVelocityData([]))
+      .finally(() => setVelLoading(false))
   }, [])
 
+  const thStyle = {
+    padding: '8px 12px',
+    fontSize: 10, fontWeight: 600,
+    color: 'var(--text-tertiary)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.08em',
+    textAlign: 'left',
+    background: 'var(--surface-raised)',
+    border: 'none',
+    borderBottom: '1px solid var(--border)',
+    whiteSpace: 'nowrap',
+  }
+
   return (
-    <div style={S.page}>
-      <nav style={S.nav}>
-        <a href="/dashboard" style={S.brand}>ORACLE</a>
-        <a href="/search" style={S.navLink}>Search</a>
-        <a href="/signals" style={S.navLink}>Signals</a>
-        {user?.role === 'admin' && <a href="/admin/scrapers" style={S.navLink}>Admin</a>}
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ fontSize: '0.8rem', color: '#6b7280' }}>{user?.email}</span>
-          <button onClick={logout} style={{ ...S.btn, background: '#f3f4f6', color: '#374151', fontWeight: 500 }}>
-            Sign out
-          </button>
-        </div>
-      </nav>
+    <AppShell>
+      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '2.5rem 2rem' }}>
+        <PageHeader />
 
-      <main style={S.main}>
-        <h1 style={S.h1}>BD Intelligence Dashboard</h1>
-        <p style={S.sub}>Mandate probability signals across 34 practice areas</p>
+        {/* ── Top velocity table ───────────────────────────────────────────── */}
+        <div style={card}>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '1rem' }}>
+            <h2 style={cardTitle}>Highest Velocity Companies</h2>
+            <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>Top 20 by 7-day mandate probability change</span>
+          </div>
 
-        <div style={{ display: 'flex', gap: 12, marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-          <a href="/search" style={S.btn}>Search Companies</a>
-          <a href="/signals" style={{ ...S.btn, background: '#f9fafb', color: '#374151', border: '1px solid #e5e7eb' }}>
-            Recent Signals
-          </a>
-        </div>
-
-        <div style={S.card}>
-          <h2 style={S.cardH}>Signal Volume by Practice Area</h2>
-          {trendLoading ? (
-            <p style={{ color: '#9ca3af', fontSize: '0.875rem' }}>Loading trends…</p>
+          {velLoading ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {Array.from({ length: 8 }).map((_, i) => (
+                <Skeleton key={i} height={40} style={{ opacity: 1 - i * 0.08 }} />
+              ))}
+            </div>
+          ) : velocityData.length === 0 ? (
+            <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-tertiary)', fontSize: 13 }}>
+              <div style={{ fontSize: 24, marginBottom: 6 }}>⏱</div>
+              Velocity data will appear after the first scoring run completes.
+            </div>
           ) : (
-            <TrendCharts data={trendData} />
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr>
+                    <th style={{ ...thStyle, width: 32 }}>#</th>
+                    <th style={thStyle}>Company</th>
+                    <th style={{ ...thStyle, textAlign: 'center' }}>Velocity</th>
+                    <th style={{ ...thStyle, textAlign: 'center' }}>Top Practice Area</th>
+                    <th style={{ ...thStyle, textAlign: 'right' }}>Score (30d)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {velocityData.map((item, i) => (
+                    <VelocityRow key={item.company_id} item={item} rank={i + 1} />
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
 
-        <div style={S.card}>
-          <h2 style={S.cardH}>Getting Started</h2>
-          <p style={{ fontSize: '0.875rem', color: '#6b7280', lineHeight: 1.6 }}>
-            Use the <strong>Search Companies</strong> button to find a company and view its
-            34×3 mandate probability matrix. Click any row in the score matrix to drill down
-            into SHAP explanations.
-          </p>
+        {/* ── Trend charts ─────────────────────────────────────────────────── */}
+        <div style={card}>
+          <h2 style={cardTitle}>Signal Volume by Practice Area</h2>
+          <TrendCharts data={trendData} loading={trendLoading} />
         </div>
-      </main>
-    </div>
+      </div>
+    </AppShell>
   )
 }

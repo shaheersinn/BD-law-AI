@@ -1,0 +1,124 @@
+/*
+ * ConstructLex Pro — ORACLE Design System
+ * src/styles/design-system.css
+ *
+ * Import this once in main.jsx.
+ * All components reference these variables — never hard-code colour values.
+ */
+
+/* ── Google Fonts fallback (already loaded via index.html) ─────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ── Design tokens ────────────────────────────────────────────────────────── */
+:root {
+  /* Colour palette */
+  --bg:               #F8F7F4;
+  --text:             #1A1A2E;
+  --text-secondary:   #555566;
+  --text-tertiary:    #8888AA;
+  --accent:           #0C9182;
+  --accent-2:         #059669;
+  --accent-dark:      #065F5B;
+  --accent-light:     #E8F5F3;
+  --border:           #E2E0DA;
+  --border-strong:    #C8C5BC;
+  --surface:          #FFFFFF;
+  --surface-hover:    #F0EFEC;
+  --surface-raised:   #FAFAF8;
+  --error:            #DC2626;
+  --error-bg:         #FEF2F2;
+  --warning:          #D97706;
+  --warning-bg:       #FFFBEB;
+  --success:          #059669;
+  --success-bg:       #F0FDF4;
+
+  /* Score heatmap bands */
+  --score-0:          #F0FAFA;   /* 0.0–0.3  — near white */
+  --score-1:          #A7D9D4;   /* 0.3–0.5  — light teal */
+  --score-2:          #4DB8B0;   /* 0.5–0.7  — mid teal */
+  --score-3:          #0C9182;   /* 0.7–0.9  — accent-primary */
+  --score-4:          #065F5B;   /* 0.9–1.0  — dark teal */
+
+  /* Typography */
+  --font-display:     'Cormorant Garamond', Georgia, serif;
+  --font-body:        'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-mono:        'JetBrains Mono', 'Courier New', monospace;
+
+  /* Sidebar */
+  --sidebar-width:    240px;
+  --sidebar-collapsed: 64px;
+
+  /* Shadows */
+  --shadow-sm:        0 1px 3px rgba(26, 26, 46, 0.06);
+  --shadow-md:        0 4px 12px rgba(26, 26, 46, 0.08);
+  --shadow-lg:        0 8px 24px rgba(26, 26, 46, 0.12);
+
+  /* Border radius */
+  --radius-sm:        6px;
+  --radius-md:        10px;
+  --radius-lg:        14px;
+  --radius-xl:        20px;
+
+  /* Transitions */
+  --transition:       150ms ease;
+}
+
+/* ── Base reset ───────────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button, input, select, textarea {
+  font-family: var(--font-body);
+  font-size: 14px;
+}
+
+/* ── Skeleton shimmer animation ───────────────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--surface-hover) 25%,
+    var(--border) 50%,
+    var(--surface-hover) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-sm);
+}
+
+/* ── Scrollbar styling ────────────────────────────────────────────────────── */
+::-webkit-scrollbar         { width: 6px; height: 6px; }
+::-webkit-scrollbar-track   { background: transparent; }
+::-webkit-scrollbar-thumb   { background: var(--border-strong); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
+
+/* ── Utility classes ──────────────────────────────────────────────────────── */
+.font-display { font-family: var(--font-display); }
+.font-mono    { font-family: var(--font-mono); }
+.text-accent  { color: var(--accent); }
+.text-secondary { color: var(--text-secondary); }

@@ -1,31 +1,26 @@
 /**
- * pages/ExplainPage.jsx — SHAP explanations for top 5 practice areas.
+ * pages/ExplainPage.jsx — ConstructLex Pro SHAP explanations.
  */
 
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { scores as scoresApi } from '../api/client'
+import AppShell from '../components/layout/AppShell'
+import { SkeletonCard } from '../components/Skeleton'
 
-const S = {
-  page:  { minHeight: '100vh', background: '#F8F7F4', fontFamily: 'Plus Jakarta Sans, system-ui, sans-serif' },
-  main:  { maxWidth: 900, margin: '0 auto', padding: '2rem 1.5rem' },
-  back:  { color: '#6b7280', fontSize: '0.875rem', textDecoration: 'none', display: 'inline-block', marginBottom: '1.25rem' },
-  h1:    { fontSize: '1.4rem', fontWeight: 700, color: '#111827', marginBottom: '1.5rem' },
-  card:  { background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: '1.5rem', marginBottom: '1.25rem' },
-  pa:    { fontSize: '1rem', fontWeight: 700, color: '#0C9182', textTransform: 'capitalize', marginBottom: 4 },
-  score: { fontSize: '0.85rem', color: '#6b7280', marginBottom: '1rem' },
-  h3:    { fontSize: '0.8rem', fontWeight: 600, color: '#374151', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 },
-  feat:  { display: 'flex', justifyContent: 'space-between', padding: '5px 0', borderBottom: '1px solid #f9fafb', fontSize: '0.85rem' },
-  cf:    { padding: '5px 10px', background: '#f0fdf4', borderRadius: 6, fontSize: '0.8rem', color: '#166534', marginBottom: 4 },
-}
-
-function FeatureRow({ feature, shap_value }) {
-  const sign = shap_value >= 0 ? '+' : ''
+function ShapBar({ value, maxAbs }) {
+  const pct = (Math.abs(value) / maxAbs) * 100
   return (
-    <div style={S.feat}>
-      <span style={{ color: '#374151' }}>{feature}</span>
-      <span style={{ fontFamily: 'JetBrains Mono, monospace', color: shap_value >= 0 ? '#059669' : '#dc2626' }}>
-        {sign}{shap_value?.toFixed(3)}
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div style={{ flex: 1, background: 'var(--surface-raised)', borderRadius: 3, height: 6, overflow: 'hidden' }}>
+        <div style={{
+          width: `${pct}%`, height: '100%', borderRadius: 3,
+          background: value >= 0 ? 'var(--accent)' : 'var(--error)',
+          transition: 'width 0.3s ease',
+        }} />
+      </div>
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: value >= 0 ? 'var(--success)' : 'var(--error)', minWidth: 48, textAlign: 'right' }}>
+        {value >= 0 ? '+' : ''}{value?.toFixed(3)}
       </span>
     </div>
   )
@@ -33,6 +28,7 @@ function FeatureRow({ feature, shap_value }) {
 
 export default function ExplainPage() {
   const { id } = useParams()
+  const navigate = useNavigate()
   const [explanations, setExplanations] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError]     = useState(null)
@@ -44,49 +40,102 @@ export default function ExplainPage() {
       .finally(() => setLoading(false))
   }, [id])
 
-  if (loading) return <div style={S.page}><main style={S.main}><p style={{ color: '#9ca3af' }}>Loading…</p></main></div>
-  if (error)   return <div style={S.page}><main style={S.main}><p style={{ color: '#ef4444' }}>{error}</p></main></div>
-
   return (
-    <div style={S.page}>
-      <main style={S.main}>
-        <a href={`/companies/${id}`} style={S.back}>← Company Detail</a>
-        <h1 style={S.h1}>SHAP Explanations — Top Practice Areas</h1>
+    <AppShell>
+      <div style={{ maxWidth: 900, margin: '0 auto', padding: '2.5rem 2rem' }}>
+        <button onClick={() => navigate(`/companies/${id}`)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', fontSize: 13, padding: 0, marginBottom: '1.5rem', fontFamily: 'var(--font-body)' }}>
+          ← Company Detail
+        </button>
 
-        {!explanations?.length ? (
-          <p style={{ color: '#9ca3af', fontSize: '0.875rem' }}>No explanations available yet.</p>
-        ) : (
-          explanations.map((exp, i) => (
-            <div key={i} style={S.card}>
-              <div style={S.pa}>{exp.practice_area?.replace(/_/g, ' ')}</div>
-              <div style={S.score}>
-                Score {(exp.score * 100).toFixed(1)}% · {exp.horizon}d horizon
-                {exp.base_value != null && ` · Base ${(exp.base_value * 100).toFixed(1)}%`}
+        <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 30, color: 'var(--text)', marginBottom: '0.5rem' }}>
+          SHAP Explanations
+        </h1>
+        <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: '2rem', margin: '0 0 2rem' }}>
+          Feature contributions for the top 5 highest-scoring practice areas
+        </p>
+
+        {loading && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            {Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} height={160} />)}
+          </div>
+        )}
+
+        {error && (
+          <div style={{ color: 'var(--error)', background: 'var(--error-bg)', border: '1px solid var(--error)', borderRadius: 'var(--radius-md)', padding: '12px 16px', fontSize: 13 }}>
+            {error}
+          </div>
+        )}
+
+        {!loading && !error && !explanations?.length && (
+          <div style={{ padding: '3rem 2rem', textAlign: 'center', color: 'var(--text-tertiary)', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)' }}>
+            <div style={{ fontSize: 24, marginBottom: 8 }}>📊</div>
+            <div style={{ fontWeight: 600, fontSize: 13 }}>No explanations available</div>
+            <div style={{ fontSize: 12, marginTop: 4 }}>Scores must reach 40%+ threshold before SHAP explanations are generated.</div>
+          </div>
+        )}
+
+        {!loading && explanations?.map((exp, i) => {
+          const maxAbs = Math.max(...(exp.top_shap_features?.map(f => Math.abs(f.shap_value)) || [1]))
+          return (
+            <div key={i} style={{
+              background: 'var(--surface)', border: '1px solid var(--border)',
+              borderRadius: 'var(--radius-lg)', padding: '1.5rem',
+              marginBottom: '1.25rem', boxShadow: 'var(--shadow-sm)',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 4 }}>
+                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, color: 'var(--accent)', textTransform: 'capitalize' }}>
+                  {exp.practice_area?.replace(/_/g, ' ')}
+                </div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 20, fontWeight: 700, color: 'var(--text)' }}>
+                  {(exp.score * 100).toFixed(1)}%
+                </div>
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginBottom: '1.25rem', fontFamily: 'var(--font-mono)' }}>
+                {exp.horizon}d horizon{exp.base_value != null ? ` · base ${(exp.base_value * 100).toFixed(1)}%` : ''}
               </div>
 
               {exp.top_shap_features?.length > 0 && (
-                <div style={{ marginBottom: '1rem' }}>
-                  <div style={S.h3}>Top SHAP Features</div>
+                <div style={{ marginBottom: '1.25rem' }}>
+                  <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>
+                    Feature Contributions
+                  </div>
                   {exp.top_shap_features.map((f, j) => (
-                    <FeatureRow key={j} feature={f.feature} shap_value={f.shap_value} />
+                    <div key={j} style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 12, alignItems: 'center', padding: '5px 0', borderBottom: '1px solid var(--surface-raised)' }}>
+                      <span style={{ fontSize: 12, color: 'var(--text)', fontFamily: 'var(--font-body)' }}>{f.feature}</span>
+                      <ShapBar value={f.shap_value} maxAbs={maxAbs} />
+                    </div>
                   ))}
                 </div>
               )}
 
               {exp.counterfactuals?.length > 0 && (
                 <div>
-                  <div style={S.h3}>Counterfactuals (what would lower this score)</div>
+                  <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>
+                    What Would Lower This Score
+                  </div>
                   {exp.counterfactuals.map((cf, j) => (
-                    <div key={j} style={S.cf}>
-                      {cf.feature}: {cf.direction} → score reduction {cf.reduction ? `−${(cf.reduction * 100).toFixed(1)}%` : '?'}
+                    <div key={j} style={{
+                      padding: '8px 12px', background: 'var(--success-bg)',
+                      borderRadius: 'var(--radius-sm)', marginBottom: 6,
+                      fontSize: 12, color: 'var(--text)',
+                      border: '1px solid var(--success)',
+                      borderLeft: '3px solid var(--success)',
+                    }}>
+                      <strong style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>{cf.feature}</strong>
+                      <span style={{ color: 'var(--text-secondary)' }}> → {cf.direction} it</span>
+                      {cf.estimated_score_reduction && (
+                        <span style={{ marginLeft: 8, fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--success)' }}>
+                          −{(cf.estimated_score_reduction * 100).toFixed(1)}%
+                        </span>
+                      )}
                     </div>
                   ))}
                 </div>
               )}
             </div>
-          ))
-        )}
-      </main>
-    </div>
+          )
+        })}
+      </div>
+    </AppShell>
   )
 }

@@ -1,76 +1,13 @@
 /**
- * pages/LoginPage.jsx — JWT login form.
+ * pages/LoginPage.jsx — ConstructLex Pro login.
+ *
+ * Split layout: left brand panel (teal gradient) + right form.
+ * Cormorant Garamond wordmark. Plus Jakarta Sans body.
  */
 
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import useAuthStore from '../stores/auth'
-
-const styles = {
-  page: {
-    minHeight: '100vh',
-    background: '#F8F7F4',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontFamily: 'Plus Jakarta Sans, system-ui, sans-serif',
-    padding: '2rem',
-  },
-  card: {
-    background: '#fff',
-    border: '1px solid #e5e7eb',
-    borderRadius: 16,
-    padding: '2.5rem',
-    width: '100%',
-    maxWidth: 400,
-    boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
-  },
-  logo: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    background: 'linear-gradient(135deg, #0C9182, #059669)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: '1.5rem',
-  },
-  title: { fontSize: '1.5rem', fontWeight: 700, color: '#111827', marginBottom: 4 },
-  sub:   { fontSize: '0.875rem', color: '#6b7280', marginBottom: '1.75rem' },
-  label: { display: 'block', fontSize: '0.875rem', fontWeight: 500, color: '#374151', marginBottom: 6 },
-  input: {
-    width: '100%',
-    padding: '10px 14px',
-    border: '1px solid #d1d5db',
-    borderRadius: 8,
-    fontSize: '0.875rem',
-    color: '#111827',
-    boxSizing: 'border-box',
-    marginBottom: '1rem',
-    outline: 'none',
-  },
-  btn: {
-    width: '100%',
-    padding: '11px',
-    background: 'linear-gradient(135deg, #0C9182, #059669)',
-    color: '#fff',
-    border: 'none',
-    borderRadius: 8,
-    fontSize: '0.9rem',
-    fontWeight: 600,
-    cursor: 'pointer',
-    marginTop: 4,
-  },
-  error: {
-    background: '#fef2f2',
-    border: '1px solid #fecaca',
-    borderRadius: 8,
-    padding: '10px 14px',
-    fontSize: '0.875rem',
-    color: '#991b1b',
-    marginBottom: '1rem',
-  },
-}
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -81,7 +18,7 @@ export default function LoginPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    clearError()
+    clearError?.()
     setLoading(true)
     const ok = await login(email, password)
     setLoading(false)
@@ -89,40 +26,187 @@ export default function LoginPage() {
   }
 
   return (
-    <div style={styles.page}>
-      <div style={styles.card}>
-        <div style={styles.logo}>
-          <span style={{ color: '#fff', fontSize: 22, fontWeight: 700 }}>O</span>
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      fontFamily: 'var(--font-body)',
+      background: 'var(--bg)',
+    }}>
+      {/* ── Left brand panel ─────────────────────────────────────────────── */}
+      <div style={{
+        width: 420,
+        flexShrink: 0,
+        background: 'linear-gradient(160deg, var(--accent-dark) 0%, var(--accent) 55%, var(--accent-2) 100%)',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        padding: '3rem',
+        position: 'relative',
+        overflow: 'hidden',
+      }}>
+        {/* Subtle geometric pattern */}
+        <div style={{
+          position: 'absolute', inset: 0, opacity: 0.06,
+          backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)',
+          backgroundSize: '28px 28px',
+        }} />
+
+        <div style={{ position: 'relative' }}>
+          <div style={{
+            fontFamily: 'var(--font-display)',
+            fontWeight: 700, fontSize: 42,
+            color: '#fff',
+            letterSpacing: '0.04em',
+            lineHeight: 1,
+            marginBottom: 8,
+          }}>
+            ORACLE
+          </div>
+          <div style={{
+            color: 'rgba(255,255,255,0.7)', fontSize: 13,
+            letterSpacing: '0.12em', textTransform: 'uppercase',
+            fontWeight: 500,
+          }}>
+            BD Intelligence Platform
+          </div>
         </div>
-        <h1 style={styles.title}>ORACLE</h1>
-        <p style={styles.sub}>BigLaw BD Intelligence Platform</p>
 
-        {error && <div style={styles.error}>{error}</div>}
+        <div style={{ position: 'relative' }}>
+          <blockquote style={{
+            margin: 0,
+            fontFamily: 'var(--font-display)',
+            fontSize: 20, fontWeight: 600,
+            color: 'rgba(255,255,255,0.9)',
+            lineHeight: 1.4,
+            fontStyle: 'italic',
+          }}>
+            "Predict the mandate before the call goes out."
+          </blockquote>
+          <div style={{
+            marginTop: 12,
+            fontSize: 11, color: 'rgba(255,255,255,0.55)',
+            letterSpacing: '0.08em', textTransform: 'uppercase',
+          }}>
+            Halcyon Legal · Toronto
+          </div>
+        </div>
+      </div>
 
-        <form onSubmit={handleSubmit}>
-          <label style={styles.label}>Email</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="admin@halcyon.legal"
-            required
-            autoFocus
-            style={styles.input}
-          />
-          <label style={styles.label}>Password</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
-            required
-            style={styles.input}
-          />
-          <button type="submit" disabled={loading} style={styles.btn}>
-            {loading ? 'Signing in…' : 'Sign in'}
-          </button>
-        </form>
+      {/* ── Right form panel ──────────────────────────────────────────────── */}
+      <div style={{
+        flex: 1,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '3rem',
+      }}>
+        <div style={{ width: '100%', maxWidth: 380 }}>
+          <h1 style={{
+            fontFamily: 'var(--font-display)',
+            fontWeight: 700, fontSize: 28,
+            color: 'var(--text)',
+            marginBottom: 6,
+          }}>
+            Sign in
+          </h1>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: '2rem', margin: '0 0 2rem' }}>
+            Access your BD intelligence dashboard
+          </p>
+
+          {error && (
+            <div style={{
+              background: 'var(--error-bg)',
+              border: '1px solid var(--error)',
+              borderRadius: 'var(--radius-md)',
+              padding: '10px 14px',
+              fontSize: 13,
+              color: 'var(--error)',
+              marginBottom: '1.25rem',
+            }}>
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit}>
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{
+                display: 'block', fontSize: 12, fontWeight: 600,
+                color: 'var(--text-secondary)', marginBottom: 6,
+                textTransform: 'uppercase', letterSpacing: '0.07em',
+              }}>
+                Email
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="admin@halcyon.legal"
+                required
+                autoFocus
+                style={{
+                  width: '100%', padding: '10px 14px',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-md)',
+                  fontSize: 13, color: 'var(--text)',
+                  background: 'var(--surface)',
+                  boxSizing: 'border-box', outline: 'none',
+                  transition: 'border-color var(--transition)',
+                  fontFamily: 'var(--font-body)',
+                }}
+                onFocus={e => e.target.style.borderColor = 'var(--accent)'}
+                onBlur={e  => e.target.style.borderColor = 'var(--border)'}
+              />
+            </div>
+
+            <div style={{ marginBottom: '1.75rem' }}>
+              <label style={{
+                display: 'block', fontSize: 12, fontWeight: 600,
+                color: 'var(--text-secondary)', marginBottom: 6,
+                textTransform: 'uppercase', letterSpacing: '0.07em',
+              }}>
+                Password
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+                style={{
+                  width: '100%', padding: '10px 14px',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-md)',
+                  fontSize: 13, color: 'var(--text)',
+                  background: 'var(--surface)',
+                  boxSizing: 'border-box', outline: 'none',
+                  transition: 'border-color var(--transition)',
+                  fontFamily: 'var(--font-body)',
+                }}
+                onFocus={e => e.target.style.borderColor = 'var(--accent)'}
+                onBlur={e  => e.target.style.borderColor = 'var(--border)'}
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              style={{
+                width: '100%', padding: '11px',
+                background: loading ? 'var(--border)' : 'linear-gradient(135deg, var(--accent), var(--accent-2))',
+                color: loading ? 'var(--text-tertiary)' : '#fff',
+                border: 'none',
+                borderRadius: 'var(--radius-md)',
+                fontSize: 13, fontWeight: 700,
+                cursor: loading ? 'default' : 'pointer',
+                fontFamily: 'var(--font-body)',
+                letterSpacing: '0.04em',
+                transition: 'background var(--transition)',
+              }}
+            >
+              {loading ? 'Signing in…' : 'Sign in →'}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   )
