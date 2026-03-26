@@ -52,33 +52,38 @@ def refresh_model_orchestrator(self: Any) -> dict[str, Any]:
     Agent 023 — Reload orchestrator model selections from model_registry.
     Runs every 6 hours. Hot-reloads without API restart.
     """
-    import asyncio
+    from sqlalchemy import text
 
-    from app.database import get_db
+    from app.database_sync import get_sync_db
     from app.ml.orchestrator import get_orchestrator
-    from app.training.model_registry import load_registry_from_db
 
     try:
+        with get_sync_db() as db:
+            result = db.execute(
+                text("""
+                    SELECT practice_area, active_model, bayesian_f1, transformer_f1,
+                           bayesian_version, transformer_version, n_train, n_holdout,
+                           scale_pos_weight, top_features, trained_at
+                    FROM model_registry
+                    WHERE is_active = true
+                    ORDER BY practice_area
+                """)
+            )
+            registry = [dict(row) for row in result.mappings()]
 
-        async def _run() -> dict[str, Any]:
-            async with get_db() as db:
-                registry = await load_registry_from_db(db)
+        orchestrator = get_orchestrator()
+        orchestrator.update_from_registry(registry)
 
-            orchestrator = get_orchestrator()
-            orchestrator.update_from_registry(registry)
+        report = orchestrator.get_selection_report()
+        transformer_count = sum(1 for r in report if r["active_model"] == "transformer")
 
-            report = orchestrator.get_selection_report()
-            transformer_count = sum(1 for r in report if r["active_model"] == "transformer")
-
-            return {
-                "registry_records": len(registry),
-                "transformer_active": transformer_count,
-                "bayesian_active": len(report) - transformer_count,
-            }
-
-        result = asyncio.run(_run())
-        log.info("agent_023_model_selector", **result)
-        return result
+        result_data = {
+            "registry_records": len(registry),
+            "transformer_active": transformer_count,
+            "bayesian_active": len(report) - transformer_count,
+        }
+        log.info("agent_023_model_selector", **result_data)
+        return result_data
 
     except Exception as exc:
         log.exception("agent_023_model_selector_failed", error=str(exc))
@@ -182,7 +187,7 @@ def clean_stale_scores(self: Any, retention_days: int = 90) -> dict[str, Any]:
     try:
         with get_sync_db() as db:
             result = db.execute(
-                text(f"DELETE FROM scoring_results WHERE scored_at < NOW() - INTERVAL '{int(retention_days)} days'"),  # noqa: S608
+                text(f"DELETE FROM scoring_results WHERE scored_at < NOW() - INTERVAL '{int(retention_days)} days'"),  # noqa: S608  # nosec B608
             )
             db.commit()
             deleted = result.rowcount

@@ -42,9 +42,11 @@ class Settings(BaseSettings):
     log_level: str = Field(default="INFO", description="Logging level")
 
     # ── Security ───────────────────────────────────────────────────────────────
-    secret_key: str = Field(
-        default_factory=lambda: secrets.token_urlsafe(32),
-        description="JWT signing secret key — MUST be changed in production",
+    # Use None as sentinel: if None in production, validator raises immediately.
+    # In development an ephemeral key is generated at startup (model_validator below).
+    secret_key: str | None = Field(
+        default=None,
+        description="JWT signing secret key — MUST be explicitly set in production",
     )
     algorithm: str = Field(default="HS256", description="JWT algorithm")
     access_token_expire_minutes: int = Field(
@@ -188,14 +190,29 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def validate_production_secrets(self) -> Settings:
-        """In production, enforce that critical secrets are not defaults."""
+        """In production, enforce that SECRET_KEY is explicitly set (not auto-generated).
+
+        An auto-generated key (default_factory) changes on every container restart,
+        immediately invalidating all active JWT sessions. In production the key MUST
+        come from the SECRET_KEY environment variable.
+        """
         if self.environment == "production":
-            # In production, secret_key should not be auto-generated
-            # (auto-generated keys change on restart, invalidating all tokens)
+            if self.secret_key is None:
+                msg = (
+                    "SECRET_KEY must be explicitly set in production. "
+                    'Generate with: python -c "import secrets; print(secrets.token_urlsafe(64))"'
+                )
+                raise ValueError(msg)
             if len(self.secret_key) < 32:
-                raise ValueError("SECRET_KEY must be at least 32 characters in production")
+                msg = "SECRET_KEY must be at least 32 characters in production"
+                raise ValueError(msg)
             if self.database_url.startswith("postgresql+asyncpg://oracle:oracle@localhost"):
-                raise ValueError("DATABASE_URL must be set to a real database URL in production")
+                msg = "DATABASE_URL must be set to a real database URL in production"
+                raise ValueError(msg)
+        # Development / staging: generate an ephemeral key if none was supplied.
+        # This is intentional — restarts are expected in dev and tokens are short-lived.
+        if self.secret_key is None:
+            self.secret_key = secrets.token_urlsafe(32)
         return self
 
     @property
