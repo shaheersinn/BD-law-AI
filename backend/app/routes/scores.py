@@ -29,6 +29,10 @@ log = structlog.get_logger(__name__)
 
 router = APIRouter(prefix="/v1/scores", tags=["scores"])
 
+# Cache TTL for top-velocity endpoint (15 minutes)
+# Public constant — referenced by Phase 10 tests and monitoring.
+VELOCITY_CACHE_TTL = 900
+
 
 # ── Pydantic models ────────────────────────────────────────────────────────────
 

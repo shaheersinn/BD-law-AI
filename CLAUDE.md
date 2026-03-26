@@ -33,10 +33,10 @@ Built for BigLaw BD teams. Zero external LLM dependency in production.
 | 7 — Scoring API | ✅ COMPLETE | March 2026 |
 | 8A — Functional Frontend | ✅ COMPLETE | March 2026 |
 | 8B — Production UI (ConstructLex) | ✅ COMPLETE | March 2026 |
-| 9 — Feedback Loop | ⏳ NEXT | — |
-| 10 — Testing & Hardening | ⏳ PENDING | — |
-| 11 — Deployment | ⏳ PENDING | — |
-| 12 — Post-Launch Optimization | ⏳ PENDING | — |
+| 9 — Feedback Loop | ✅ COMPLETE | March 2026 |
+| 10 — Testing & Hardening | ✅ COMPLETE | March 2026 |
+| 11 — Deployment | ✅ COMPLETE | March 2026 |
+| 12 — Post-Launch Optimization | ⏳ NEXT | — |
 
 ---
 
@@ -592,5 +592,169 @@ Phase 8B applies the ConstructLex Pro design system to every Phase 8A component.
 ### Agents Activated in Phase 8B
 - Agent 029 — Dashboard Freshness (monitors top-velocity cache staleness — no new Celery task; operates via existing cache TTL)
 
-*Last updated: Phase 8B — March 2026*
-*Next update: Phase 9 completion*
+*Last updated: Phase 9 — March 2026*
+*Next update: Phase 10 completion*
+
+---
+
+## Phase 9 — What Was Built
+
+Phase 9 closes the intelligence loop: when a mandate is confirmed (from CanLII, law firm announcements, or partner input), ORACLE records it against the prior prediction, measures lead time, tracks accuracy by practice area, and flags model drift when accuracy degrades.
+
+### Key Files Added in Phase 9
+
+**DB Migration (`backend/alembic/versions/0008_phase9_feedback.py`)**
+- `mandate_confirmations` — confirmed mandates (manual + auto-detected). Fields: company_id, practice_area, confirmed_at, confirmation_source, evidence_url, is_auto_detected, reviewed_by_user_id
+- `prediction_accuracy_log` — per-confirmation accuracy metrics. Fields: company_id, practice_area, horizon (30/60/90), predicted_score, threshold_used, was_correct, lead_days, confirmed_at
+- `model_drift_alerts` — practice areas with accuracy degradation. Fields: practice_area, detected_at, accuracy_before, accuracy_after, delta, ks_statistic, ks_pvalue, status (open/acknowledged/resolved)
+
+**Services (`backend/app/services/`)**
+- `mandate_confirmation.py` — `confirm_mandate()`: writes mandate_confirmations row; computes prediction_lead_days from scoring_results (days ORACLE had score > 0.5 before confirmation). `list_confirmations()`, `get_confirmation_stats()` helpers.
+- `accuracy_tracker.py` — `compute_accuracy_for_confirmation()`: for each horizon (30/60/90), finds closest scoring_results row and records was_correct + lead_days. Idempotent via ON CONFLICT DO NOTHING. `compute_all_pending()` called weekly by Agent 030.
+- `drift_detector.py` — `detect_drift()`: compares rolling 30-day accuracy vs prior 30 days per practice area. Flags if drop > 10pp. Runs KS test on score distributions via scipy.stats.ks_2samp. Inserts model_drift_alerts. `get_open_alerts()` used by API.
+- `confirmation_hunter.py` — `run()`: auto-detects mandate confirmations from recent signal_records. Three sources: canlii_live scraper, law_firm_* scrapers, SEDAR legal_contingency signals. Uses `EntityResolver` (rapidfuzz token_sort + partial_ratio, threshold 82.0) to match raw entity names. Creates confirmations with is_auto_detected=True — partner review required.
+
+**Celery Tasks (`backend/app/tasks/phase9_tasks.py`)**
+- `agents.compute_prediction_accuracy` (Agent 030) — weekly Sunday 01:00 UTC
+- `agents.run_drift_detector` (Agent 031) — weekly Sunday 02:00 UTC; also triggers orchestrator re-evaluation for flagged practice areas
+- `agents.run_confirmation_hunter` (Agent 032) — daily 06:30 UTC
+
+**API Routes (`backend/app/routes/feedback.py`)**
+- `POST /api/v1/feedback/mandate` — partner confirms mandate manually (require_partner)
+- `GET /api/v1/feedback/accuracy?days=90` — precision + avg lead days per practice area × horizon
+- `GET /api/v1/feedback/drift` — open model drift alerts
+- `GET /api/v1/feedback/confirmations` — recent confirmations list (filterable)
+
+**Frontend**
+- `frontend/src/pages/FeedbackPage.jsx` — 3 sections: Confirm Mandate form, Accuracy table, Drift Alerts. ConstructLex Pro design system.
+- `frontend/src/api/client.js` — added `feedback` endpoint group
+- `frontend/src/components/layout/Sidebar.jsx` — added Feedback nav item (partner + admin only)
+- `frontend/src/App.jsx` — added `/feedback` route
+
+**Tests (`backend/tests/test_phase9_feedback.py`)**
+- 14 tests covering: DB writes, lead_days computation, idempotency, drift threshold logic, auto-detected flag, fuzzy matching, role enforcement, schema validation, Celery task registration, migration file validity
+
+### Agents Activated in Phase 9
+- Agent 030 — Active Learning / Accuracy Tracker (`agents.compute_prediction_accuracy` — agents queue, weekly)
+- Agent 031 — Drift Detector (`agents.run_drift_detector` — agents queue, weekly)
+- Agent 032 — Mandate Confirmation Hunter (`agents.run_confirmation_hunter` — agents queue, daily)
+
+---
+
+## Phase 10 — What Was Built
+
+Phase 10 hardens the platform for production: fixes Celery's asyncio.run() anti-pattern,
+adds security headers, Prometheus metrics, Sentry Celery integration, integration + load
+test suites, and a React ErrorBoundary with Axios retry logic.
+
+### Key Files Added in Phase 10
+
+**Sync DB Session Factory (`backend/app/database_sync.py`)**
+- `_build_sync_url()` — converts `postgresql+asyncpg://` → `postgresql+psycopg2://`
+- `get_sync_db()` — context manager yielding a psycopg2-backed SQLAlchemy `Session`
+- `check_sync_db_connection()` — health probe for Celery worker startup
+- Lazy engine initialisation; pool_size=5, max_overflow=10, pool_pre_ping=True
+
+**Celery Task Hardening**
+- `backend/app/tasks/phase6_tasks.py` — 6 SQL-only tasks refactored to use `get_sync_db()` instead of `asyncio.run()`. Only `refresh_model_orchestrator` retains `asyncio.run()` (calls async service layer). All except blocks now call `sentry_sdk.capture_exception(exc)` (import guarded).
+- `backend/app/tasks/phase9_tasks.py` — Sentry `capture_exception()` added to all 3 agent except blocks. `asyncio.run()` retained (tasks call async services).
+
+**Sentry Celery Integration (`backend/app/main.py`)**
+- Added `CeleryIntegration(monitor_beat_tasks=True)` to `sentry_sdk.init()` integrations list alongside existing FastApiIntegration + SqlalchemyIntegration.
+
+**Security Headers Middleware (`backend/app/middleware/security_headers.py`)**
+- `SecurityHeadersMiddleware(is_production: bool)` — injects on every response:
+  - `Content-Security-Policy` (strict in production, relaxed for Swagger in dev)
+  - `X-Frame-Options: DENY`
+  - `X-Content-Type-Options: nosniff`
+  - `X-XSS-Protection: 1; mode=block`
+  - `Referrer-Policy: strict-origin-when-cross-origin`
+  - `Permissions-Policy: geolocation=(), microphone=(), camera=(), payment=(), usb=()`
+  - `Strict-Transport-Security` (production only, max-age=63072000 + includeSubDomains + preload)
+- Registered in `main.py` after `ErrorHandlerMiddleware`
+
+**Prometheus Metrics Endpoint (`backend/app/routes/metrics.py`)**
+- `GET /api/v1/metrics` — requires admin role; returns Prometheus text format
+- Metrics: `oracle_http_requests_total`, `oracle_http_request_p95_seconds`, `oracle_scoring_results_total`, `oracle_active_companies_total`, `oracle_model_drift_alerts_open`, `oracle_mandate_confirmations_total`, `oracle_metrics_scrape_duration_seconds`
+- All data from PostgreSQL; graceful error fallback (partial metrics on DB error)
+
+**Dependencies**
+- `backend/requirements.txt` — added `psycopg2-binary==2.9.10`, `prometheus-client==0.21.1`
+- `backend/requirements-dev.txt` — added `locust==2.32.3`, `types-psycopg2==2.9.21.20241019`
+
+**Integration Tests (`backend/tests/integration/`)**
+- `test_pipeline.py` — 3 tests: score_company_batch stores results, live feed cache invalidation, bulk DB call count assertion
+- `test_auth.py` — 4 tests: response schema, expired token rejection, JWT claims whitelist, role hierarchy
+- `test_batch_scoring.py` — 5 tests: 51-id 422, schema fields, max-50 valid, returns list, cache-hit skips DB
+- `test_cache_invalidation.py` — 4 tests: key format, 6h TTL, 15-min velocity TTL, 1h trends TTL
+
+**Load Tests (`backend/tests/load/locustfile.py`)**
+- `PartnerUser` (weight 3) — 6 tasks: score, explain, batch, top-velocity, confirm-mandate, accuracy
+- `AnalystUser` (weight 5) — 6 tasks: search, company profile, signal feed, trends, batch, health
+- `AdminUser` (weight 1) — 4 tasks: scraper health, drift alerts, metrics, readiness
+- Target SLOs: p95 < 200ms for single score, p95 < 500ms for batch, error rate < 0.1%
+
+**Phase 10 Hardening Tests (`backend/tests/test_phase10_hardening.py`)**
+- 13 tests: URL conversion, sync DB, security headers (X-Frame-Options, nosniff, HSTS prod, no HSTS dev), metrics gauge helper, sync DB import assertion, asyncio.run count assertion, requirements pins
+
+**Frontend Hardening**
+- `frontend/src/components/ErrorBoundary.jsx` — React class component; `getDerivedStateFromError` + `componentDidCatch`; ConstructLex Pro styled fallback UI (inline styles, safe from CSS variable failure); "Try again" resets state; Sentry forwarding via `window.__sentryHub`
+- `frontend/src/App.jsx` — wrapped `<BrowserRouter>` in `<ErrorBoundary>`
+- `frontend/src/api/client.js` — 5xx retry interceptor: up to 3 retries, linear backoff 500ms → 1000ms → 1500ms; 4xx errors never retried; 401 still clears auth immediately
+
+*Last updated: Phase 10 — March 2026*
+*Next update: Phase 11 completion*
+
+---
+
+## Phase 11 — What Was Built
+
+Phase 11 ships the deployment infrastructure: GitHub Actions CI/CD pipelines, a hardened
+`do-app.yaml`, a manual-only migration script, a full pre-launch checklist, and an `.env.example`
+reference for all 35+ environment variables.
+
+### Key Files Added in Phase 11
+
+**CI/CD (`.github/workflows/`)**
+- `ci.yml` — runs on every push and PR targeting `main`. Installs only lint/test deps (skips
+  heavy ML libs). Steps: ruff lint → ruff format check → mypy → bandit (medium+ severity = fail)
+  → pytest unit tests (load and integration tests excluded from CI — they need live services).
+- `cd.yml` — runs on push to `main` after CI gate passes. Three jobs:
+  - `lint-test` — identical gate as CI (ensures nothing skips)
+  - `deploy` — installs `doctl`, calls `doctl apps create-deployment --wait`, verifies ACTIVE
+    phase, runs smoke tests (`GET /api/health` + `GET /api/v1/scores/top-velocity`)
+  - `notify-failure` — posts a Slack alert if `deploy` fails (uses `SLACK_WEBHOOK_URL` secret)
+  - **Migrations NEVER run in the CD pipeline — manual only.**
+
+**Required GitHub Actions Secrets:**
+- `DIGITALOCEAN_ACCESS_TOKEN` — DO personal access token (App Platform read/write)
+- `DO_APP_ID` — App Platform app UUID (`doctl apps list`)
+- `DO_API_URL` — production API base URL
+- `SMOKE_TEST_TOKEN` — valid JWT for smoke test auth
+- `SLACK_WEBHOOK_URL` — Slack incoming webhook for failure alerts
+
+**`do-app.yaml` Changes**
+- Removed `alembic upgrade head &&` and `python -m scripts.seed_db --skip-if-seeded &&`
+  from api `run_command` — container startup now only launches uvicorn
+- Added `min_instance_count: 1` to `api` and `worker` services (prevents cold starts)
+- Changed worker `instance_size_slug` from `basic-s` to `professional-xs` (2 GB RAM for ML scoring)
+- Added `LIVE_FEEDS_ENABLED=true` to api and worker envs
+
+**`scripts/run_migrations.sh`**
+- Manual-only migration trigger. Requires `CONFIRM=yes` env var — exits with error otherwise.
+- Shows current head, pending history, then runs `alembic upgrade head`.
+- Must be run manually before any deploy that includes schema changes.
+
+**`docs/deployment_checklist.md`**
+- Complete pre-launch checklist: secrets, DB migrations, model artifacts, app health, GitHub
+  Actions secrets, frontend, CORS, monitoring, backups, rollback procedure, post-launch checks.
+- Covers DO App Platform alerts (CPU/memory/error rate), Sentry alert configuration,
+  UptimeRobot setup, DO Managed PostgreSQL backup (7-day retention), MongoDB Atlas backup.
+
+**`.env.example`**
+- Documents all 35+ environment variables from `app/config.py` with placeholder values.
+- Organised into sections: Application, Security, CORS, PostgreSQL, MongoDB, Redis, Celery,
+  Spaces, Feature Flags, External APIs, LLM (training only), Monitoring, Rate Limiting.
+
+*Last updated: Phase 11 — March 2026*
+*Next update: Phase 12 completion*

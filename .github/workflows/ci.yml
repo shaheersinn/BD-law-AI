@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-test:
+    name: Lint + Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('backend/requirements*.txt') }}
+          restore-keys: pip-
+
+      - name: Install lint + test dependencies
+        # Install only what's needed for linting and unit tests.
+        # Heavy ML deps (torch, transformers, xgboost) are skipped — they are
+        # tested in isolation via mocks and would make CI prohibitively slow.
+        run: |
+          pip install --upgrade pip
+          pip install \
+            ruff==0.9.3 \
+            mypy==1.14.1 \
+            bandit==1.8.3 \
+            pytest==8.3.4 \
+            pytest-asyncio==0.25.2 \
+            pytest-mock==3.14.0 \
+            httpx==0.28.1 \
+            fastapi==0.115.6 \
+            pydantic==2.10.5 \
+            pydantic-settings==2.7.0 \
+            sqlalchemy==2.0.36 \
+            structlog==25.1.0 \
+            python-jose==3.3.0 \
+            passlib==1.7.4 \
+            bcrypt==4.2.1 \
+            redis==5.2.1 \
+            celery==5.4.0 \
+            sentry-sdk==2.20.0 \
+            prometheus-client==0.21.1 \
+            scipy==1.14.1 \
+            rapidfuzz==3.11.0 \
+            psycopg2-binary==2.9.10
+
+      - name: Ruff — lint
+        working-directory: backend
+        run: ruff check app/ tests/
+
+      - name: Ruff — format check
+        working-directory: backend
+        run: ruff format --check app/
+
+      - name: mypy — type check
+        working-directory: backend
+        run: mypy app/ --ignore-missing-imports --no-error-summary
+
+      - name: Bandit — security scan
+        working-directory: backend
+        run: bandit -r app/ -ll -q
+
+      - name: Pytest — unit tests
+        working-directory: backend
+        run: |
+          pytest tests/ -x -q --tb=short \
+            --ignore=tests/load \
+            --ignore=tests/integration

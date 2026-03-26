@@ -15,6 +15,12 @@ Also implements support tasks:
     - run_cross_jurisdiction_propagation: Daily propagation
     - update_graph_features: Daily graph centrality update
     - seed_decay_config: One-time default lambda seeding
+
+Phase 10 hardening:
+    - Tasks that use raw SQL now use get_sync_db() (psycopg2) instead of asyncio.run().
+    - Tasks that must call async services (refresh_model_orchestrator) still use
+      asyncio.run() since the underlying service layer is async.
+    - Sentry capture_exception() added in all except blocks.
 """
 
 from __future__ import annotations
@@ -76,6 +82,11 @@ def refresh_model_orchestrator(self: Any) -> dict[str, Any]:
 
     except Exception as exc:
         log.exception("agent_023_model_selector_failed", error=str(exc))
+        try:
+            import sentry_sdk
+            sentry_sdk.capture_exception(exc)
+        except ImportError:
+            pass
         raise self.retry(exc=exc) from exc
 
 
@@ -98,54 +109,52 @@ def run_anomaly_escalation(self: Any, anomaly_threshold: float = 0.7) -> dict[st
     Escalates to active_learning_queue with high priority.
     Runs daily after scoring pipeline.
     """
-    import asyncio
+    from sqlalchemy import text
 
-    from app.database import get_db
+    from app.database_sync import get_sync_db
 
     try:
+        with get_sync_db() as db:
+            result = db.execute(
+                text("""
+                    SELECT company_id, anomaly_score, scored_at
+                    FROM scoring_results
+                    WHERE scored_at >= NOW() - INTERVAL '24 hours'
+                      AND anomaly_score >= :threshold
+                    ORDER BY anomaly_score DESC
+                    LIMIT 200
+                """),
+                {"threshold": anomaly_threshold},
+            )
+            anomalous = result.fetchall()
 
-        async def _run() -> dict[str, Any]:
-            async with get_db() as db:
-                from sqlalchemy import text
-
-                result = await db.execute(
+            escalated = 0
+            for row in anomalous:
+                company_id, anomaly_score, _scored_at = row
+                db.execute(
                     text("""
-                        SELECT company_id, anomaly_score, scored_at
-                        FROM scoring_results
-                        WHERE scored_at >= NOW() - INTERVAL '24 hours'
-                          AND anomaly_score >= :threshold
-                        ORDER BY anomaly_score DESC
-                        LIMIT 200
+                        INSERT INTO active_learning_queue
+                            (company_id, practice_area, priority_score, status)
+                        VALUES (:company_id, 'anomaly', :priority, 'pending')
+                        ON CONFLICT DO NOTHING
                     """),
-                    {"threshold": anomaly_threshold},
+                    {"company_id": company_id, "priority": float(anomaly_score)},
                 )
-                anomalous = result.fetchall()
+                escalated += 1
 
-                escalated = 0
-                for row in anomalous:
-                    company_id, anomaly_score, scored_at = row
-                    # Insert/update active learning queue with high priority
-                    await db.execute(
-                        text("""
-                            INSERT INTO active_learning_queue
-                                (company_id, practice_area, priority_score, status)
-                            VALUES (:company_id, 'anomaly', :priority, 'pending')
-                            ON CONFLICT DO NOTHING
-                        """),
-                        {"company_id": company_id, "priority": float(anomaly_score)},
-                    )
-                    escalated += 1
+            db.commit()
 
-                await db.commit()
-
-            return {"anomalous_companies": len(anomalous), "escalated": escalated}
-
-        result = asyncio.run(_run())
-        log.info("agent_024_anomaly_escalation", **result)
-        return result
+        result_data = {"anomalous_companies": len(anomalous), "escalated": escalated}
+        log.info("agent_024_anomaly_escalation", **result_data)
+        return result_data
 
     except Exception as exc:
         log.exception("agent_024_anomaly_escalation_failed", error=str(exc))
+        try:
+            import sentry_sdk
+            sentry_sdk.capture_exception(exc)
+        except ImportError:
+            pass
         raise self.retry(exc=exc) from exc
 
 
@@ -166,32 +175,29 @@ def clean_stale_scores(self: Any, retention_days: int = 90) -> dict[str, Any]:
     Agent 025 — Archive scoring_results older than retention_days.
     Runs weekly. Prevents table bloat.
     """
-    import asyncio
+    from sqlalchemy import text
 
-    from app.database import get_db
+    from app.database_sync import get_sync_db
 
     try:
+        with get_sync_db() as db:
+            result = db.execute(
+                text(f"DELETE FROM scoring_results WHERE scored_at < NOW() - INTERVAL '{int(retention_days)} days'"),  # noqa: S608
+            )
+            db.commit()
+            deleted = result.rowcount
 
-        async def _run() -> dict[str, Any]:
-            async with get_db() as db:
-                from sqlalchemy import text
-
-                result = await db.execute(
-                    text("""
-                        DELETE FROM scoring_results
-                        WHERE scored_at < NOW() - INTERVAL ':days days'
-                    """),
-                    {"days": retention_days},
-                )
-                await db.commit()
-                return {"deleted_rows": result.rowcount}
-
-        result = asyncio.run(_run())
-        log.info("agent_025_score_decay", **result)
-        return result
+        result_data = {"deleted_rows": deleted}
+        log.info("agent_025_score_decay", **result_data)
+        return result_data
 
     except Exception as exc:
         log.exception("agent_025_score_decay_failed", error=str(exc))
+        try:
+            import sentry_sdk
+            sentry_sdk.capture_exception(exc)
+        except ImportError:
+            pass
         raise self.retry(exc=exc) from exc
 
 
@@ -239,67 +245,66 @@ def run_ccaa_cascade(self: Any) -> dict[str, Any]:
     - Securities (same company — shareholder class action follows)
     - Employment (mass layoff follows restructuring)
     """
-    import asyncio
+    from sqlalchemy import text
 
-    from app.database import get_db
+    from app.database_sync import get_sync_db
 
     try:
+        with get_sync_db() as db:
+            result = db.execute(
+                text("""
+                    SELECT DISTINCT sr.company_id
+                    FROM signal_records sr
+                    WHERE sr.signal_type = 'canlii_ccaa'
+                      AND sr.published_at >= NOW() - INTERVAL '7 days'
+                      AND NOT EXISTS (
+                          SELECT 1 FROM signal_records sr2
+                          WHERE sr2.company_id = sr.company_id
+                            AND sr2.signal_type = 'ccaa_cascade_applied'
+                      )
+                """)
+            )
+            ccaa_companies = [row[0] for row in result.fetchall()]
+            cascaded = 0
 
-        async def _run() -> dict[str, Any]:
-            async with get_db() as db:
-                from sqlalchemy import text
+            cascade_signals = [
+                ("class_actions_cascade", 0.85),
+                ("securities_cascade", 0.75),
+                ("employment_cascade", 0.70),
+            ]
 
-                # Find recent CCAA signals not yet cascaded
-                result = await db.execute(
-                    text("""
-                        SELECT DISTINCT sr.company_id
-                        FROM signal_records sr
-                        WHERE sr.signal_type = 'canlii_ccaa'
-                          AND sr.published_at >= NOW() - INTERVAL '7 days'
-                          AND NOT EXISTS (
-                              SELECT 1 FROM signal_records sr2
-                              WHERE sr2.company_id = sr.company_id
-                                AND sr2.signal_type = 'ccaa_cascade_applied'
-                          )
-                    """)
-                )
-                ccaa_companies = [row[0] for row in result.fetchall()]
-                cascaded = 0
+            for company_id in ccaa_companies:
+                for signal_type, confidence in cascade_signals:
+                    db.execute(
+                        text("""
+                            INSERT INTO signal_records
+                                (company_id, signal_type, signal_value, confidence_score,
+                                 source_id, published_at, is_canary)
+                            VALUES (:company_id, :signal_type, '{}', :confidence,
+                                    'ccaa_cascade_agent', NOW(), false)
+                            ON CONFLICT DO NOTHING
+                        """),
+                        {
+                            "company_id": company_id,
+                            "signal_type": signal_type,
+                            "confidence": confidence,
+                        },
+                    )
+                cascaded += 1
 
-                for company_id in ccaa_companies:
-                    # Create cascade signals for co-occurring practice areas
-                    cascade_signals = [
-                        ("class_actions_cascade", "class_actions", 0.85),
-                        ("securities_cascade", "securities", 0.75),
-                        ("employment_cascade", "employment", 0.70),
-                    ]
-                    for signal_type, _pa, confidence in cascade_signals:
-                        await db.execute(
-                            text("""
-                                INSERT INTO signal_records
-                                    (company_id, signal_type, signal_value, confidence_score,
-                                     source_id, published_at, is_canary)
-                                VALUES (:company_id, :signal_type, '{}', :confidence,
-                                        'ccaa_cascade_agent', NOW(), false)
-                                ON CONFLICT DO NOTHING
-                            """),
-                            {
-                                "company_id": company_id,
-                                "signal_type": signal_type,
-                                "confidence": confidence,
-                            },
-                        )
-                    cascaded += 1
+            db.commit()
 
-                await db.commit()
-            return {"ccaa_companies_found": len(ccaa_companies), "cascaded": cascaded}
-
-        result = asyncio.run(_run())
-        log.info("agent_027_ccaa_cascade", **result)
-        return result
+        result_data = {"ccaa_companies_found": len(ccaa_companies), "cascaded": cascaded}
+        log.info("agent_027_ccaa_cascade", **result_data)
+        return result_data
 
     except Exception as exc:
         log.exception("agent_027_ccaa_cascade_failed", error=str(exc))
+        try:
+            import sentry_sdk
+            sentry_sdk.capture_exception(exc)
+        except ImportError:
+            pass
         raise self.retry(exc=exc) from exc
 
 
@@ -325,97 +330,97 @@ def score_company_batch(self: Any, company_ids: list[int]) -> dict[str, Any]:
     Performance: one bulk SELECT → in-memory ML scoring → one bulk INSERT.
     No per-company DB round-trips inside the scoring loop.
     """
-    import asyncio
     import json
 
-    from app.database import get_db
+    from sqlalchemy import text
+
+    from app.database_sync import get_sync_db
     from app.ml.orchestrator import get_orchestrator
 
     try:
+        orchestrator = get_orchestrator()
+        if not orchestrator._loaded:
+            log.warning("scoring_batch: orchestrator not loaded, loading now")
+            orchestrator.load()
 
-        async def _run() -> dict[str, Any]:
-            orchestrator = get_orchestrator()
-            if not orchestrator._loaded:
-                log.warning("scoring_batch: orchestrator not loaded, loading now")
-                orchestrator.load()
+        from app.ml.anomaly_detector import get_anomaly_detector
+        from app.ml.velocity_scorer import aggregate_company_velocity
 
-            from app.ml.anomaly_detector import get_anomaly_detector
-            from app.ml.velocity_scorer import aggregate_company_velocity
+        with get_sync_db() as db:
+            # ── Phase A: Bulk fetch latest features for all companies ────
+            feat_result = db.execute(
+                text("""
+                    SELECT DISTINCT ON (company_id) *
+                    FROM company_features
+                    WHERE company_id = ANY(:ids)
+                    ORDER BY company_id, feature_date DESC
+                """),
+                {"ids": list(company_ids)},
+            )
+            feature_map: dict[int, dict] = {
+                row["company_id"]: dict(row) for row in feat_result.mappings()
+            }
 
-            async with get_db() as db:
-                from sqlalchemy import text
+            # ── Phase B: In-memory scoring (zero DB I/O) ────────────────
+            rows_to_insert: list[dict] = []
+            failed = 0
 
-                # ── Phase A: Bulk fetch latest features for all companies ────
-                feat_result = await db.execute(
-                    text("""
-                        SELECT DISTINCT ON (company_id) *
-                        FROM company_features
-                        WHERE company_id = ANY(:ids)
-                        ORDER BY company_id, feature_date DESC
-                    """),
-                    {"ids": list(company_ids)},
-                )
-                feature_map: dict[int, dict] = {
-                    row["company_id"]: dict(row) for row in feat_result.mappings()
-                }
-
-                # ── Phase B: In-memory scoring (zero DB I/O) ────────────────
-                rows_to_insert: list[dict] = []
-                failed = 0
-
-                for company_id in company_ids:
-                    features = feature_map.get(company_id)
-                    if features is None:
-                        log.warning("score_company_batch: no features for company %d", company_id)
-                        failed += 1
-                        continue
-                    try:
-                        horizon_scores = orchestrator.score_company(features)
-                        scores_json = {pa: hs.as_dict() for pa, hs in horizon_scores.items()}
-                        velocity = aggregate_company_velocity(
-                            {pa: {"30d": hs.score_30d} for pa, hs in horizon_scores.items()}
-                        )
-                        anomaly = get_anomaly_detector().score(features)
-                        rows_to_insert.append(
-                            {
-                                "company_id": company_id,
-                                "scores": json.dumps(scores_json),
-                                "velocity_score": velocity,
-                                "anomaly_score": anomaly,
-                                "model_versions": json.dumps(
-                                    {pa: hs.model_version for pa, hs in horizon_scores.items()}
-                                ),
-                            }
-                        )
-                    except Exception:
-                        log.exception(
-                            "score_company_batch: scoring failed for company %d", company_id
-                        )
-                        failed += 1
-
-                # ── Phase C: Bulk INSERT (one executemany call) ──────────────
-                if rows_to_insert:
-                    await db.execute(
-                        text("""
-                            INSERT INTO scoring_results
-                                (company_id, scored_at, scores, velocity_score,
-                                 anomaly_score, model_versions)
-                            VALUES (:company_id, NOW(), :scores::jsonb, :velocity_score,
-                                    :anomaly_score, :model_versions::jsonb)
-                        """),
-                        rows_to_insert,
+            for company_id in company_ids:
+                features = feature_map.get(company_id)
+                if features is None:
+                    log.warning("score_company_batch: no features for company %d", company_id)
+                    failed += 1
+                    continue
+                try:
+                    horizon_scores = orchestrator.score_company(features)
+                    scores_json = {pa: hs.as_dict() for pa, hs in horizon_scores.items()}
+                    velocity = aggregate_company_velocity(
+                        {pa: {"30d": hs.score_30d} for pa, hs in horizon_scores.items()}
                     )
-                    await db.commit()
+                    anomaly = get_anomaly_detector().score(features)
+                    rows_to_insert.append(
+                        {
+                            "company_id": company_id,
+                            "scores": json.dumps(scores_json),
+                            "velocity_score": velocity,
+                            "anomaly_score": anomaly,
+                            "model_versions": json.dumps(
+                                {pa: hs.model_version for pa, hs in horizon_scores.items()}
+                            ),
+                        }
+                    )
+                except Exception:
+                    log.exception(
+                        "score_company_batch: scoring failed for company %d", company_id
+                    )
+                    failed += 1
 
-            scored = len(rows_to_insert)
-            return {"scored": scored, "failed": failed, "total": len(company_ids)}
+            # ── Phase C: Bulk INSERT (one executemany call) ──────────────
+            if rows_to_insert:
+                db.execute(
+                    text("""
+                        INSERT INTO scoring_results
+                            (company_id, scored_at, scores, velocity_score,
+                             anomaly_score, model_versions)
+                        VALUES (:company_id, NOW(), :scores::jsonb, :velocity_score,
+                                :anomaly_score, :model_versions::jsonb)
+                    """),
+                    rows_to_insert,
+                )
+                db.commit()
 
-        result = asyncio.run(_run())
+        scored = len(rows_to_insert)
+        result = {"scored": scored, "failed": failed, "total": len(company_ids)}
         log.info("scoring_batch_complete", **result)
         return result
 
     except Exception as exc:
         log.exception("scoring_batch_failed", error=str(exc))
+        try:
+            import sentry_sdk
+            sentry_sdk.capture_exception(exc)
+        except ImportError:
+            pass
         raise self.retry(exc=exc) from exc
 
 
@@ -433,65 +438,64 @@ def score_company_batch(self: Any, company_ids: list[int]) -> dict[str, Any]:
 )
 def run_active_learning(self: Any) -> dict[str, Any]:
     """Weekly: identify uncertain companies and queue for priority scraping."""
-    import asyncio
     import json
 
-    from app.database import get_db
+    from sqlalchemy import text
+
+    from app.database_sync import get_sync_db
     from app.ml.active_learning import (
         build_active_learning_queue_rows,
         identify_uncertain_companies,
     )
 
     try:
+        with get_sync_db() as db:
+            result = db.execute(
+                text("""
+                    SELECT company_id, scores
+                    FROM scoring_results
+                    WHERE scored_at >= NOW() - INTERVAL '24 hours'
+                """)
+            )
+            rows = result.fetchall()
 
-        async def _run() -> dict[str, Any]:
-            async with get_db() as db:
-                from sqlalchemy import text
+            company_scores: dict[int, dict[str, dict[int, float]]] = {}
+            for row in rows:
+                cid = row[0]
+                scores = json.loads(row[1]) if isinstance(row[1], str) else row[1]
+                company_scores[cid] = {
+                    pa: {int(k): v for k, v in hs.items()} for pa, hs in scores.items()
+                }
 
-                result = await db.execute(
+            uncertain = identify_uncertain_companies(company_scores)
+            queue_rows = build_active_learning_queue_rows(uncertain)
+
+            for queue_row in queue_rows:
+                db.execute(
                     text("""
-                        SELECT company_id, scores
-                        FROM scoring_results
-                        WHERE scored_at >= NOW() - INTERVAL '24 hours'
-                    """)
+                        INSERT INTO active_learning_queue
+                            (company_id, practice_area, priority_score, status)
+                        VALUES (:company_id, :practice_area, :priority_score, 'pending')
+                        ON CONFLICT DO NOTHING
+                    """),
+                    queue_row,
                 )
-                rows = result.fetchall()
+            db.commit()
 
-                company_scores: dict[int, dict[str, dict[int, float]]] = {}
-                for row in rows:
-                    cid = row[0]
-                    scores = json.loads(row[1]) if isinstance(row[1], str) else row[1]
-                    # Convert string keys to int
-                    company_scores[cid] = {
-                        pa: {int(k): v for k, v in hs.items()} for pa, hs in scores.items()
-                    }
-
-                uncertain = identify_uncertain_companies(company_scores)
-                queue_rows = build_active_learning_queue_rows(uncertain)
-
-                for queue_row in queue_rows:
-                    await db.execute(
-                        text("""
-                            INSERT INTO active_learning_queue
-                                (company_id, practice_area, priority_score, status)
-                            VALUES (:company_id, :practice_area, :priority_score, 'pending')
-                            ON CONFLICT DO NOTHING
-                        """),
-                        queue_row,
-                    )
-                await db.commit()
-
-            return {
-                "uncertain_companies": len(uncertain),
-                "queue_rows_added": len(queue_rows),
-            }
-
-        result = asyncio.run(_run())
-        log.info("active_learning_complete", **result)
-        return result
+        result_data = {
+            "uncertain_companies": len(uncertain),
+            "queue_rows_added": len(queue_rows),
+        }
+        log.info("active_learning_complete", **result_data)
+        return result_data
 
     except Exception as exc:
         log.exception("active_learning_failed", error=str(exc))
+        try:
+            import sentry_sdk
+            sentry_sdk.capture_exception(exc)
+        except ImportError:
+            pass
         raise self.retry(exc=exc) from exc
 
 
@@ -513,39 +517,40 @@ def seed_decay_config(self: Any) -> dict[str, Any]:
     Called once after Phase 6 migration runs.
     Subsequent calibrations come from Azure training jobs.
     """
-    import asyncio
+    from sqlalchemy import text
 
-    from app.database import get_db
+    from app.database_sync import get_sync_db
     from app.ml.temporal_decay import build_default_decay_config_rows
 
     try:
+        rows = build_default_decay_config_rows()
+        inserted = 0
 
-        async def _run() -> dict[str, Any]:
-            rows = build_default_decay_config_rows()
-            async with get_db() as db:
-                from sqlalchemy import text
+        with get_sync_db() as db:
+            for row in rows:
+                result = db.execute(
+                    text("""
+                        INSERT INTO signal_decay_config
+                            (signal_type, practice_area, lambda_value,
+                             half_life_days, calibrated, source)
+                        VALUES (:signal_type, :practice_area, :lambda_value,
+                                :half_life_days, :calibrated, :source)
+                        ON CONFLICT (signal_type, practice_area) DO NOTHING
+                    """),
+                    row,
+                )
+                inserted += result.rowcount
+            db.commit()
 
-                inserted = 0
-                for row in rows:
-                    result = await db.execute(
-                        text("""
-                            INSERT INTO signal_decay_config
-                                (signal_type, practice_area, lambda_value,
-                                 half_life_days, calibrated, source)
-                            VALUES (:signal_type, :practice_area, :lambda_value,
-                                    :half_life_days, :calibrated, :source)
-                            ON CONFLICT (signal_type, practice_area) DO NOTHING
-                        """),
-                        row,
-                    )
-                    inserted += result.rowcount
-                await db.commit()
-            return {"inserted": inserted, "total": len(rows)}
-
-        result = asyncio.run(_run())
-        log.info("seed_decay_config_complete", **result)
-        return result
+        result_data = {"inserted": inserted, "total": len(rows)}
+        log.info("seed_decay_config_complete", **result_data)
+        return result_data
 
     except Exception as exc:
         log.exception("seed_decay_config_failed", error=str(exc))
+        try:
+            import sentry_sdk
+            sentry_sdk.capture_exception(exc)
+        except ImportError:
+            pass
         raise self.retry(exc=exc) from exc

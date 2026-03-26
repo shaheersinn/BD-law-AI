@@ -12,6 +12,7 @@ import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import './styles/design-system.css'
 
+import ErrorBoundary      from './components/ErrorBoundary'
 import PrivateRoute       from './components/PrivateRoute'
 import LoginPage          from './pages/LoginPage'
 import DashboardPage      from './pages/DashboardPage'
@@ -21,6 +22,7 @@ import ExplainPage        from './pages/ExplainPage'
 import SignalsFeedPage    from './pages/SignalsFeedPage'
 import ScrapersAdminPage  from './pages/admin/ScrapersAdminPage'
 import UsersAdminPage     from './pages/admin/UsersAdminPage'
+import FeedbackPage       from './pages/FeedbackPage'
 import useAuthStore       from './stores/auth'
 
 function AppRoutes() {
@@ -52,6 +54,11 @@ function AppRoutes() {
         <PrivateRoute><SignalsFeedPage /></PrivateRoute>
       } />
 
+      {/* Partner+ */}
+      <Route path="/feedback" element={
+        <PrivateRoute><FeedbackPage /></PrivateRoute>
+      } />
+
       {/* Admin only */}
       <Route path="/admin/scrapers" element={
         <PrivateRoute adminOnly><ScrapersAdminPage /></PrivateRoute>
@@ -71,8 +78,10 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <AppRoutes />
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <AppRoutes />
+      </BrowserRouter>
+    </ErrorBoundary>
   )
 }
