@@ -21,7 +21,7 @@ services:
   - name: api
     source_dir: backend
     github:
-      repo: REPLACE_GITHUB_USERNAME/oracle-bd
+      repo: shaheersinn/oracle-bd
       branch: main
       deploy_on_push: true
     dockerfile_path: Dockerfile
