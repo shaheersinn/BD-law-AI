@@ -36,7 +36,7 @@ Built for BigLaw BD teams. Zero external LLM dependency in production.
 | 9 — Feedback Loop | ⏳ NEXT | — |
 | 10 — Testing & Hardening | ⏳ PENDING | — |
 | 11 — Deployment | ⏳ PENDING | — |
-| 12 — Post-Launch Optimization | ⏳ PENDING | — |
+| 12 — Post-Launch Optimization | ✅ COMPLETE | March 2026 |
 
 ---
 
@@ -592,5 +592,89 @@ Phase 8B applies the ConstructLex Pro design system to every Phase 8A component.
 ### Agents Activated in Phase 8B
 - Agent 029 — Dashboard Freshness (monitors top-velocity cache staleness — no new Celery task; operates via existing cache TTL)
 
-*Last updated: Phase 8B — March 2026*
-*Next update: Phase 9 completion*
+*Last updated: Phase 12 — March 2026*
+*All phases complete.*
+
+---
+
+## Phase 12 — What Was Built
+
+Phase 12 closes the post-launch optimization loop: weekly usage analytics, ML score quality monitoring, human signal weight overrides, targeted Azure ML retraining, and an admin optimization dashboard.
+
+### Key Files Added in Phase 12
+
+**Services**
+- `backend/app/services/analytics_service.py` — `compute_weekly_usage_report()`: pulls `api_request_log`, computes p50/p95, top companies, cache hit rate, stores in `usage_reports`, delivers via Slack webhook or structlog. `get_perf_report()` for on-demand latency analysis.
+- `backend/app/services/score_quality.py` — `compute_score_quality_report()`: pulls `prediction_accuracy_log`, computes per-practice-area precision/recall, identifies worst 5, checks training data volume (`mandate_labels`), stores in `score_quality_reports`, writes `backend/reports/score_quality_{date}.md`.
+
+**ML Extensions**
+- `backend/app/ml/sector_weights.py` — New: `recalibrate_from_confirmations(db)` (re-runs MI calibration on 30 days of confirmed mandates, updates `sector_signal_weights`), `refresh_cooccurrence_rules(db)` wrapping Apriori, `load_human_overrides_from_cache()`, `compute_aggregate_multiplier()` extended with `human_overrides` parameter (human wins).
+- `backend/app/ml/cooccurrence.py` — New: `refresh_rules(db)` re-mines Apriori rules from `mandate_confirmations` × `signal_records` and replaces `signal_rules` table entries.
+
+**Azure**
+- `azure/training/azure_job.py` — New `--practice-areas` CLI flag for targeted practice-area retraining. `submit_training_job(practice_areas=[...])` passes comma-separated list to `train_all.py`.
+
+**API Routes (`backend/app/routes/optimization.py`)**
+- Prefix `/v1/optimization`, tags `["optimization"]`
+- `GET /usage-report` → latest `usage_reports` row (require_partner)
+- `GET /score-quality` → latest `score_quality_reports` row (require_partner)
+- `GET /perf-report?days=7` → p50/p95/p99 by endpoint sorted by p95 DESC; `needs_attention: true` if p95 > 300ms (require_partner)
+- `GET /signal-overrides` → list active `signal_weight_overrides` (require_partner)
+- `POST /signal-override` → create override, deactivates existing pair, invalidates Redis cache (require_partner)
+- `DELETE /signal-override/{id}` → deactivate override, invalidates Redis cache (require_partner)
+
+**Celery Tasks (`backend/app/tasks/phase12_tasks.py`)**
+- `agents.compute_usage_report` — Agent 033, weekly Monday 08:00 UTC (agents queue)
+- `agents.recalibrate_signal_weights` — Agent 034, monthly 1st 02:00 UTC (agents queue)
+- `agents.check_retrain_trigger` — Agent 035, weekly Sunday 03:00 UTC (agents queue)
+
+**Database (`backend/alembic/versions/0009_phase12_optimization.py`)**
+- `usage_reports` — weekly snapshots (top_companies JSONB, endpoint_breakdown JSONB, p50/p95, cache_hit_rate)
+- `score_quality_reports` — per-practice-area accuracy summaries (summary JSONB, worst_five JSONB)
+- `signal_weight_overrides` — human BD team multipliers (0.01–5.0) per signal_type × practice_area; human override wins over ML weight
+- `retrain_submissions` — records of Azure ML retraining jobs submitted by Agent 035
+
+**Frontend**
+- `frontend/src/pages/admin/OptimizationPage.jsx` — Route `/admin/optimization` (admin only). Three sections: Usage Report (top companies, p95, cache hit rate), Score Quality (34-row table; worst 5 in amber; low-data flags), Signal Overrides (active list + inline create/remove form). Skeleton loading throughout.
+- `frontend/src/api/client.js` — Added `optimization` endpoint group (6 methods). All endpoint groups attached to default export.
+- `frontend/src/App.jsx` — Added `/admin/optimization` route.
+- `frontend/src/components/layout/Sidebar.jsx` — Added "Optimization" nav item to admin section.
+
+**Config (`backend/app/config.py`)**
+- `optimization_report_retention_weeks: int = 52`
+- `retrain_drift_threshold: float = 0.10`
+
+**Tests (`backend/tests/test_phase12_optimization.py`)**
+- 26 tests: migration validity, 4-table check, config settings, analytics service, score quality (worst-five logic, markdown writer), sector weights override integration, cooccurrence stub, Azure job signature, 3 Celery tasks registered, beat schedule correctness, override Pydantic model validation, 34-practice-area count, reports/.gitkeep.
+
+### Agents Activated in Phase 12
+- Agent 033 — Usage Analytics (`agents.compute_usage_report` — agents queue, weekly Monday 08:00 UTC)
+- Agent 034 — Signal Weight Recalibration (`agents.recalibrate_signal_weights` — agents queue, monthly 1st 02:00 UTC)
+- Agent 035 — Retraining Trigger (`agents.check_retrain_trigger` — agents queue, weekly Sunday 03:00 UTC)
+
+---
+
+## Known Limitations
+
+1. **Phase 9–11 dependencies**: Phase 12 analytics services (`score_quality.py`, `check_retrain_trigger`) gracefully degrade when `prediction_accuracy_log`, `mandate_confirmations`, and `model_drift_alerts` tables don't exist (Phase 9 not yet implemented). They log warnings and return empty results rather than crashing.
+2. **Single-tenant only**: Multi-tenant architecture is designed but not activated (`multi_tenant_enabled=False`). Each new law firm requires a separate deployment.
+3. **English-only NLP**: French-language filings (SEDAR Québec) are out of scope. No bilingual signal processing.
+4. **Azure ML credentials required for retraining**: Agent 035 `check_retrain_trigger` will log a warning and record a dry-run job ID if `AZURE_SUBSCRIPTION_ID` / `AZURE_RESOURCE_GROUP` / `AZURE_WORKSPACE_NAME` env vars are not set.
+5. **p95 threshold is static**: The 300ms "needs_attention" flag in `/perf-report` is hardcoded. High-variance endpoints (batch scoring) may always flag amber.
+6. **Score quality recall not computed**: Recall requires knowing all real mandates that occurred — this would require complete mandate confirmation coverage (Phase 9). Currently only precision and avg lead days are populated.
+7. **GraphSAGE deferred**: Phase 6 used NetworkX centrality for the director interlock graph. PyTorch Geometric GraphSAGE was deferred from Phase 6 and has not been implemented.
+
+---
+
+## Recommended Next Features
+
+1. **Email digest**: Weekly usage report delivered via SMTP (not just Slack). Add `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `REPORT_EMAIL_TO` env vars.
+2. **Multi-tenant support**: Activate `multi_tenant_enabled` flag. Each firm gets isolated DB schema, separate JWT namespace, and Vercel deployment.
+3. **Mobile app / push alerts**: React Native app with push notifications when a watched company's score crosses a threshold.
+4. **API key access**: Allow law firm clients to query the scoring API via API keys (not JWT). Add `api_keys` table with rate limits per key.
+5. **Slack BD alerts**: When a company's 30d score crosses 0.7, push a Slack alert to the BD partner's channel with top signals and SHAP explanation.
+6. **GraphSAGE upgrade**: Replace NetworkX in `graph_features.py` with PyTorch Geometric GraphSAGE for richer director interlock embeddings.
+7. **Practice area filtering**: Let partners subscribe to only the practice areas they handle. Reduces noise in the ScoreMatrix.
+8. **Automatic CLAUDE.md sync**: On each phase completion, auto-update CLAUDE.md via a CI step rather than manual Agent update.
+9. **Prometheus + Grafana dashboards**: The `/api/metrics` endpoint (Phase 10) enables full Prometheus scraping. Wire to Grafana for real-time dashboards visible to the BD team.
+10. **Feedback labelling UI**: Partners can label ORACLE predictions as correct/incorrect directly from the ScoreMatrix, feeding the Phase 9 accuracy tracker without needing to go to the Feedback page.

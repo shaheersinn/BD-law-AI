@@ -23,9 +23,18 @@ log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 
-def submit_training_job(dry_run: bool = False) -> str:
+def submit_training_job(
+    dry_run: bool = False,
+    practice_areas: list[str] | None = None,
+) -> str:
     """
     Submit Oracle ML training job to Azure ML.
+
+    Args:
+        dry_run:        Use 10% of data for validation runs.
+        practice_areas: Optional list of practice areas for targeted retraining.
+                        When provided, only those practice areas are retrained.
+                        Used by Phase 12 Agent 035 to avoid full retrains.
 
     Returns:
         Azure ML job name.
@@ -79,10 +88,14 @@ def submit_training_job(dry_run: bool = False) -> str:
     )
 
     dry_run_flag = "--dry-run" if dry_run else ""
+    pa_flag = ""
+    if practice_areas:
+        pa_list = ",".join(practice_areas)
+        pa_flag = f"--practice-areas {pa_list}"
 
     job = command(
         code="./",   # entire repo — .amlignore excludes frontend
-        command=f"python -m app.training.train_all {dry_run_flag}",
+        command=f"python -m app.training.train_all {dry_run_flag} {pa_flag}".strip(),
         environment=env,
         compute=compute_name,
         experiment_name="oracle-ml-training",
@@ -101,6 +114,8 @@ def submit_training_job(dry_run: bool = False) -> str:
     returned_job = ml_client.jobs.create_or_update(job)
     log.info("Submitted Azure ML job: %s", returned_job.name)
     log.info("Studio URL: %s", returned_job.studio_url)
+    if practice_areas:
+        log.info("Targeted retraining for practice areas: %s", practice_areas)
     return returned_job.name
 
 
@@ -138,8 +153,15 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--wait", action="store_true", help="Wait for job completion")
+    parser.add_argument(
+        "--practice-areas",
+        type=str,
+        default=None,
+        help="Comma-separated list of practice areas for targeted retraining (Phase 12)",
+    )
     args = parser.parse_args()
 
-    job_name = submit_training_job(dry_run=args.dry_run)
+    pa_list = args.practice_areas.split(",") if args.practice_areas else None
+    job_name = submit_training_job(dry_run=args.dry_run, practice_areas=pa_list)
     if args.wait:
         wait_for_completion(job_name)

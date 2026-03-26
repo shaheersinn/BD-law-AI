@@ -271,6 +271,11 @@ app.include_router(companies_router, prefix=PREFIX)
 app.include_router(signals_router, prefix=PREFIX)
 app.include_router(trends_router, prefix=PREFIX)
 
+# Phase 12 — Post-Launch Optimization
+from app.routes.optimization import router as optimization_router  # noqa: E402
+
+app.include_router(optimization_router, prefix=PREFIX)
+
 
 # ── System Endpoints ───────────────────────────────────────────────────────────
 

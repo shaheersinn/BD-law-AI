@@ -156,6 +156,16 @@ class Settings(BaseSettings):
     rate_limit_requests: int = Field(default=100, description="Max requests per window per user")
     rate_limit_window_seconds: int = Field(default=3600, description="Rate limit window in seconds")
 
+    # ── Phase 12: Post-Launch Optimization ────────────────────────────────────
+    optimization_report_retention_weeks: int = Field(
+        default=52,
+        description="How many weekly usage_reports rows to retain (older rows pruned by Agent 033)",
+    )
+    retrain_drift_threshold: float = Field(
+        default=0.10,
+        description="Minimum F1 drop (as fraction) that triggers targeted Azure retraining",
+    )
+
     # ── Multi-tenancy (future) ─────────────────────────────────────────────────
     # Currently single-tenant. Multi-tenant architecture designed but not activated.
     # When multi-tenancy is enabled, each firm gets isolated DB schema.

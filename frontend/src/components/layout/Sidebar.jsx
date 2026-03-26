@@ -36,8 +36,9 @@ const navItems = [
 ]
 
 const adminItems = [
-  { path: '/admin/scrapers', label: 'Scrapers', icon: 'scrapers' },
-  { path: '/admin/users',    label: 'Users',    icon: 'users' },
+  { path: '/admin/scrapers',      label: 'Scrapers',      icon: 'scrapers' },
+  { path: '/admin/users',         label: 'Users',         icon: 'users' },
+  { path: '/admin/optimization',  label: 'Optimization',  icon: 'admin' },
 ]
 
 export default function Sidebar() {

@@ -59,4 +59,21 @@ export const trends = {
   practiceAreas: () => api.get('/api/v1/trends/practice_areas').then(r => r.data),
 }
 
+// ── optimization (Phase 12) ───────────────────────────────────────────────────
+export const optimization = {
+  usageReport:    ()       => api.get('/api/v1/optimization/usage-report'),
+  scoreQuality:   ()       => api.get('/api/v1/optimization/score-quality'),
+  perfReport:     (days=7) => api.get(`/api/v1/optimization/perf-report?days=${days}`),
+  listOverrides:  ()       => api.get('/api/v1/optimization/signal-overrides'),
+  createOverride: (body)   => api.post('/api/v1/optimization/signal-override', body),
+  deleteOverride: (id)     => api.delete(`/api/v1/optimization/signal-override/${id}`),
+}
+
+// Attach all endpoint groups to the default export for convenience
+api.scores       = scores
+api.companies    = companies
+api.signals      = signals
+api.trends       = trends
+api.optimization = optimization
+
 export default api

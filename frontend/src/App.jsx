@@ -19,8 +19,9 @@ import SearchPage         from './pages/SearchPage'
 import CompanyDetailPage  from './pages/CompanyDetailPage'
 import ExplainPage        from './pages/ExplainPage'
 import SignalsFeedPage    from './pages/SignalsFeedPage'
-import ScrapersAdminPage  from './pages/admin/ScrapersAdminPage'
-import UsersAdminPage     from './pages/admin/UsersAdminPage'
+import ScrapersAdminPage    from './pages/admin/ScrapersAdminPage'
+import UsersAdminPage       from './pages/admin/UsersAdminPage'
+import OptimizationPage     from './pages/admin/OptimizationPage'
 import useAuthStore       from './stores/auth'
 
 function AppRoutes() {
@@ -58,6 +59,9 @@ function AppRoutes() {
       } />
       <Route path="/admin/users" element={
         <PrivateRoute adminOnly><UsersAdminPage /></PrivateRoute>
+      } />
+      <Route path="/admin/optimization" element={
+        <PrivateRoute adminOnly><OptimizationPage /></PrivateRoute>
       } />
 
       {/* Default redirects */}

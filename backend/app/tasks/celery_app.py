@@ -35,7 +35,9 @@ celery_app = Celery(
     broker=settings.celery_broker_url,
     backend=settings.celery_result_backend,
     include=[
-        "app.tasks._impl",  # All task implementations
+        "app.tasks._impl",          # All task implementations
+        "app.tasks.phase6_tasks",   # Phase 6 ML tasks
+        "app.tasks.phase12_tasks",  # Phase 12 optimization agents
     ],
 )
 
@@ -122,6 +124,10 @@ celery_app.conf.task_routes = {
     "app.tasks._impl.monitor_signal_velocity": {"queue": "agents"},
     "app.tasks._impl.run_dead_signal_resurrector": {"queue": "agents"},
     "app.tasks._impl.trigger_linkedin_lookup": {"queue": "agents"},
+    # Phase 12: Optimization agents → agents queue
+    "agents.compute_usage_report": {"queue": "agents"},
+    "agents.recalibrate_signal_weights": {"queue": "agents"},
+    "agents.check_retrain_trigger": {"queue": "agents"},
 }
 
 # ── Beat Schedule ──────────────────────────────────────────────────────────────
@@ -318,6 +324,27 @@ celery_app.conf.beat_schedule = {
     "run-dead-signal-resurrector": {
         "task": "app.tasks._impl.run_dead_signal_resurrector",
         "schedule": crontab(minute="*/30"),
+        "options": {"queue": "agents"},
+    },
+    # ── Phase 12: Agent 033 — Usage Analytics + Score Quality ─────────────────
+    # Weekly Monday 08:00 UTC: usage snapshot + score quality report
+    "agent-compute-usage-report": {
+        "task": "agents.compute_usage_report",
+        "schedule": crontab(minute=0, hour=8, day_of_week=1),  # Monday 08:00 UTC
+        "options": {"queue": "agents"},
+    },
+    # ── Phase 12: Agent 034 — Signal Weight Recalibration ─────────────────────
+    # Monthly on 1st at 02:00 UTC: recalibrate sector weights + co-occurrence rules
+    "agent-recalibrate-signal-weights": {
+        "task": "agents.recalibrate_signal_weights",
+        "schedule": crontab(minute=0, hour=2, day_of_month=1),  # 1st of month 02:00 UTC
+        "options": {"queue": "agents"},
+    },
+    # ── Phase 12: Agent 035 — Model Retraining Trigger ────────────────────────
+    # Weekly Sunday 03:00 UTC: check drift alerts, submit targeted Azure retraining
+    "agent-check-retrain-trigger": {
+        "task": "agents.check_retrain_trigger",
+        "schedule": crontab(minute=0, hour=3, day_of_week=0),  # Sunday 03:00 UTC
         "options": {"queue": "agents"},
     },
 }
