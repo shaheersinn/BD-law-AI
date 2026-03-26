@@ -22,7 +22,7 @@ from alembic import op
 
 # revision identifiers
 revision = "0006_phase6_ml"
-down_revision = "0004_phase4_llm_training"  # adjust to actual latest migration
+down_revision = "0005_phase5_live_feeds"
 branch_labels = None
 depends_on = None
 
