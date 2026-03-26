@@ -35,8 +35,8 @@ Built for BigLaw BD teams. Zero external LLM dependency in production.
 | 8B — Production UI (ConstructLex) | ✅ COMPLETE | March 2026 |
 | 9 — Feedback Loop | ✅ COMPLETE | March 2026 |
 | 10 — Testing & Hardening | ✅ COMPLETE | March 2026 |
-| 11 — Deployment | ⏳ NEXT | — |
-| 12 — Post-Launch Optimization | ⏳ PENDING | — |
+| 11 — Deployment | ✅ COMPLETE | March 2026 |
+| 12 — Post-Launch Optimization | ⏳ NEXT | — |
 
 ---
 
@@ -704,3 +704,57 @@ test suites, and a React ErrorBoundary with Axios retry logic.
 
 *Last updated: Phase 10 — March 2026*
 *Next update: Phase 11 completion*
+
+---
+
+## Phase 11 — What Was Built
+
+Phase 11 ships the deployment infrastructure: GitHub Actions CI/CD pipelines, a hardened
+`do-app.yaml`, a manual-only migration script, a full pre-launch checklist, and an `.env.example`
+reference for all 35+ environment variables.
+
+### Key Files Added in Phase 11
+
+**CI/CD (`.github/workflows/`)**
+- `ci.yml` — runs on every push and PR targeting `main`. Installs only lint/test deps (skips
+  heavy ML libs). Steps: ruff lint → ruff format check → mypy → bandit (medium+ severity = fail)
+  → pytest unit tests (load and integration tests excluded from CI — they need live services).
+- `cd.yml` — runs on push to `main` after CI gate passes. Three jobs:
+  - `lint-test` — identical gate as CI (ensures nothing skips)
+  - `deploy` — installs `doctl`, calls `doctl apps create-deployment --wait`, verifies ACTIVE
+    phase, runs smoke tests (`GET /api/health` + `GET /api/v1/scores/top-velocity`)
+  - `notify-failure` — posts a Slack alert if `deploy` fails (uses `SLACK_WEBHOOK_URL` secret)
+  - **Migrations NEVER run in the CD pipeline — manual only.**
+
+**Required GitHub Actions Secrets:**
+- `DIGITALOCEAN_ACCESS_TOKEN` — DO personal access token (App Platform read/write)
+- `DO_APP_ID` — App Platform app UUID (`doctl apps list`)
+- `DO_API_URL` — production API base URL
+- `SMOKE_TEST_TOKEN` — valid JWT for smoke test auth
+- `SLACK_WEBHOOK_URL` — Slack incoming webhook for failure alerts
+
+**`do-app.yaml` Changes**
+- Removed `alembic upgrade head &&` and `python -m scripts.seed_db --skip-if-seeded &&`
+  from api `run_command` — container startup now only launches uvicorn
+- Added `min_instance_count: 1` to `api` and `worker` services (prevents cold starts)
+- Changed worker `instance_size_slug` from `basic-s` to `professional-xs` (2 GB RAM for ML scoring)
+- Added `LIVE_FEEDS_ENABLED=true` to api and worker envs
+
+**`scripts/run_migrations.sh`**
+- Manual-only migration trigger. Requires `CONFIRM=yes` env var — exits with error otherwise.
+- Shows current head, pending history, then runs `alembic upgrade head`.
+- Must be run manually before any deploy that includes schema changes.
+
+**`docs/deployment_checklist.md`**
+- Complete pre-launch checklist: secrets, DB migrations, model artifacts, app health, GitHub
+  Actions secrets, frontend, CORS, monitoring, backups, rollback procedure, post-launch checks.
+- Covers DO App Platform alerts (CPU/memory/error rate), Sentry alert configuration,
+  UptimeRobot setup, DO Managed PostgreSQL backup (7-day retention), MongoDB Atlas backup.
+
+**`.env.example`**
+- Documents all 35+ environment variables from `app/config.py` with placeholder values.
+- Organised into sections: Application, Security, CORS, PostgreSQL, MongoDB, Redis, Celery,
+  Spaces, Feature Flags, External APIs, LLM (training only), Monitoring, Rate Limiting.
+
+*Last updated: Phase 11 — March 2026*
+*Next update: Phase 12 completion*
