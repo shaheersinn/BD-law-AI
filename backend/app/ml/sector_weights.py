@@ -37,7 +37,7 @@ SECTORS: list[str] = [
 
 
 def calibrate_sector_weights(
-    X_train: Any,  # pd.DataFrame with feature columns + sector column
+    X_train: Any,  # noqa: N803  # pd.DataFrame with feature columns + sector column
     y_train: Any,  # pd.Series (binary labels)
     feature_columns: list[str],
     sector_column: str = "sector",
@@ -60,7 +60,6 @@ def calibrate_sector_weights(
         # Global MI across all sectors
         X_features = X_train[feature_columns].fillna(0)
         global_mi = mutual_info_classif(X_features, y_train, random_state=42)
-        global_mi_map = dict(zip(feature_columns, global_mi))
 
         sectors_in_data = X_train[sector_column].unique()
 
@@ -81,7 +80,7 @@ def calibrate_sector_weights(
             sector_mi = mutual_info_classif(X_sector, y_sector, random_state=42)
 
             sector_weights: dict[str, float] = {}
-            for feat, smi, gmi in zip(feature_columns, sector_mi, global_mi):
+            for feat, smi, gmi in zip(feature_columns, sector_mi, global_mi, strict=False):
                 if gmi < 1e-6:
                     sector_weights[feat] = 1.0
                 else:

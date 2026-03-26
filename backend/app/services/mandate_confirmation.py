@@ -175,7 +175,9 @@ async def get_confirmation_stats(
 
     try:
         if practice_area:
-            result = await db.execute(_STATS_BY_PA, {"since": since, "practice_area": practice_area})
+            result = await db.execute(
+                _STATS_BY_PA, {"since": since, "practice_area": practice_area}
+            )
         else:
             result = await db.execute(_STATS_ALL, {"since": since})
         rows = result.fetchall()

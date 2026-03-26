@@ -120,9 +120,6 @@ def explain_prediction(
                 continue  # not contributing to high score
 
             feat_val = float(features.get(feat_name, 0.0))
-            # Estimate what value would bring SHAP contribution to ~0
-            # Simple linear approximation: target_val ≈ current_val - (shap / weight)
-            reduction_pct = min(0.5, abs(float(sv[i])) / max(score, 0.01))
             counterfactuals.append(
                 {
                     "feature": feat_name,

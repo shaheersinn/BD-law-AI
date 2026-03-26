@@ -289,12 +289,12 @@ from app.routes.metrics import router as metrics_router  # noqa: E402
 app.include_router(metrics_router, prefix=PREFIX)
 
 # Phase 8B — Additional BD intelligence routes
-from app.routes.watchlist import router as watchlist_router  # noqa: E402
 from app.routes.analytics import router as analytics_router  # noqa: E402
-from app.routes.geo import router as geo_router  # noqa: E402
 from app.routes.clients import router as clients_router  # noqa: E402
-from app.routes.triggers import router as triggers_router  # noqa: E402
+from app.routes.geo import router as geo_router  # noqa: E402
 from app.routes.scores_8b_addition import router as scores_8b_router  # noqa: E402
+from app.routes.triggers import router as triggers_router  # noqa: E402
+from app.routes.watchlist import router as watchlist_router  # noqa: E402
 
 app.include_router(watchlist_router, prefix=PREFIX)
 app.include_router(analytics_router, prefix=PREFIX)

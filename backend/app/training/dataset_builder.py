@@ -115,7 +115,7 @@ class DatasetBuilder:
         # Build label columns per horizon
         for horizon in [30, 60, 90]:
 
-            def has_mandate_in_window(row: pd.Series) -> int:
+            def has_mandate_in_window(row: pd.Series, _h: int = horizon) -> int:  # noqa: B023
                 if pd.isna(row.get("mandate_confirmed_at")):
                     return 0
                 if row.get("is_negative_label", False):
@@ -128,7 +128,7 @@ class DatasetBuilder:
                     fd = pd.Timestamp(feature_date).to_pydatetime()
                     md = pd.Timestamp(mandate_date).to_pydatetime()
                     delta = (md - fd).days
-                    return 1 if 0 <= delta <= horizon else 0
+                    return 1 if 0 <= delta <= _h else 0
                 except Exception:
                     return 0
 
@@ -233,12 +233,10 @@ class DatasetBuilder:
         """Fetch company_features from PostgreSQL."""
         try:
             limit_clause = f"LIMIT {limit}" if limit else ""
-            query = text(f"""
-                SELECT company_id, feature_date, {", ".join(feature_columns)}
-                FROM company_features
-                ORDER BY feature_date DESC
-                {limit_clause}
-            """)
+            # feature_columns comes from an internal constant — not user input
+            cols = ", ".join(feature_columns)
+            sql = f"SELECT company_id, feature_date, {cols} FROM company_features ORDER BY feature_date DESC {limit_clause}"  # noqa: S608
+            query = text(sql)
             result = await self._db.execute(query)
             rows = result.fetchall()
             if not rows:
@@ -279,15 +277,10 @@ class DatasetBuilder:
         Used for AnomalyDetector training (clean baseline only).
         """
         try:
-            query = text(f"""
-                SELECT cf.{", cf.".join(feature_columns)}
-                FROM company_features cf
-                WHERE cf.company_id NOT IN (
-                    SELECT DISTINCT company_id FROM mandate_labels
-                    WHERE is_negative_label = false
-                )
-                LIMIT 10000
-            """)
+            # feature_columns comes from an internal constant — not user input
+            cols = ", cf.".join(feature_columns)
+            sql = f"SELECT cf.{cols} FROM company_features cf WHERE cf.company_id NOT IN (SELECT DISTINCT company_id FROM mandate_labels WHERE is_negative_label = false) LIMIT 10000"  # noqa: S608
+            query = text(sql)
             result = await self._db.execute(query)
             rows = result.fetchall()
             if not rows:
@@ -337,15 +330,10 @@ class DatasetBuilder:
     async def fetch_sector_training_data(self, feature_columns: list[str]) -> dict[str, Any] | None:
         """Fetch features + sector labels for sector weight calibration."""
         try:
-            query = text(f"""
-                SELECT cf.{", cf.".join(feature_columns)}, c.sector,
-                       CASE WHEN ml.company_id IS NOT NULL THEN 1 ELSE 0 END as has_mandate
-                FROM company_features cf
-                JOIN companies c ON c.id = cf.company_id
-                LEFT JOIN mandate_labels ml ON ml.company_id = cf.company_id
-                    AND ml.is_negative_label = false
-                LIMIT 50000
-            """)
+            # feature_columns comes from an internal constant — not user input
+            cols = ", cf.".join(feature_columns)
+            sql = f"SELECT cf.{cols}, c.sector, CASE WHEN ml.company_id IS NOT NULL THEN 1 ELSE 0 END as has_mandate FROM company_features cf JOIN companies c ON c.id = cf.company_id LEFT JOIN mandate_labels ml ON ml.company_id = cf.company_id AND ml.is_negative_label = false LIMIT 50000"  # noqa: S608
+            query = text(sql)
             result = await self._db.execute(query)
             rows = result.fetchall()
             if not rows:

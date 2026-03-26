@@ -161,9 +161,7 @@ def test_metrics_gauge_helper_output():
 
 def test_phase6_tasks_import_get_sync_db():
     """phase6_tasks.py imports get_sync_db (not asyncio.run for SQL tasks)."""
-    task_source = (
-        BACKEND_ROOT / "app" / "tasks" / "phase6_tasks.py"
-    ).read_text()
+    task_source = (BACKEND_ROOT / "app" / "tasks" / "phase6_tasks.py").read_text()
 
     assert "get_sync_db" in task_source, "phase6_tasks.py must import get_sync_db"
     assert "database_sync" in task_source, "phase6_tasks.py must import from database_sync"
@@ -174,9 +172,7 @@ def test_phase6_tasks_no_asyncio_run_for_sql_tasks():
     SQL-only tasks in phase6_tasks.py no longer use asyncio.run().
     Only refresh_model_orchestrator (which calls async services) may use it.
     """
-    task_source = (
-        BACKEND_ROOT / "app" / "tasks" / "phase6_tasks.py"
-    ).read_text()
+    task_source = (BACKEND_ROOT / "app" / "tasks" / "phase6_tasks.py").read_text()
 
     # Count asyncio.run() calls on actual code lines (exclude comments and docstrings)
     lines = task_source.splitlines()

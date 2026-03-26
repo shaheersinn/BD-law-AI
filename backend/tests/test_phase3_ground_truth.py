@@ -59,8 +59,8 @@ def _inject_module_stubs() -> None:
     settings_stub.log_level = "INFO"
     settings_stub.allowed_origins = ["http://localhost:3000"]
     settings_stub.sentry_dsn = None
-    settings_stub.models_dir = "/tmp/models"
-    settings_stub.data_dir = "/tmp/data"
+    settings_stub.models_dir = "/tmp/models"  # noqa: S108
+    settings_stub.data_dir = "/tmp/data"  # noqa: S108
     cfg_mod.get_settings = lambda: settings_stub  # type: ignore[attr-defined]
     cfg_mod.Settings = MagicMock  # type: ignore[attr-defined]
     sys.modules.setdefault("app.config", cfg_mod)

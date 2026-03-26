@@ -153,7 +153,10 @@ class TestGroqClient:
                 signal_id=2, signal_type="job_posting", signal_text="dev role", company_id=1
             )
         ]
-        raw = '```json\n[{"signal_id": 2, "label_type": "negative", "practice_areas": [], "confidence": 0.9, "reasoning": "tech role"}]\n```'
+        raw = (
+            '```json\n[{"signal_id": 2, "label_type": "negative",'
+            ' "practice_areas": [], "confidence": 0.9, "reasoning": "tech role"}]\n```'
+        )
         results = client._parse_response(raw, batch)
         assert len(results) == 1
         assert results[0].label_type == "negative"
@@ -667,7 +670,6 @@ class TestTrainingDataCurator:
         db = _make_mock_db(rows=[])
         db.add = MagicMock()
         execute_calls: list[Any] = []
-        original_execute = db.execute
 
         async def capture_execute(stmt: Any, params: Any = None) -> Any:
             execute_calls.append((stmt, params))

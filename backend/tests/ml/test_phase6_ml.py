@@ -141,7 +141,7 @@ class TestBayesianEngine:
 
         results = orchestrator.score_company({"feature": 0.0})
         assert len(results) == 34, f"Expected 34 practice areas, got {len(results)}"
-        for pa, hs in results.items():
+        for _pa, hs in results.items():
             assert hs.score_30d >= 0.0
             assert hs.score_60d >= 0.0
             assert hs.score_90d >= 0.0
@@ -317,7 +317,8 @@ class TestCooccurrenceMining:
         assert not df.empty
         assert df.shape[0] == 3
         assert "sedar_material_change" in df.columns
-        assert df.dtypes["sedar_material_change"] == bool
+        dtype = df.dtypes["sedar_material_change"]
+        assert dtype == bool or isinstance(dtype.type(), (bool, np.bool_))  # noqa: E721
 
 
 class TestCrossJurisdiction:
@@ -384,9 +385,7 @@ class TestOrchestrator:
 
     def test_transformer_requires_f1_threshold(self):
         from app.ml.bayesian_engine import ORCHESTRATOR_F1_THRESHOLD
-        from app.ml.orchestrator import MandateOrchestrator
-
-        orch = MandateOrchestrator()
+        from app.ml.orchestrator import MandateOrchestrator  # noqa: F401
 
         # Transformer barely beats bayesian (below threshold)
         bayesian_f1 = 0.70

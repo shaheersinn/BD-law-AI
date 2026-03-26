@@ -26,7 +26,7 @@ from typing import Any
 import numpy as np
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
+import torch.nn.functional as F  # noqa: N812
 from torch.utils.data import DataLoader, TensorDataset
 
 from app.config import get_settings
@@ -237,9 +237,9 @@ class TransformerScorer:
     @staticmethod
     def train(
         practice_area: str,
-        X_seq_train: np.ndarray,  # [n_samples, seq_len, n_features]
+        X_seq_train: np.ndarray,  # noqa: N803  # [n_samples, seq_len, n_features]
         y_train: dict[int, np.ndarray],  # {30: labels, 60: labels, 90: labels}
-        X_seq_holdout: np.ndarray,
+        X_seq_holdout: np.ndarray,  # noqa: N803
         y_holdout: dict[int, np.ndarray],
         output_dir: Path,
         n_epochs: int = N_EPOCHS,
@@ -269,15 +269,6 @@ class TransformerScorer:
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
             optimizer, T_max=n_epochs * len(loader)
         )
-
-        # Class weights for BCE loss (handle imbalance)
-        pos_weights = {
-            h: torch.tensor(
-                [(len(y) - y.sum()) / max(y.sum(), 1)],
-                dtype=torch.float32,
-            ).to(device)
-            for h, y in y_train.items()
-        }
 
         log.info(
             "Training TransformerScorer %s on %s (%d samples, %d epochs)",
@@ -382,7 +373,7 @@ def _sequence_to_tensor(
 
 def _evaluate_transformer_loss(
     model: MandateTransformer,
-    X_seq: np.ndarray,
+    X_seq: np.ndarray,  # noqa: N803
     y: dict[int, np.ndarray],
     device: torch.device,
 ) -> float:
@@ -398,7 +389,7 @@ def _evaluate_transformer_loss(
 
 def _compute_transformer_holdout_metrics(
     model: MandateTransformer,
-    X_seq: np.ndarray,
+    X_seq: np.ndarray,  # noqa: N803
     y: dict[int, np.ndarray],
     device: torch.device,
 ) -> dict[str, Any]:

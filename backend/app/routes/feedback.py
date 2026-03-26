@@ -107,7 +107,9 @@ async def post_mandate_confirmation(
             company_id=body.company_id,
             practice_area=body.practice_area,
         )
-        raise HTTPException(status_code=500, detail="Failed to record mandate confirmation") from exc
+        raise HTTPException(
+            status_code=500, detail="Failed to record mandate confirmation"
+        ) from exc
 
     log.info(
         "mandate confirmed by partner",

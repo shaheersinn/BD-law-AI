@@ -171,12 +171,17 @@ async def test_accuracy_log_idempotent() -> None:
         return ir
 
     # DB calls: 1 confirm fetch + 3 score lookups + 3 inserts = 7
-    mock_db.execute = AsyncMock(side_effect=[
-        conf_result,
-        make_score_result(), make_insert_result(),
-        make_score_result(), make_insert_result(),
-        make_score_result(), make_insert_result(),
-    ])
+    mock_db.execute = AsyncMock(
+        side_effect=[
+            conf_result,
+            make_score_result(),
+            make_insert_result(),
+            make_score_result(),
+            make_insert_result(),
+            make_score_result(),
+            make_insert_result(),
+        ]
+    )
     mock_db.commit = AsyncMock()
 
     result = await compute_accuracy_for_confirmation(mock_db, confirmation_id=10)
@@ -186,8 +191,7 @@ async def test_accuracy_log_idempotent() -> None:
     # ON CONFLICT DO NOTHING means it's idempotent — verified by the SQL string
     # Check that at least one INSERT was called
     insert_calls = [
-        call for call in mock_db.execute.call_args_list
-        if "ON CONFLICT DO NOTHING" in str(call)
+        call for call in mock_db.execute.call_args_list if "ON CONFLICT DO NOTHING" in str(call)
     ]
     assert len(insert_calls) == 3
 
@@ -433,10 +437,7 @@ def test_phase9_celery_tasks_registered() -> None:
 def test_migration_0008_is_valid_python() -> None:
     """Migration file 0008_phase9_feedback.py must compile without errors."""
     migration_path = (
-        Path(__file__).parent.parent
-        / "alembic"
-        / "versions"
-        / "0008_phase9_feedback.py"
+        Path(__file__).parent.parent / "alembic" / "versions" / "0008_phase9_feedback.py"
     )
     assert migration_path.exists(), f"Migration file not found: {migration_path}"
 

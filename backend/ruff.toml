@@ -30,6 +30,8 @@ ignore = [
 # Routes and tasks can have long descriptive strings
 "app/routes/**/*.py" = ["E501"]
 "app/tasks/**/*.py" = ["E501"]
+# Training SQL queries build column lists from internal constants — long lines are unavoidable
+"app/training/**/*.py" = ["E501"]
 
 [format]
 quote-style = "double"

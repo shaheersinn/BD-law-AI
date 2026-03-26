@@ -29,6 +29,7 @@ from app.auth.service import (
     decode_token,
     get_user_by_id,
     hash_password,
+    verify_password,
 )
 from app.database import get_db
 
@@ -150,10 +151,7 @@ async def refresh_token(
         raise credentials_exception
 
     # Verify refresh token matches stored hash
-    from passlib.context import CryptContext
-
-    pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
-    if not user.hashed_refresh_token or not pwd_ctx.verify(
+    if not user.hashed_refresh_token or not verify_password(
         body.refresh_token, user.hashed_refresh_token
     ):
         raise credentials_exception

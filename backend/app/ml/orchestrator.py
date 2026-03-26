@@ -145,7 +145,8 @@ class MandateOrchestrator:
                 if pa in self._transformer_scorers and transformer_f1 > 0:
                     reason = (
                         f"Bayesian retained: transformer F1 improvement "
-                        f"{transformer_f1 - bayesian_f1:.3f} < threshold {ORCHESTRATOR_F1_THRESHOLD}"
+                        f"{transformer_f1 - bayesian_f1:.3f}"
+                        f" < threshold {ORCHESTRATOR_F1_THRESHOLD}"
                     )
                 else:
                     reason = "Bayesian default (no transformer trained yet)"

@@ -66,6 +66,7 @@ def compute_prediction_accuracy(self: Any) -> dict[str, Any]:
         log.exception("agent_030_accuracy_tracker_failed", error=str(exc))
         try:
             import sentry_sdk
+
             sentry_sdk.capture_exception(exc)
         except ImportError:
             pass
@@ -132,6 +133,7 @@ def run_drift_detector(self: Any) -> dict[str, Any]:
         log.exception("agent_031_drift_detector_failed", error=str(exc))
         try:
             import sentry_sdk
+
             sentry_sdk.capture_exception(exc)
         except ImportError:
             pass
@@ -184,6 +186,7 @@ def run_confirmation_hunter(self: Any) -> dict[str, Any]:
         log.exception("agent_032_confirmation_hunter_failed", error=str(exc))
         try:
             import sentry_sdk
+
             sentry_sdk.capture_exception(exc)
         except ImportError:
             pass
