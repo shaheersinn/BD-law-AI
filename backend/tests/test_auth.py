@@ -7,7 +7,6 @@ Uses httpx.AsyncClient against the test app.
 
 import pytest
 
-
 # ── Auth service unit tests ────────────────────────────────────────────────────
 
 

@@ -14,7 +14,6 @@ All tests run without live DB/Redis/Mongo (fully mocked).
 
 from __future__ import annotations
 
-import asyncio
 import time
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -25,7 +24,6 @@ from app.services.scoring_service import (
     invalidate_score_cache,
     score_cache_key,
 )
-
 
 # ── Cache Performance Tests ────────────────────────────────────────────────
 

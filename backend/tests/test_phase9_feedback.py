@@ -408,8 +408,8 @@ async def test_feedback_drift_endpoint() -> None:
 
 def test_phase9_celery_tasks_registered() -> None:
     """All 3 Phase 9 Celery tasks must appear in the registered task list."""
-    from app.tasks.celery_app import celery_app
     import app.tasks.phase9_tasks  # noqa: F401 — ensure tasks are registered
+    from app.tasks.celery_app import celery_app
 
     registered = set(celery_app.tasks.keys())
 

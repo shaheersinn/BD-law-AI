@@ -360,7 +360,7 @@ def test_alembic_migration_syntax():
 @pytest.mark.asyncio
 async def test_base_scraper_fetch_retries_3x():
     """Mock httpx.AsyncClient to fail twice then succeed. Verify BaseScraper.get() makes 3 attempts."""
-    from unittest.mock import AsyncMock, MagicMock, patch
+    from unittest.mock import AsyncMock, MagicMock
 
     from app.scrapers.base import BaseScraper
 
@@ -405,7 +405,7 @@ async def test_base_scraper_fetch_retries_3x():
 @pytest.mark.asyncio
 async def test_budget_manager_blocks_over_limit():
     """ApiBudgetManager.check_budget returns False when daily limit exceeded."""
-    from unittest.mock import AsyncMock, patch
+    from unittest.mock import AsyncMock
 
     from app.scrapers.budget_manager import ApiBudgetManager
 

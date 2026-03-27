@@ -22,7 +22,6 @@ from httpx import ASGITransport, AsyncClient
 from app.config import Settings
 from app.main import app
 
-
 # ── Settings Tests ──────────────────────────────────────────────────────────
 
 
