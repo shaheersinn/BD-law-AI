@@ -2,7 +2,7 @@
 # Region: tor1 (Toronto — Canadian data residency)
 #
 # SETUP REQUIRED BEFORE FIRST DEPLOY:
-# 1. Replace shaheersinn with your GitHub username
+# 1. Ensure shaheersinn is your GitHub username
 # 2. Set encrypted env vars in the DO console:
 #    SECRET_KEY, DATABASE_URL, REDIS_URL, REDIS_RESULT_BACKEND,
 #    MONGODB_URL, CELERY_BROKER_URL, CELERY_RESULT_BACKEND,
@@ -21,7 +21,7 @@ services:
   - name: api
     source_dir: backend
     github:
-      repo: shaheersinn/oracle-bd
+      repo: shaheersinn/BD-law-AI
       branch: main
       deploy_on_push: true
     dockerfile_path: Dockerfile
@@ -47,7 +47,6 @@ services:
       - key: LIVE_FEEDS_ENABLED
         value: "true"
       # CORS — set to your actual frontend URLs (DO app + Vercel)
-      # Example: '["https://oracle-bd-for-law.ondigitalocean.app","https://your-app.vercel.app"]'
       - key: ALLOWED_ORIGINS
         value: '["https://oracle-bd-for-law.ondigitalocean.app"]'
       # Set these in DO console (encrypted) — never commit:
@@ -59,7 +58,7 @@ services:
   - name: worker
     source_dir: backend
     github:
-      repo: shaheersinn/oracle-bd
+      repo: shaheersinn/BD-law-AI
       branch: main
       deploy_on_push: true
     dockerfile_path: Dockerfile
@@ -83,7 +82,7 @@ services:
   - name: beat
     source_dir: backend
     github:
-      repo: shaheersinn/oracle-bd
+      repo: shaheersinn/BD-law-AI
       branch: main
       deploy_on_push: true
     dockerfile_path: Dockerfile
@@ -103,7 +102,7 @@ static_sites:
   - name: frontend
     source_dir: frontend
     github:
-      repo: shaheersinn/oracle-bd
+      repo: shaheersinn/BD-law-AI
       branch: main
       deploy_on_push: true
     build_command: npm install && npm run build
