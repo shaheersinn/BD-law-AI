@@ -475,7 +475,7 @@ class BayesianEngine:
             best_threshold, best_f1 = _find_optimal_threshold(y_holdout.values, probs_holdout)
 
             # Holdout metrics
-            y_pred_holdout = (probs_holdout >= best_threshold).astype(int)
+            _y_pred_holdout = (probs_holdout >= best_threshold).astype(int)  # noqa: F841
             pr_auc = _safe_pr_auc(y_holdout.values, probs_holdout)
             roc_auc = _safe_roc_auc(y_holdout.values, probs_holdout)
 

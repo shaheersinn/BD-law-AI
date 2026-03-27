@@ -47,10 +47,7 @@ class Base(DeclarativeBase):
 
     def to_dict(self) -> dict:
         """Return a dict of all column values."""
-        return {
-            c.name: getattr(self, c.name)
-            for c in self.__table__.columns
-        }
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 
 # ── PostgreSQL Engine ──────────────────────────────────────────────────────────

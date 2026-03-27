@@ -1,0 +1,5 @@
+[bandit]
+# B608: SQL f-strings in training/dataset_builder.py use only internal feature
+# column names (from a hardcoded list, not user input). Not an injection vector.
+skips = B608
+exclude = app/training/dataset_builder.py

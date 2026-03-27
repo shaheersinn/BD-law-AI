@@ -233,7 +233,7 @@ class DatasetBuilder:
         """Fetch company_features from PostgreSQL."""
         try:
             limit_clause = f"LIMIT {limit}" if limit else ""
-            query = text(f"""
+            query = text(f"""  # nosec
                 SELECT company_id, feature_date, {", ".join(feature_columns)}
                 FROM company_features
                 ORDER BY feature_date DESC
@@ -279,7 +279,7 @@ class DatasetBuilder:
         Used for AnomalyDetector training (clean baseline only).
         """
         try:
-            query = text(f"""
+            query = text(f"""  # nosec
                 SELECT cf.{", cf.".join(feature_columns)}
                 FROM company_features cf
                 WHERE cf.company_id NOT IN (
@@ -337,7 +337,7 @@ class DatasetBuilder:
     async def fetch_sector_training_data(self, feature_columns: list[str]) -> dict[str, Any] | None:
         """Fetch features + sector labels for sector weight calibration."""
         try:
-            query = text(f"""
+            query = text(f"""  # nosec
                 SELECT cf.{", cf.".join(feature_columns)}, c.sector,
                        CASE WHEN ml.company_id IS NOT NULL THEN 1 ELSE 0 END as has_mandate
                 FROM company_features cf

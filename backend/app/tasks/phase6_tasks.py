@@ -84,6 +84,7 @@ def refresh_model_orchestrator(self: Any) -> dict[str, Any]:
         log.exception("agent_023_model_selector_failed", error=str(exc))
         try:
             import sentry_sdk
+
             sentry_sdk.capture_exception(exc)
         except ImportError:
             pass
@@ -152,6 +153,7 @@ def run_anomaly_escalation(self: Any, anomaly_threshold: float = 0.7) -> dict[st
         log.exception("agent_024_anomaly_escalation_failed", error=str(exc))
         try:
             import sentry_sdk
+
             sentry_sdk.capture_exception(exc)
         except ImportError:
             pass
@@ -182,7 +184,9 @@ def clean_stale_scores(self: Any, retention_days: int = 90) -> dict[str, Any]:
     try:
         with get_sync_db() as db:
             result = db.execute(
-                text(f"DELETE FROM scoring_results WHERE scored_at < NOW() - INTERVAL '{int(retention_days)} days'"),  # noqa: S608
+                text(
+                    f"DELETE FROM scoring_results WHERE scored_at < NOW() - INTERVAL '{int(retention_days)} days'"  # nosec B608
+                ),
             )
             db.commit()
             deleted = result.rowcount
@@ -195,6 +199,7 @@ def clean_stale_scores(self: Any, retention_days: int = 90) -> dict[str, Any]:
         log.exception("agent_025_score_decay_failed", error=str(exc))
         try:
             import sentry_sdk
+
             sentry_sdk.capture_exception(exc)
         except ImportError:
             pass
@@ -302,6 +307,7 @@ def run_ccaa_cascade(self: Any) -> dict[str, Any]:
         log.exception("agent_027_ccaa_cascade_failed", error=str(exc))
         try:
             import sentry_sdk
+
             sentry_sdk.capture_exception(exc)
         except ImportError:
             pass
@@ -390,9 +396,7 @@ def score_company_batch(self: Any, company_ids: list[int]) -> dict[str, Any]:
                         }
                     )
                 except Exception:
-                    log.exception(
-                        "score_company_batch: scoring failed for company %d", company_id
-                    )
+                    log.exception("score_company_batch: scoring failed for company %d", company_id)
                     failed += 1
 
             # ── Phase C: Bulk INSERT (one executemany call) ──────────────
@@ -418,6 +422,7 @@ def score_company_batch(self: Any, company_ids: list[int]) -> dict[str, Any]:
         log.exception("scoring_batch_failed", error=str(exc))
         try:
             import sentry_sdk
+
             sentry_sdk.capture_exception(exc)
         except ImportError:
             pass
@@ -493,6 +498,7 @@ def run_active_learning(self: Any) -> dict[str, Any]:
         log.exception("active_learning_failed", error=str(exc))
         try:
             import sentry_sdk
+
             sentry_sdk.capture_exception(exc)
         except ImportError:
             pass
@@ -550,6 +556,7 @@ def seed_decay_config(self: Any) -> dict[str, Any]:
         log.exception("seed_decay_config_failed", error=str(exc))
         try:
             import sentry_sdk
+
             sentry_sdk.capture_exception(exc)
         except ImportError:
             pass

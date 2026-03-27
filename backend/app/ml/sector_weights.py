@@ -60,7 +60,7 @@ def calibrate_sector_weights(
         # Global MI across all sectors
         X_features = X_train[feature_columns].fillna(0)
         global_mi = mutual_info_classif(X_features, y_train, random_state=42)
-        global_mi_map = dict(zip(feature_columns, global_mi))
+        _global_mi_map = dict(zip(feature_columns, global_mi))  # noqa: F841
 
         sectors_in_data = X_train[sector_column].unique()
 

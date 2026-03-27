@@ -6,7 +6,7 @@ JetTrack, FootTrafficEvent, SatelliteSignal, PermitFiling.
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, Float, Integer, String, Text, func
+from sqlalchemy import Boolean, DateTime, Integer, String, Text, func
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -32,9 +32,7 @@ class JetTrack(Base):
     signal_text: Mapped[str | None] = mapped_column(Text)
     predicted_mandate: Mapped[str | None] = mapped_column(String(100))
     relationship_warmth: Mapped[int] = mapped_column(Integer, default=50)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     def to_dict(self) -> dict:
         return {
@@ -97,9 +95,7 @@ class SatelliteSignal(Base):
     signal_type: Mapped[str | None] = mapped_column(String(100))
     confidence: Mapped[int] = mapped_column(Integer, default=0)
     urgency: Mapped[str] = mapped_column(String(20), default="medium")
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     def to_dict(self) -> dict:
         return {
@@ -123,17 +119,13 @@ class PermitFiling(Base):
     company: Mapped[str] = mapped_column(String(200), nullable=False, index=True)
     permit_type: Mapped[str | None] = mapped_column(String(100))
     location: Mapped[str | None] = mapped_column(String(300))
-    filed_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    filed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     project_type: Mapped[str | None] = mapped_column(String(200))
     legal_work_triggered: Mapped[list[str] | None] = mapped_column(ARRAY(String))
     estimated_fee: Mapped[str | None] = mapped_column(String(50))
     urgency: Mapped[str] = mapped_column(String(20), default="medium")
     lead_partner: Mapped[str | None] = mapped_column(String(100))
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     def to_dict(self) -> dict:
         return {

@@ -246,7 +246,9 @@ async def _insert_alert(
         "ks_statistic": ks_statistic,
         "ks_pvalue": ks_pvalue,
         "status": "open",
-        "detected_at": detected_at.isoformat() if hasattr(detected_at, "isoformat") else str(detected_at),
+        "detected_at": detected_at.isoformat()
+        if hasattr(detected_at, "isoformat")
+        else str(detected_at),
     }
 
 

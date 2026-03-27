@@ -27,8 +27,8 @@ import time
 from datetime import UTC, datetime
 from typing import Any
 
-import structlog
 import redis.asyncio as aioredis
+import structlog
 from redis.asyncio import Redis
 
 from app.config import get_settings

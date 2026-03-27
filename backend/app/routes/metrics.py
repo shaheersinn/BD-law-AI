@@ -43,11 +43,7 @@ def _gauge(name: str, value: float, help_text: str, labels: dict | None = None) 
     if labels:
         pairs = ",".join(f'{k}="{v}"' for k, v in labels.items())
         label_str = f"{{{pairs}}}"
-    return (
-        f"# HELP {name} {help_text}\n"
-        f"# TYPE {name} gauge\n"
-        f"{name}{label_str} {value}\n"
-    )
+    return f"# HELP {name} {help_text}\n# TYPE {name} gauge\n{name}{label_str} {value}\n"
 
 
 def _counter(name: str, rows: list[dict], help_text: str) -> str:
@@ -142,7 +138,10 @@ async def get_metrics(db: AsyncSession = Depends(get_db)) -> PlainTextResponse:
         # ── p95 response time per endpoint ────────────────────────────────────
         result = await db.execute(_SQL_REQUEST_P95)
         p95_rows = result.fetchall()
-        p95_lines = ["# HELP oracle_http_request_p95_seconds P95 response time in seconds (last 5m)", "# TYPE oracle_http_request_p95_seconds gauge"]
+        p95_lines = [
+            "# HELP oracle_http_request_p95_seconds P95 response time in seconds (last 5m)",
+            "# TYPE oracle_http_request_p95_seconds gauge",
+        ]
         for r in p95_rows:
             p95_lines.append(f'oracle_http_request_p95_seconds{{endpoint="{r[0]}"}} {r[1]:.4f}')
         output_parts.append("\n".join(p95_lines) + "\n")
@@ -151,7 +150,9 @@ async def get_metrics(db: AsyncSession = Depends(get_db)) -> PlainTextResponse:
         result = await db.execute(_SQL_SCORING_TOTAL)
         total = result.scalar() or 0
         output_parts.append(
-            _gauge("oracle_scoring_results_total", float(total), "Total rows in scoring_results table")
+            _gauge(
+                "oracle_scoring_results_total", float(total), "Total rows in scoring_results table"
+            )
         )
 
         # ── Active companies (scored last 24h) ────────────────────────────────

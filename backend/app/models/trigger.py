@@ -76,6 +76,4 @@ class Alert(Base):
     dismissed: Mapped[bool | None] = mapped_column(Boolean)
     matter_opened: Mapped[bool | None] = mapped_column(Boolean)
     mandate_confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

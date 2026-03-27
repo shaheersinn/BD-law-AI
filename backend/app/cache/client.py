@@ -29,11 +29,11 @@ log = logging.getLogger(__name__)
 settings = get_settings()
 
 # Standard TTL tiers (seconds)
-TTL_SHORT = 300       # 5 minutes
-TTL_MEDIUM = 3600     # 1 hour
-TTL_LONG = 21_600     # 6 hours
-TTL_AI = 21_600       # 6 hours — AI-generated briefs
-TTL_GEO = 43_200      # 12 hours — geospatial data
+TTL_SHORT = 300  # 5 minutes
+TTL_MEDIUM = 3600  # 1 hour
+TTL_LONG = 21_600  # 6 hours
+TTL_AI = 21_600  # 6 hours — AI-generated briefs
+TTL_GEO = 43_200  # 12 hours — geospatial data
 
 T = TypeVar("T")
 
