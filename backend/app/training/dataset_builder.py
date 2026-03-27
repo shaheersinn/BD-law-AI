@@ -233,12 +233,12 @@ class DatasetBuilder:
         """Fetch company_features from PostgreSQL."""
         try:
             limit_clause = f"LIMIT {limit}" if limit else ""
-            query = text(f"""  # nosec
+            query = text(f"""
                 SELECT company_id, feature_date, {", ".join(feature_columns)}
                 FROM company_features
                 ORDER BY feature_date DESC
                 {limit_clause}
-            """)
+            """)  # nosec B608
             result = await self._db.execute(query)
             rows = result.fetchall()
             if not rows:
@@ -279,7 +279,7 @@ class DatasetBuilder:
         Used for AnomalyDetector training (clean baseline only).
         """
         try:
-            query = text(f"""  # nosec
+            query = text(f"""
                 SELECT cf.{", cf.".join(feature_columns)}
                 FROM company_features cf
                 WHERE cf.company_id NOT IN (
@@ -287,7 +287,7 @@ class DatasetBuilder:
                     WHERE is_negative_label = false
                 )
                 LIMIT 10000
-            """)
+            """)  # nosec B608
             result = await self._db.execute(query)
             rows = result.fetchall()
             if not rows:
@@ -337,7 +337,7 @@ class DatasetBuilder:
     async def fetch_sector_training_data(self, feature_columns: list[str]) -> dict[str, Any] | None:
         """Fetch features + sector labels for sector weight calibration."""
         try:
-            query = text(f"""  # nosec
+            query = text(f"""
                 SELECT cf.{", cf.".join(feature_columns)}, c.sector,
                        CASE WHEN ml.company_id IS NOT NULL THEN 1 ELSE 0 END as has_mandate
                 FROM company_features cf
@@ -345,7 +345,7 @@ class DatasetBuilder:
                 LEFT JOIN mandate_labels ml ON ml.company_id = cf.company_id
                     AND ml.is_negative_label = false
                 LIMIT 50000
-            """)
+            """)  # nosec B608
             result = await self._db.execute(query)
             rows = result.fetchall()
             if not rows:
