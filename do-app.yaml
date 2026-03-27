@@ -25,7 +25,8 @@ services:
       branch: main
       deploy_on_push: true
     dockerfile_path: Dockerfile
-    instance_size_slug: basic-s
+    # professional-s: 2 vCPU / 4 GB RAM — required for building heavy ML dependencies
+    instance_size_slug: professional-s
     instance_count: 1
     min_instance_count: 1
     http_port: 8000
@@ -62,8 +63,8 @@ services:
       branch: main
       deploy_on_push: true
     dockerfile_path: Dockerfile
-    # professional-xs: 2 vCPU / 2 GB RAM — required for in-process ML scoring
-    instance_size_slug: professional-xs
+    # professional-s: 2 vCPU / 4 GB RAM — required for in-process ML scoring
+    instance_size_slug: professional-s
     instance_count: 1
     min_instance_count: 1
     run_command: >
