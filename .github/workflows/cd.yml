@@ -123,7 +123,7 @@ jobs:
         # Applies the updated do-app.yaml and triggers a new deployment
         # NEVER runs alembic upgrade head — migrations are manual via scripts/run_migrations.sh
         run: |
-          doctl apps update ${{ secrets.DO_APP_ID }} --spec do-app.yaml --wait
+          doctl apps update ${{ secrets.DO_APP_ID }} --spec do-app.yaml --wait --verbose
 
       - name: Verify deployment succeeded
         run: |

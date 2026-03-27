@@ -79,7 +79,7 @@ services:
       registry_type: DOCR
       repository: oracle-backend
       tag: latest
-    instance_size_slug: basic-xxs
+    instance_size_slug: basic-xs
     instance_count: 1
     run_command: >
       celery -A app.tasks.celery_app:celery_app beat
