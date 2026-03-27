@@ -22,7 +22,7 @@ greenlet==3.1.1
 
 # ── Database — MongoDB (async) ─────────────────────────────────────────────────
 motor==3.6.0
-pymongo==4.10.1
+pymongo==4.9.2
 
 # ── Cache / Message Broker — Redis ────────────────────────────────────────────
 redis==5.2.1
