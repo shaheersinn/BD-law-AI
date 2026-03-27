@@ -512,7 +512,7 @@ async def test_lead_days_positive_when_prediction_precedes() -> None:
     )
 
     assert result.get("lead_days") is not None
-    if isinstance(result["lead_days"], (int, float)):
+    if isinstance(result["lead_days"], int | float):
         assert result["lead_days"] > 0
 
 

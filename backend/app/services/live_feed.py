@@ -107,7 +107,7 @@ class LiveFeedRouter:
             # Redis Streams require flat string field values
             fields: dict[str, str] = {}
             for k, v in signal.items():
-                if isinstance(v, (dict, list)):
+                if isinstance(v, dict | list):
                     fields[k] = json.dumps(v)
                 elif v is None:
                     fields[k] = ""
@@ -258,7 +258,7 @@ class LiveFeedRouter:
             client = self._get_client()
             info = await client.xpending(STREAM_KEY, CONSUMER_GROUP)  # type: ignore[misc]
             # xpending returns: [count, min_id, max_id, consumers] or a dict
-            if isinstance(info, (list, tuple)) and info:
+            if isinstance(info, list | tuple) and info:
                 return int(info[0])
             if isinstance(info, dict):
                 return int(info.get("pending", 0))

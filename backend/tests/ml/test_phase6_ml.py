@@ -22,7 +22,8 @@ from unittest.mock import MagicMock
 import numpy as np
 import pandas as pd
 import pytest
-import torch
+
+torch = pytest.importorskip("torch", reason="torch not installed — skipping transformer tests")
 
 # ── Fixtures ───────────────────────────────────────────────────────────────────
 

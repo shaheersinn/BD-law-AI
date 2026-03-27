@@ -253,7 +253,7 @@ def _parse_json_field(value: Any) -> Any:
     """Parse a JSON field that may already be a dict/list or a JSON string."""
     if value is None:
         return None
-    if isinstance(value, (dict, list)):
+    if isinstance(value, dict | list):
         return value
     try:
         return json.loads(value)
