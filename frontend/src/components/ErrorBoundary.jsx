@@ -2,7 +2,7 @@
  * components/ErrorBoundary.jsx — React error boundary for ORACLE.
  *
  * Catches unhandled JavaScript errors in the component tree below it.
- * Renders a ConstructLex Pro styled fallback UI instead of a blank page.
+ * Renders a Digital Atelier styled fallback UI instead of a blank page.
  *
  * Usage:
  *   <ErrorBoundary>
@@ -57,7 +57,7 @@ export default class ErrorBoundary extends Component {
     return (
       <div style={styles.container}>
         <div style={styles.card}>
-          {/* ConstructLex wordmark */}
+          {/* ORACLE wordmark */}
           <div style={styles.wordmark}>ORACLE</div>
           <div style={styles.subtitle}>BD Intelligence Platform</div>
 
@@ -102,53 +102,55 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     padding: '2rem',
-    fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif',
+    fontFamily: '"Manrope", system-ui, sans-serif',
   },
   card: {
     backgroundColor: '#FFFFFF',
-    border: '1px solid #E5E4E0',
-    borderRadius: '12px',
+    borderRadius: '16px',
     padding: '2.5rem 3rem',
     maxWidth: '480px',
     width: '100%',
     textAlign: 'center',
-    boxShadow: '0 4px 24px rgba(26,26,46,0.08)',
+    boxShadow: '0 4px 24px rgba(26,40,64,0.08)',
   },
   wordmark: {
-    fontFamily: '"Cormorant Garamond", Georgia, serif',
+    fontFamily: '"Newsreader", Georgia, serif',
     fontSize: '1.75rem',
-    fontWeight: 600,
-    letterSpacing: '0.15em',
-    color: '#0C9182',
+    fontWeight: 500,
+    letterSpacing: '-0.01em',
+    color: '#1a2840',
   },
   subtitle: {
-    fontSize: '0.75rem',
-    color: '#8888AA',
-    letterSpacing: '0.1em',
+    fontSize: '0.6875rem',
+    color: '#71717A',
+    letterSpacing: '0.05em',
     textTransform: 'uppercase',
     marginTop: '0.25rem',
+    fontFamily: '"Manrope", sans-serif',
+    fontWeight: 700,
   },
   divider: {
     height: '1px',
-    backgroundColor: '#E5E4E0',
+    backgroundColor: '#F0F0F0',
     margin: '1.5rem 0',
   },
   heading: {
+    fontFamily: '"Newsreader", Georgia, serif',
     fontSize: '1.25rem',
-    fontWeight: 600,
-    color: '#1A1A2E',
+    fontWeight: 500,
+    color: '#1a2840',
     margin: '0 0 0.75rem 0',
   },
   body: {
     fontSize: '0.9rem',
-    color: '#555566',
+    color: '#71717A',
     lineHeight: 1.6,
     margin: '0 0 1.5rem 0',
+    fontFamily: '"Manrope", sans-serif',
   },
   errorDetail: {
     backgroundColor: '#FFF3F3',
-    border: '1px solid #FCA5A5',
-    borderRadius: '6px',
+    borderRadius: '8px',
     padding: '0.75rem',
     fontSize: '0.75rem',
     color: '#B91C1C',
@@ -157,6 +159,7 @@ const styles = {
     marginBottom: '1.5rem',
     whiteSpace: 'pre-wrap',
     wordBreak: 'break-word',
+    fontFamily: '"JetBrains Mono", monospace',
   },
   actions: {
     display: 'flex',
@@ -165,25 +168,25 @@ const styles = {
     flexWrap: 'wrap',
   },
   primaryBtn: {
-    backgroundColor: '#0C9182',
+    background: 'linear-gradient(to bottom, #1a2840, #253650)',
     color: '#FFFFFF',
     border: 'none',
-    borderRadius: '6px',
+    borderRadius: '8px',
     padding: '0.6rem 1.5rem',
     fontSize: '0.875rem',
     fontWeight: 600,
     cursor: 'pointer',
-    fontFamily: 'inherit',
+    fontFamily: '"Manrope", sans-serif',
   },
   secondaryBtn: {
-    backgroundColor: 'transparent',
-    color: '#0C9182',
-    border: '1.5px solid #0C9182',
-    borderRadius: '6px',
+    backgroundColor: '#E8F5E9',
+    color: '#2E7D32',
+    border: 'none',
+    borderRadius: '8px',
     padding: '0.6rem 1.5rem',
     fontSize: '0.875rem',
     fontWeight: 600,
     cursor: 'pointer',
-    fontFamily: 'inherit',
+    fontFamily: '"Manrope", sans-serif',
   },
 }

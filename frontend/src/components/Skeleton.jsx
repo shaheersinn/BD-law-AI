@@ -1,13 +1,6 @@
 /**
- * components/Skeleton.jsx — Loading skeleton components.
- *
- * CSS-animated shimmer placeholders. No spinners.
- * Usage:
- *   <Skeleton width="100%" height={20} />
- *   <SkeletonText lines={3} />
- *   <SkeletonCard />
- *   <SkeletonRow />
- *   <SkeletonTable rows={5} cols={4} />
+ * components/Skeleton.jsx — Digital Atelier loading skeletons.
+ * Uses shimmer animation from design-system.css with surface tokens.
  */
 
 export function Skeleton({ width = '100%', height = 16, radius = 6, style = {} }) {
@@ -36,10 +29,10 @@ export function SkeletonText({ lines = 3, style = {} }) {
 export function SkeletonCard({ height = 120, style = {} }) {
   return (
     <div style={{
-      background: 'var(--surface)',
-      border: '1px solid var(--border)',
-      borderRadius: 'var(--radius-lg)',
+      background: 'var(--color-surface-container-lowest)',
+      borderRadius: 'var(--radius-xl)',
       padding: '1.5rem',
+      boxShadow: 'var(--shadow-ambient)',
       ...style,
     }}>
       <Skeleton width="40%" height={18} style={{ marginBottom: 16 }} />

@@ -1,86 +1,146 @@
-/*
- * ConstructLex Pro — ORACLE Design System
- * src/styles/design-system.css
+/**
+ * design-system.css — Digital Atelier Token Set
+ * ORACLE BD Intelligence Platform
  *
- * Import this once in main.jsx.
- * All components reference these variables — never hard-code colour values.
+ * Creative North Star: "The Editorial Brief"
+ * Dual-font strategy: Newsreader (editorial) + Manrope (data)
+ * Surface hierarchy: layered tonal canvas, no 1px solid borders
+ *
+ * Reference: SKILL_design_system.md + Stitch/lexington_estate_ii/DESIGN.md
  */
 
-/* ── Google Fonts fallback (already loaded via index.html) ─────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
-
-/* ── Design tokens ────────────────────────────────────────────────────────── */
+/* ──────────────────────────────────────────────────────────────
+   1. CSS Custom Properties (replaces ALL old --cl-* tokens)
+   ────────────────────────────────────────────────────────────── */
 :root {
-  /* Colour palette */
-  --bg:               #F8F7F4;
-  --text:             #1A1A2E;
-  --text-secondary:   #555566;
-  --text-tertiary:    #8888AA;
-  --accent:           #0C9182;
-  --accent-2:         #059669;
-  --accent-dark:      #065F5B;
-  --accent-light:     #E8F5F3;
-  --border:           #E2E0DA;
-  --border-strong:    #C8C5BC;
-  --surface:          #FFFFFF;
-  --surface-hover:    #F0EFEC;
-  --surface-raised:   #FAFAF8;
-  --error:            #DC2626;
-  --error-bg:         #FEF2F2;
-  --warning:          #D97706;
-  --warning-bg:       #FFFBEB;
-  --success:          #059669;
-  --success-bg:       #F0FDF4;
+  /* ── Core palette ─────────────────────────────────── */
+  --color-primary:                   #04162e;
+  --color-primary-container:         #1a2b44;
+  --color-on-primary:                #ffffff;
+  --color-on-primary-container:      #8292b0;
 
-  /* Score heatmap bands */
-  --score-0:          #F0FAFA;   /* 0.0–0.3  — near white */
-  --score-1:          #A7D9D4;   /* 0.3–0.5  — light teal */
-  --score-2:          #4DB8B0;   /* 0.5–0.7  — mid teal */
-  --score-3:          #0C9182;   /* 0.7–0.9  — accent-primary */
-  --score-4:          #065F5B;   /* 0.9–1.0  — dark teal */
+  --color-secondary:                 #306d58;
+  --color-secondary-container:       #adedd3;
+  --color-on-secondary-container:    #306d58;
 
-  /* Typography */
-  --font-display:     'Cormorant Garamond', Georgia, serif;
-  --font-body:        'Plus Jakarta Sans', system-ui, sans-serif;
+  --color-surface:                   #f7f9fb;
+  --color-surface-container-lowest:  #ffffff;
+  --color-surface-container-low:     #f2f4f6;
+  --color-surface-container-high:    #e8eaed;
+  --color-surface-container-highest: #e0e3e5;
+
+  --color-on-surface:                #191c1e;
+  --color-on-surface-variant:        #44474e;
+
+  --color-outline-variant:           #c5c6ce;
+
+  /* ── Score heatmap ─────────────────────────────────── */
+  --score-0: #F0FAFA;
+  --score-1: #A7D9D4;
+  --score-2: #4DB8B0;
+  --score-3: #0C9182;
+  --score-4: #065F5B;
+
+  /* ── Semantic states ──────────────────────────────── */
+  --color-error:      #dc2626;
+  --color-error-bg:   #fef2f2;
+  --color-warning:    #d97706;
+  --color-warning-bg: #fffbeb;
+  --color-success:    #059669;
+  --color-success-bg: #f0fdf4;
+
+  /* ── Typography ───────────────────────────────────── */
+  --font-editorial:   'Newsreader', Georgia, serif;
+  --font-data:        'Manrope', system-ui, sans-serif;
   --font-mono:        'JetBrains Mono', 'Courier New', monospace;
 
-  /* Sidebar */
-  --sidebar-width:    240px;
-  --sidebar-collapsed: 64px;
+  /* ── Layout ───────────────────────────────────────── */
+  --sidebar-width:      240px;
+  --sidebar-collapsed:  64px;
 
-  /* Shadows */
-  --shadow-sm:        0 1px 3px rgba(26, 26, 46, 0.06);
-  --shadow-md:        0 4px 12px rgba(26, 26, 46, 0.08);
-  --shadow-lg:        0 8px 24px rgba(26, 26, 46, 0.12);
+  /* ── Elevation ────────────────────────────────────── */
+  --shadow-ambient: 0 0 40px -10px rgba(25, 28, 30, 0.06);
 
-  /* Border radius */
-  --radius-sm:        6px;
-  --radius-md:        10px;
-  --radius-lg:        14px;
-  --radius-xl:        20px;
+  /* ── Radius ───────────────────────────────────────── */
+  --radius-md:   0.375rem;
+  --radius-xl:   0.75rem;
+  --radius-full: 9999px;
 
-  /* Transitions */
-  --transition:       150ms ease;
+  /* ── Transitions ──────────────────────────────────── */
+  --transition-fast:   150ms ease-out;
+  --transition-card:   200ms ease-out;
 }
 
-/* ── Base reset ───────────────────────────────────────────────────────────── */
-*, *::before, *::after {
+
+/* ──────────────────────────────────────────────────────────────
+   2. Typography Scale (Rule 4 — use ONLY these classes)
+   ────────────────────────────────────────────────────────────── */
+
+.type-display-lg {
+  font-family: var(--font-editorial);
+  font-size: 3.5rem;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.type-headline-sm {
+  font-family: var(--font-editorial);
+  font-size: 1.5rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.3;
+}
+
+.type-title-sm {
+  font-family: var(--font-data);
+  font-size: 1.0rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.4;
+}
+
+.type-body-md {
+  font-family: var(--font-data);
+  font-size: 0.875rem;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  line-height: 1.6;
+}
+
+.type-label-sm {
+  font-family: var(--font-data);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+
+
+/* ──────────────────────────────────────────────────────────────
+   3. Base Reset & Globals
+   ────────────────────────────────────────────────────────────── */
+
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
-html, body, #root {
-  margin: 0;
-  padding: 0;
-  height: 100%;
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  font-family: var(--font-body);
-  font-size: 14px;
-  color: var(--text);
-  background: var(--bg);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+  font-family: var(--font-data);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  letter-spacing: 0.01em;
+  color: var(--color-on-surface);
+  background-color: var(--color-surface);
 }
 
 a {
@@ -88,37 +148,65 @@ a {
   text-decoration: none;
 }
 
-button, input, select, textarea {
-  font-family: var(--font-body);
-  font-size: 14px;
+button {
+  font-family: var(--font-data);
+  cursor: pointer;
 }
 
-/* ── Skeleton shimmer animation ───────────────────────────────────────────── */
+input, select, textarea {
+  font-family: var(--font-data);
+}
+
+
+/* ──────────────────────────────────────────────────────────────
+   4. Skeleton Loading Animation
+   ────────────────────────────────────────────────────────────── */
+
 @keyframes shimmer {
-  0%   { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
 }
 
 .skeleton {
   background: linear-gradient(
     90deg,
-    var(--surface-hover) 25%,
-    var(--border) 50%,
-    var(--surface-hover) 75%
+    var(--color-surface-container-low) 25%,
+    var(--color-surface-container-high) 50%,
+    var(--color-surface-container-low) 75%
   );
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-  border-radius: var(--radius-sm);
+  background-size: 800px 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--radius-md);
 }
 
-/* ── Scrollbar styling ────────────────────────────────────────────────────── */
-::-webkit-scrollbar         { width: 6px; height: 6px; }
-::-webkit-scrollbar-track   { background: transparent; }
-::-webkit-scrollbar-thumb   { background: var(--border-strong); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
 
-/* ── Utility classes ──────────────────────────────────────────────────────── */
-.font-display { font-family: var(--font-display); }
-.font-mono    { font-family: var(--font-mono); }
-.text-accent  { color: var(--accent); }
-.text-secondary { color: var(--text-secondary); }
+/* ──────────────────────────────────────────────────────────────
+   5. No-Scrollbar Utility
+   ────────────────────────────────────────────────────────────── */
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+
+/* ──────────────────────────────────────────────────────────────
+   6. Ghost Border Utility (the ONLY permitted border pattern)
+   ────────────────────────────────────────────────────────────── */
+
+.ghost-border {
+  outline: 1px solid rgba(197, 198, 206, 0.15);
+}
+
+.ghost-border-focus:focus {
+  outline: 1px solid rgba(197, 198, 206, 0.40);
+}
+
+
+/* ──────────────────────────────────────────────────────────────
+   7. Glass Effect
+   ────────────────────────────────────────────────────────────── */
+
+.glass {
+  background: rgba(255, 255, 255, 0.80);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}

@@ -1,11 +1,10 @@
 /**
- * App.jsx — ORACLE Phase 8B (ConstructLex Pro design system applied).
+ * App.jsx — ORACLE (Digital Atelier design system).
  *
- * Changes from Phase 8A:
- * - Imports design-system.css (CSS variables, fonts, skeleton animation)
+ * - Imports design-system.css (CSS variables, Newsreader/Manrope, surface hierarchy)
  * - LoginPage has NO AppShell (full-screen split layout)
+ * - LandingPage is public at / (no auth)
  * - All authenticated pages wrap with AppShell internally
- * - Same routes as Phase 8A — no routing changes
  */
 
 import { useEffect } from 'react'
@@ -23,6 +22,7 @@ import SignalsFeedPage    from './pages/SignalsFeedPage'
 import ScrapersAdminPage  from './pages/admin/ScrapersAdminPage'
 import UsersAdminPage     from './pages/admin/UsersAdminPage'
 import FeedbackPage       from './pages/FeedbackPage'
+import LandingPage        from './pages/LandingPage'
 import useAuthStore       from './stores/auth'
 
 function AppRoutes() {
@@ -36,6 +36,7 @@ function AppRoutes() {
     <Routes>
       {/* Public */}
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/landing" element={<LandingPage />} />
 
       {/* Authenticated — AppShell is applied inside each page */}
       <Route path="/dashboard" element={
@@ -69,7 +70,7 @@ function AppRoutes() {
 
       {/* Default redirects */}
       <Route path="/" element={
-        token ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />
+        token ? <Navigate to="/dashboard" replace /> : <LandingPage />
       } />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

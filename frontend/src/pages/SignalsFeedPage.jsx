@@ -1,5 +1,6 @@
 /**
- * pages/SignalsFeedPage.jsx — ConstructLex Pro global signal feed.
+ * pages/SignalsFeedPage.jsx — Digital Atelier signal feed.
+ * Tonal surfaces, signal type chips, pill-style limit buttons.
  */
 
 import { useEffect, useState } from 'react'
@@ -27,22 +28,46 @@ export default function SignalsFeedPage() {
     <AppShell>
       <div style={{ maxWidth: 860, margin: '0 auto', padding: '2.5rem 2rem' }}>
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '0.5rem', flexWrap: 'wrap', gap: 12 }}>
-          <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 30, color: 'var(--text)', margin: 0 }}>
+          <h1 style={{
+            fontFamily: 'var(--font-editorial)',
+            fontWeight: 500,
+            fontSize: '1.5rem',
+            color: 'var(--color-primary)',
+            margin: 0,
+            letterSpacing: '-0.01em',
+          }}>
             Signal Feed
           </h1>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          {/* Limit pills */}
+          <div style={{
+            display: 'flex',
+            gap: 4,
+            alignItems: 'center',
+            background: 'var(--color-surface-container-low)',
+            borderRadius: 'var(--radius-xl)',
+            padding: 4,
+          }}>
             {[50, 100, 200].map((n) => (
               <button
                 key={n}
                 onClick={() => { setLimit(n); load(n) }}
                 style={{
                   padding: '5px 12px',
-                  border: '1px solid',
-                  borderColor: limit === n ? 'var(--accent)' : 'var(--border)',
                   borderRadius: 'var(--radius-md)',
-                  background: limit === n ? 'var(--accent-light)' : 'var(--surface)',
-                  color: limit === n ? 'var(--accent)' : 'var(--text-secondary)',
-                  fontSize: 12, cursor: 'pointer', fontFamily: 'var(--font-body)',
+                  background: limit === n
+                    ? 'var(--color-surface-container-lowest)'
+                    : 'transparent',
+                  color: limit === n
+                    ? 'var(--color-on-surface)'
+                    : 'var(--color-on-surface-variant)',
+                  fontFamily: 'var(--font-data)',
+                  fontSize: '0.6875rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.05em',
+                  textTransform: 'uppercase',
+                  cursor: 'pointer',
+                  boxShadow: limit === n ? 'var(--shadow-ambient)' : 'none',
+                  transition: 'background 150ms ease-out',
                 }}
               >
                 {n}
@@ -50,12 +75,26 @@ export default function SignalsFeedPage() {
             ))}
           </div>
         </div>
-        <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: '1.75rem', margin: '0 0 1.75rem' }}>
+        <p style={{
+          fontFamily: 'var(--font-data)',
+          color: 'var(--color-on-surface-variant)',
+          fontSize: '0.875rem',
+          letterSpacing: '0.01em',
+          marginBottom: '1.75rem',
+        }}>
           Latest signals across all companies and sources
         </p>
 
         {error && (
-          <div style={{ color: 'var(--error)', background: 'var(--error-bg)', border: '1px solid var(--error)', borderRadius: 'var(--radius-md)', padding: '10px 14px', fontSize: 13, marginBottom: '1rem' }}>
+          <div style={{
+            color: 'var(--color-error)',
+            background: 'var(--color-error-bg)',
+            borderRadius: 'var(--radius-md)',
+            padding: '10px 14px',
+            fontSize: 13,
+            fontFamily: 'var(--font-data)',
+            marginBottom: '1rem',
+          }}>
             {error}
           </div>
         )}

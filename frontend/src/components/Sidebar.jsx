@@ -1,5 +1,5 @@
 /**
- * components/Sidebar.jsx — ConstructLex Pro sidebar navigation.
+ * components/Sidebar.jsx — Digital Atelier sidebar navigation.
  *
  * Fixed 240px left panel. Active state via useLocation().
  * Shows admin section only for admin/partner roles.
@@ -96,37 +96,38 @@ export default function Sidebar() {
       {/* Logo */}
       <div style={{
         padding: '1.5rem 1.25rem 1rem',
-        borderBottom: '1px solid var(--cl-border)',
         marginBottom: '0.5rem',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{
             width: 34,
             height: 34,
-            borderRadius: 9,
-            background: 'linear-gradient(135deg, var(--cl-accent-primary), var(--cl-accent-secondary))',
+            borderRadius: 'var(--radius-md)',
+            background: 'linear-gradient(to bottom, var(--color-primary), var(--color-primary-container))',
             display: 'grid',
             placeItems: 'center',
             flexShrink: 0,
           }}>
-            <span style={{ color: '#fff', fontSize: 14, fontWeight: 700, fontFamily: 'var(--cl-font-display)' }}>O</span>
+            <span style={{ color: 'var(--color-on-primary)', fontSize: 14, fontWeight: 700, fontFamily: 'var(--font-editorial)' }}>O</span>
           </div>
           <div>
             <div style={{
-              fontFamily: 'var(--cl-font-display)',
+              fontFamily: 'var(--font-editorial)',
               fontSize: '1.05rem',
-              fontWeight: 700,
-              color: 'var(--cl-text-primary)',
+              fontWeight: 500,
+              color: 'var(--color-primary)',
               lineHeight: 1.1,
+              letterSpacing: '-0.01em',
             }}>
               ORACLE
             </div>
             <div style={{
-              fontSize: '0.62rem',
-              color: 'var(--cl-text-secondary)',
+              fontSize: '0.6875rem',
+              color: 'var(--color-on-surface-variant)',
               textTransform: 'uppercase',
-              letterSpacing: '0.1em',
-              fontWeight: 600,
+              letterSpacing: '0.05em',
+              fontWeight: 700,
+              fontFamily: 'var(--font-data)',
             }}>
               BD Intelligence
             </div>
@@ -164,27 +165,27 @@ export default function Sidebar() {
       {/* User / logout */}
       <div style={{
         padding: '1rem 1.25rem',
-        borderTop: '1px solid var(--cl-border)',
       }}>
         {user && (
           <div style={{
             fontSize: '0.78rem',
-            color: 'var(--cl-text-secondary)',
+            color: 'var(--color-on-surface-variant)',
             marginBottom: 8,
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
+            fontFamily: 'var(--font-data)',
           }}>
             <span style={{
               display: 'inline-block',
               padding: '1px 6px',
-              background: 'var(--cl-surface-hover)',
-              borderRadius: 4,
-              fontSize: '0.65rem',
-              fontWeight: 600,
+              background: 'var(--color-surface-container-high)',
+              borderRadius: 'var(--radius-full)',
+              fontSize: '0.6875rem',
+              fontWeight: 700,
               textTransform: 'uppercase',
-              letterSpacing: '0.06em',
-              color: 'var(--cl-accent-primary)',
+              letterSpacing: '0.05em',
+              color: 'var(--color-secondary)',
               marginRight: 6,
             }}>
               {user.role}

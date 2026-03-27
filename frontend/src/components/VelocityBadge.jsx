@@ -1,9 +1,9 @@
 /**
- * components/VelocityBadge.jsx — Visual velocity indicator.
+ * components/VelocityBadge.jsx — Digital Atelier velocity indicator.
  *
- * Positive = rising mandate probability (teal arrow up)
- * Negative = declining (muted arrow down)
- * Near-zero = flat (dash)
+ * Positive = secondary-container (emerald) with up arrow
+ * Negative = error-bg with down arrow
+ * Near-zero = surface-container-high (neutral)
  */
 
 export default function VelocityBadge({ velocity, size = 'md' }) {
@@ -19,14 +19,18 @@ export default function VelocityBadge({ velocity, size = 'md' }) {
     display: 'inline-flex',
     alignItems: 'center',
     gap: small ? 3 : 4,
-    fontSize: small ? 10 : 12,
-    fontFamily: 'var(--font-mono)',
-    fontWeight: 600,
+    fontSize: small ? 10 : 11,
+    fontFamily: 'var(--font-data)',
+    fontWeight: 700,
     padding: small ? '1px 6px' : '3px 8px',
-    borderRadius: 999,
-    ...(isRising  ? { color: 'var(--success)', background: 'var(--success-bg)', border: '1px solid var(--success)' } :
-        isFalling ? { color: 'var(--text-secondary)', background: 'var(--surface-raised)', border: '1px solid var(--border)' } :
-                    { color: 'var(--text-tertiary)', background: 'var(--surface-raised)', border: '1px solid var(--border)' }),
+    borderRadius: 'var(--radius-full)',
+    letterSpacing: '0.03em',
+    textTransform: 'uppercase',
+    ...(isRising
+      ? { color: 'var(--color-on-secondary-container)', background: 'var(--color-secondary-container)' }
+      : isFalling
+        ? { color: 'var(--color-error)', background: 'var(--color-error-bg)' }
+        : { color: 'var(--color-on-surface-variant)', background: 'var(--color-surface-container-high)' }),
   }
 
   return (
