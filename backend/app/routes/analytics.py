@@ -162,8 +162,8 @@ async def model_performance(
         )
         revenue = sum(float(c.annual_revenue or 0) for c in clients)
 
-    # Simple ROI: revenue / (Anthropic API cost estimate)
-    api_cost_estimate = total * 0.01  # ~$0.01 per API call
+    # Simple ROI: revenue / (API cost estimate)
+    api_cost_estimate = total * 0.01  # ~$0.01 per scoring API call
     roi = round(revenue / max(api_cost_estimate, 1), 1)
 
     result = {

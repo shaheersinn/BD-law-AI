@@ -14,7 +14,7 @@ import logging
 from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from fastapi.responses import StreamingResponse
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -25,9 +25,7 @@ from app.cache.client import TTL_AI, TTL_SHORT, cache
 from app.database import get_db
 from app.middleware.rate_limiter import enforce_rate_limit
 from app.models import Trigger
-from app.services.anthropic_service import ai
 from app.services.audit_log import AuditEventType, extract_request_meta, log_event
-from app.services.streaming import sse_headers, stream_ai_response
 
 log = logging.getLogger(__name__)
 router = APIRouter(prefix="/triggers", tags=["triggers"])
@@ -293,75 +291,23 @@ async def trigger_brief(
     claims: TokenClaims = Depends(require_auth),
     request: Request = None,
 ):
-    """AI partner action brief. Cached 6 hours per trigger."""
-    await enforce_rate_limit(request, "ai", str(claims.user_id))
-
-    cache_key = f"trigger:v1:brief:{trigger_id}"
-    cached = await cache.get(cache_key)
-    if cached:
-        return cached
-
-    result = await db.execute(select(Trigger).where(Trigger.id == trigger_id))
-    t = result.scalars().first()
-    if not t:
-        raise HTTPException(status_code=404, detail="Trigger not found")
-
-    brief = await ai.generate(
-        "trigger_brief",
-        source=t.source if isinstance(t.source, str) else t.source.value,
-        trigger_type=t.trigger_type,
-        company=t.company_name,
-        practice_area=t.practice_area or "General",
-        urgency=t.urgency,
-        description=t.description or t.title,
-        filed=t.filed_at.strftime("%b %d, %Y %H:%M UTC"),
+    return JSONResponse(
+        status_code=410,
+        content={
+            "error": "AI brief generation has been removed from production.",
+            "trigger_id": trigger_id,
+            "message": "Use the scoring API at /api/v1/scores/{company_id} for ML-based predictions.",
+        },
     )
-
-    data = {
-        "brief": brief,
-        "trigger_id": trigger_id,
-        "company": t.company_name,
-        "practice_area": t.practice_area,
-    }
-    await cache.set(cache_key, data, ttl=TTL_AI)
-
-    await log_event(
-        AuditEventType.ai_generate,
-        user_id=claims.user_id,
-        resource_type="trigger",
-        resource_id=trigger_id,
-        detail={"prompt_key": "trigger_brief", "company": t.company_name},
-        **(extract_request_meta(request) if request else {}),
-    )
-
-    return data
 
 
 @router.get("/{trigger_id}/brief/stream")
 async def trigger_brief_stream(
     trigger_id: int,
-    db: AsyncSession = Depends(get_db),
     claims: TokenClaims = Depends(require_auth),
-    request: Request = None,
 ):
-    """Real-time streaming version of trigger brief via SSE."""
-    await enforce_rate_limit(request, "ai", str(claims.user_id))
-
-    result = await db.execute(select(Trigger).where(Trigger.id == trigger_id))
-    t = result.scalars().first()
-    if not t:
-        raise HTTPException(status_code=404, detail="Trigger not found")
-
-    return StreamingResponse(
-        stream_ai_response(
-            "trigger_brief",
-            source=t.source if isinstance(t.source, str) else t.source.value,
-            trigger_type=t.trigger_type,
-            company=t.company_name,
-            practice_area=t.practice_area or "General",
-            urgency=t.urgency,
-            description=t.description or t.title,
-            filed=t.filed_at.strftime("%b %d, %Y %H:%M UTC"),
-        ),
-        headers=sse_headers(),
+    """Streaming AI brief — removed from production."""
+    return JSONResponse(
+        status_code=410,
+        content={"error": "AI streaming has been removed from production."},
     )

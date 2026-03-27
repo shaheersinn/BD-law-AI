@@ -12,8 +12,9 @@ from __future__ import annotations
 from typing import Any
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.dependencies import require_auth
@@ -76,6 +77,90 @@ class BatchScoreRequest(BaseModel):
 
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
+
+
+TOP_VELOCITY_SQL = """
+WITH latest AS (
+    SELECT DISTINCT ON (company_id)
+        company_id, velocity_score, scores, scored_at, anomaly_score
+    FROM scoring_results
+    WHERE scored_at >= NOW() - INTERVAL '48 hours'
+      AND velocity_score IS NOT NULL
+    ORDER BY company_id, scored_at DESC
+)
+SELECT
+    l.company_id,
+    l.velocity_score,
+    l.scores,
+    l.scored_at,
+    l.anomaly_score,
+    c.name AS company_name,
+    c.sector
+FROM latest l
+JOIN companies c ON c.id = l.company_id
+ORDER BY l.velocity_score DESC
+LIMIT :limit
+"""
+
+
+@router.get("/top-velocity", summary="Top companies by velocity score")
+async def get_top_velocity_companies(
+    limit: int = Query(default=20, ge=1, le=100),
+    db: AsyncSession = Depends(get_db),
+    _user: User = Depends(require_auth),
+) -> list[dict[str, Any]]:
+    """
+    Top N companies by 7-day mandate probability velocity.
+    Returns company_id, velocity_score, top_practice_area, top_score_30d.
+    Reads from most recent scoring_results per company (last 48h).
+    Cached 15 minutes.
+    """
+    import json as json_mod
+
+    from app.cache.client import cache
+
+    cache_key = f"top_velocity:{limit}"
+    cached = await cache.get(cache_key)
+    if cached:
+        return cached
+
+    result = await db.execute(text(TOP_VELOCITY_SQL), {"limit": limit})
+    rows = result.fetchall()
+
+    output = []
+    for row in rows:
+        company_id_val, velocity, scores_json, scored_at, anomaly, name, sector = row
+
+        # Find the highest-scoring practice area at 30d
+        top_pa = None
+        top_score_30d = 0.0
+        if scores_json:
+            scores_data = (
+                scores_json
+                if isinstance(scores_json, dict)
+                else json_mod.loads(scores_json)
+            )
+            for pa, horizons in scores_data.items():
+                s30 = horizons.get("30d", 0.0) or 0.0
+                if s30 > top_score_30d:
+                    top_score_30d = s30
+                    top_pa = pa
+
+        output.append(
+            {
+                "company_id": company_id_val,
+                "company_name": name,
+                "sector": sector,
+                "velocity_score": round(float(velocity), 4),
+                "top_practice_area": top_pa,
+                "top_score_30d": round(top_score_30d, 4),
+                "anomaly_score": round(float(anomaly), 4) if anomaly else None,
+                "scored_at": scored_at.isoformat() if scored_at else None,
+            }
+        )
+
+    await cache.set(cache_key, output, ttl=VELOCITY_CACHE_TTL)
+    return output
 
 
 @router.get("/{company_id}", response_model=ScoreResponse, summary="Get company score matrix")

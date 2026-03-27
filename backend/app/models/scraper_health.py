@@ -101,7 +101,10 @@ class ScraperHealth(Base):
         onupdate=func.now(),
     )
 
-    __table_args__ = (Index("ix_scraper_health_status_category", "status", "scraper_category"),)
+    __table_args__ = (
+        Index("ix_scraper_health_status_category", "status", "scraper_category"),
+        {"extend_existing": True},
+    )
 
     def __repr__(self) -> str:
         return (

@@ -148,19 +148,6 @@ class Settings(BaseSettings):
         description="Groq API key — Phase 4 training ONLY, never production scoring",
     )
 
-    # ── Anthropic (AI briefs — Phase 8B) ─────────────────────────────────────
-    anthropic_api_key: str = Field(
-        default="",
-        description="Anthropic API key for AI brief generation",
-    )
-    anthropic_model: str = Field(
-        default="claude-sonnet-4-20250514",
-        description="Anthropic model ID",
-    )
-    anthropic_max_tokens: int = Field(
-        default=1024,
-        description="Max tokens for Anthropic API responses",
-    )
 
     # ── Monitoring ─────────────────────────────────────────────────────────────
     sentry_dsn: str = Field(default="", description="Sentry DSN for error monitoring")

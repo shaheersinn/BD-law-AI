@@ -9,13 +9,38 @@ Run with: pytest tests/integration/ -m integration --tb=short
 Mark: integration (skipped in CI unit test run unless --integration flag passed)
 """
 
-from __future__ import annotations
-
+import sys
 from datetime import date
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+# ── Mock heavy ML dependencies so patch() can resolve module paths ─────────
+# torch is not installed in CI test environment. We mock the entire module
+# chain so that patch("app.ml.orchestrator.get_orchestrator") can resolve.
+# We must provide a real Tensor class so scipy's issubclass() doesn't crash.
+import types
+_mock_torch = types.ModuleType("torch")
+_mock_torch.nn = types.ModuleType("torch.nn")  # type: ignore[attr-defined]
+_mock_torch.nn.functional = types.ModuleType("torch.nn.functional")  # type: ignore[attr-defined]
+_mock_torch.nn.Module = type("Module", (), {})  # type: ignore[attr-defined]
+_mock_torch.Tensor = type("Tensor", (), {})  # type: ignore[attr-defined]
+_mock_torch.float32 = "float32"  # type: ignore[attr-defined]
+_mock_torch.no_grad = lambda: MagicMock(__enter__=MagicMock(), __exit__=MagicMock())  # type: ignore[attr-defined]
+_mock_torch_utils = types.ModuleType("torch.utils")
+_mock_torch_utils_data = types.ModuleType("torch.utils.data")
+_mock_torch_utils_data.DataLoader = MagicMock  # type: ignore[attr-defined]
+_mock_torch_utils_data.TensorDataset = MagicMock  # type: ignore[attr-defined]
+sys.modules.setdefault("torch", _mock_torch)
+sys.modules.setdefault("torch.nn", _mock_torch.nn)
+sys.modules.setdefault("torch.nn.functional", _mock_torch.nn.functional)
+sys.modules.setdefault("torch.utils", _mock_torch_utils)
+sys.modules.setdefault("torch.utils.data", _mock_torch_utils_data)
+
+# Now we can safely pre-import ML modules
+import app.ml.orchestrator  # noqa: E402, F401
+import app.ml.anomaly_detector  # noqa: E402, F401
+import app.ml.velocity_scorer  # noqa: E402, F401
 
 @pytest.mark.integration
 class TestScoringPipeline:
@@ -59,7 +84,7 @@ class TestScoringPipeline:
         mock_db.__exit__ = MagicMock(return_value=False)
 
         with (
-            patch("app.tasks.phase6_tasks.get_orchestrator", return_value=mock_orchestrator),
+            patch("app.ml.orchestrator.get_orchestrator", return_value=mock_orchestrator),
             patch("app.tasks.phase6_tasks.get_sync_db") as mock_get_db,
             patch("app.ml.anomaly_detector.get_anomaly_detector") as mock_anomaly,
             patch("app.ml.velocity_scorer.aggregate_company_velocity", return_value=0.3),
@@ -122,7 +147,7 @@ class TestScoringPipeline:
         mock_db.execute.return_value = feat_result
 
         with (
-            patch("app.tasks.phase6_tasks.get_orchestrator", return_value=mock_orchestrator),
+            patch("app.ml.orchestrator.get_orchestrator", return_value=mock_orchestrator),
             patch("app.tasks.phase6_tasks.get_sync_db") as mock_ctx,
             patch("app.ml.anomaly_detector.get_anomaly_detector") as mock_anomaly,
             patch("app.ml.velocity_scorer.aggregate_company_velocity", return_value=0.2),

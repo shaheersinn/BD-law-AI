@@ -5,7 +5,7 @@ app/routes/clients.py — Client endpoints with caching, auth, and streaming AI.
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from fastapi.responses import StreamingResponse
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,9 +16,7 @@ from app.cache.client import TTL_LONG, cache
 from app.database import get_db
 from app.middleware.rate_limiter import enforce_rate_limit
 from app.models import ChurnSignal, Client, RiskLevel
-from app.services.anthropic_service import ai
 from app.services.audit_log import AuditEventType, extract_request_meta, log_event
-from app.services.streaming import sse_headers, stream_ai_response
 
 log = logging.getLogger(__name__)
 router = APIRouter(prefix="/clients", tags=["clients"])
@@ -187,77 +185,24 @@ async def add_signal(
 @router.post("/{client_id}/churn-brief")
 async def churn_brief(
     client_id: int,
-    db: AsyncSession = Depends(get_db),
     claims: TokenClaims = Depends(require_auth),
-    request: Request = None,
 ):
-    await enforce_rate_limit(request, "ai", str(claims.user_id))
-    cache_key = cache.churn_brief_key(client_id)
-    cached = await cache.get(cache_key)
-    if cached:
-        return cached
-    result = await db.execute(select(Client).where(Client.id == client_id))
-    client = result.scalars().first()
-    if not client:
-        raise HTTPException(status_code=404, detail="Client not found")
-    signals_text = (
-        "\n".join(f"- {s.signal_text}" for s in (client.churn_signals or []))
-        or "- No specific signals detected yet"
+    """AI churn brief — removed from production."""
+    return JSONResponse(
+        status_code=410,
+        content={"error": "AI brief generation has been removed from production."},
     )
-    brief = await ai.generate(
-        "churn_brief",
-        name=client.name,
-        industry=client.industry,
-        score=client.churn_score,
-        risk=client.risk_level.value.upper() if client.risk_level else "MEDIUM",
-        partner=client.partner_name or "Relationship Partner",
-        revenue=f"${float(client.annual_revenue or 0):,.0f}",
-        contact_days=client.days_since_last_contact,
-        matter=client.matters[0].description if client.matters else "Various",
-        signals=signals_text,
-    )
-    data = {"brief": brief, "client_id": client_id, "cached": False}
-    await cache.set(cache_key, data, ttl=6 * 3600)
-    await log_event(
-        AuditEventType.ai_generate,
-        user_id=claims.user_id,
-        resource_type="client",
-        resource_id=client_id,
-        detail={"prompt_key": "churn_brief", "client_name": client.name},
-        **(extract_request_meta(request) if request else {}),
-    )
-    return data
 
 
 @router.get("/{client_id}/churn-brief/stream")
 async def churn_brief_stream(
     client_id: int,
-    db: AsyncSession = Depends(get_db),
     claims: TokenClaims = Depends(require_auth),
-    request: Request = None,
 ):
-    await enforce_rate_limit(request, "ai", str(claims.user_id))
-    result = await db.execute(select(Client).where(Client.id == client_id))
-    client = result.scalars().first()
-    if not client:
-        raise HTTPException(status_code=404, detail="Client not found")
-    signals_text = (
-        "\n".join(f"- {s.signal_text}" for s in (client.churn_signals or [])) or "- No signals"
-    )
-    return StreamingResponse(
-        stream_ai_response(
-            "churn_brief",
-            name=client.name,
-            industry=client.industry,
-            score=client.churn_score,
-            risk=client.risk_level.value.upper() if client.risk_level else "MEDIUM",
-            partner=client.partner_name or "Relationship Partner",
-            revenue=f"${float(client.annual_revenue or 0):,.0f}",
-            contact_days=client.days_since_last_contact,
-            matter=client.matters[0].description if client.matters else "Various",
-            signals=signals_text,
-        ),
-        headers=sse_headers(),
+    """AI churn brief streaming — removed from production."""
+    return JSONResponse(
+        status_code=410,
+        content={"error": "AI streaming has been removed from production."},
     )
 
 

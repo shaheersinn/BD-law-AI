@@ -30,7 +30,7 @@ from sqlalchemy import (
     func,
 )
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship, synonym
 
 from app.database import Base
 
@@ -191,6 +191,15 @@ class Signal(Base):
         "Company", back_populates="signals", lazy="noload"
     )
 
+    # ── Feature Pipeline Aliases ───────────────────────────────────────────────
+    # The feature engineering pipeline was written using these column names.
+    # synonym() creates queryable aliases so feature SQL works correctly.
+    signal_text = synonym("summary")
+    source_id = synonym("scraper_name")
+    confidence_score = synonym("signal_strength")
+    signal_value = synonym("signal_metadata")
+
+
     # ── Indexes ───────────────────────────────────────────────────────────────
     __table_args__ = (
         Index("ix_signals_company_type_date", "company_id", "signal_type", "published_at"),
@@ -226,3 +235,7 @@ class Signal(Base):
             for name, bit in PRACTICE_AREA_BITS.items()
             if self.practice_area_flags & (1 << bit)
         ]
+
+
+# Alias — feature engineering pipeline uses SignalRecord
+SignalRecord = Signal

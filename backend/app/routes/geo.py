@@ -19,19 +19,17 @@ import logging
 from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from fastapi.responses import StreamingResponse
+from fastapi.responses import JSONResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.dependencies import require_auth
 from app.auth.service import TokenClaims
-from app.cache.client import TTL_AI, TTL_GEO, TTL_LONG, TTL_MEDIUM, cache
+from app.cache.client import TTL_GEO, TTL_LONG, TTL_MEDIUM, cache
 from app.database import get_db
 from app.middleware.rate_limiter import enforce_rate_limit
 from app.models import FootTrafficEvent, JetTrack, PermitFiling, SatelliteSignal
-from app.services.anthropic_service import ai
 from app.services.audit_log import AuditEventType, extract_request_meta, log_event
-from app.services.streaming import sse_headers, stream_ai_response
 
 log = logging.getLogger(__name__)
 router = APIRouter(prefix="/geo", tags=["geospatial"])
@@ -141,60 +139,11 @@ async def geo_intensity(claims: TokenClaims = Depends(require_auth)):
 async def geo_brief(
     jurisdiction_id: str,
     claims: TokenClaims = Depends(require_auth),
-    request: Request = None,
 ):
-    """AI market intelligence brief for a jurisdiction. Cached 12h."""
-    await enforce_rate_limit(request, "ai", str(claims.user_id))
-
-    geo = GEO_INDEX.get(jurisdiction_id)
-    if not geo:
-        raise HTTPException(status_code=404, detail=f"Jurisdiction '{jurisdiction_id}' not found")
-
-    cache_key = f"geo:v1:brief:{jurisdiction_id}"
-    cached = await cache.get(cache_key)
-    if cached:
-        return cached
-
-    brief = await ai.generate(
-        "geo_brief",
-        jurisdiction=geo["label"],
-        index=geo["intensity"],
-        practice=geo["practice"],
-        drivers=geo["drivers"],
-    )
-
-    data = {"brief": brief, "jurisdiction": geo["label"], "intensity": geo["intensity"]}
-    await cache.set(cache_key, data, ttl=TTL_GEO)
-
-    await log_event(
-        AuditEventType.ai_generate,
-        user_id=claims.user_id,
-        detail={"prompt_key": "geo_brief", "jurisdiction": jurisdiction_id},
-        **(extract_request_meta(request) if request else {}),
-    )
-    return data
-
-
-@router.get("/intensity/{jurisdiction_id}/brief/stream")
-async def geo_brief_stream(
-    jurisdiction_id: str,
-    claims: TokenClaims = Depends(require_auth),
-    request: Request = None,
-):
-    await enforce_rate_limit(request, "ai", str(claims.user_id))
-    geo = GEO_INDEX.get(jurisdiction_id)
-    if not geo:
-        raise HTTPException(status_code=404, detail="Jurisdiction not found")
-
-    return StreamingResponse(
-        stream_ai_response(
-            "geo_brief",
-            jurisdiction=geo["label"],
-            index=geo["intensity"],
-            practice=geo["practice"],
-            drivers=geo["drivers"],
-        ),
-        headers=sse_headers(),
+    """AI market intelligence brief — removed from production."""
+    return JSONResponse(
+        status_code=410,
+        content={"error": "AI brief generation has been removed from production."},
     )
 
 
@@ -233,79 +182,12 @@ async def list_jet_tracks(
 @router.post("/jets/{track_id}/brief")
 async def jet_brief(
     track_id: int,
-    db: AsyncSession = Depends(get_db),
     claims: TokenClaims = Depends(require_auth),
-    request: Request = None,
 ):
-    """AI tactical brief for a jet track. Cached 6h."""
-    await enforce_rate_limit(request, "ai", str(claims.user_id))
-
-    cache_key = f"geo:v1:jet_brief:{track_id}"
-    cached = await cache.get(cache_key)
-    if cached:
-        return cached
-
-    result = await db.execute(select(JetTrack).where(JetTrack.id == track_id))
-    track = result.scalars().first()
-    if not track:
-        raise HTTPException(status_code=404, detail="Jet track not found")
-
-    brief = await ai.generate(
-        "jet_brief",
-        company=track.company,
-        tail=track.tail_number,
-        executive=track.executive or "Senior Executive",
-        origin=track.origin_name or track.origin_icao,
-        destination=track.dest_name or track.dest_icao,
-        date=track.departed_at.strftime("%b %d · %H:%M UTC"),
-        signal=track.signal_text or "Bay Street proximity trip detected",
-        mandate=track.predicted_mandate or "M&A Advisory",
-        confidence=track.confidence,
-        warmth=track.relationship_warmth,
-    )
-
-    data = {"brief": brief, "track_id": track_id, "company": track.company}
-    await cache.set(cache_key, data, ttl=TTL_AI)
-
-    await log_event(
-        AuditEventType.ai_generate,
-        user_id=claims.user_id,
-        resource_type="jet_track",
-        resource_id=track_id,
-        detail={"prompt_key": "jet_brief", "company": track.company},
-        **(extract_request_meta(request) if request else {}),
-    )
-    return data
-
-
-@router.get("/jets/{track_id}/brief/stream")
-async def jet_brief_stream(
-    track_id: int,
-    db: AsyncSession = Depends(get_db),
-    claims: TokenClaims = Depends(require_auth),
-    request: Request = None,
-):
-    await enforce_rate_limit(request, "ai", str(claims.user_id))
-    result = await db.execute(select(JetTrack).where(JetTrack.id == track_id))
-    track = result.scalars().first()
-    if not track:
-        raise HTTPException(status_code=404, detail="Jet track not found")
-
-    return StreamingResponse(
-        stream_ai_response(
-            "jet_brief",
-            company=track.company,
-            tail=track.tail_number,
-            executive=track.executive or "Senior Executive",
-            origin=track.origin_name or track.origin_icao,
-            destination=track.dest_name or track.dest_icao,
-            date=track.departed_at.strftime("%b %d · %H:%M UTC"),
-            signal=track.signal_text or "Bay Street proximity trip",
-            mandate=track.predicted_mandate or "M&A Advisory",
-            confidence=track.confidence,
-            warmth=track.relationship_warmth,
-        ),
-        headers=sse_headers(),
+    """AI tactical brief — removed from production."""
+    return JSONResponse(
+        status_code=410,
+        content={"error": "AI brief generation has been removed from production."},
     )
 
 
@@ -342,72 +224,12 @@ async def list_foot_traffic(
 @router.post("/foot-traffic/{event_id}/strategy")
 async def foot_traffic_strategy(
     event_id: int,
-    db: AsyncSession = Depends(get_db),
     claims: TokenClaims = Depends(require_auth),
-    request: Request = None,
 ):
-    await enforce_rate_limit(request, "ai", str(claims.user_id))
-
-    cache_key = f"geo:v1:foot_strategy:{event_id}"
-    cached = await cache.get(cache_key)
-    if cached:
-        return cached
-
-    result = await db.execute(select(FootTrafficEvent).where(FootTrafficEvent.id == event_id))
-    event = result.scalars().first()
-    if not event:
-        raise HTTPException(status_code=404, detail="Event not found")
-
-    brief = await ai.generate(
-        "foot_traffic_strategy",
-        client=event.target_company,
-        location=event.location_name,
-        devices=event.device_count,
-        duration=f"{event.avg_duration_minutes or 90} min avg",
-        date=event.occurred_at.strftime("%b %d"),
-        threat=event.threat_assessment or "Competitor engagement detected",
-        severity=event.severity.upper(),
-    )
-
-    data = {"brief": brief, "event_id": event_id, "company": event.target_company}
-    await cache.set(cache_key, data, ttl=TTL_AI)
-
-    await log_event(
-        AuditEventType.ai_generate,
-        user_id=claims.user_id,
-        resource_type="foot_traffic",
-        resource_id=event_id,
-        detail={"prompt_key": "foot_traffic_strategy", "company": event.target_company},
-        **(extract_request_meta(request) if request else {}),
-    )
-    return data
-
-
-@router.get("/foot-traffic/{event_id}/strategy/stream")
-async def foot_traffic_stream(
-    event_id: int,
-    db: AsyncSession = Depends(get_db),
-    claims: TokenClaims = Depends(require_auth),
-    request: Request = None,
-):
-    await enforce_rate_limit(request, "ai", str(claims.user_id))
-    result = await db.execute(select(FootTrafficEvent).where(FootTrafficEvent.id == event_id))
-    event = result.scalars().first()
-    if not event:
-        raise HTTPException(status_code=404, detail="Event not found")
-
-    return StreamingResponse(
-        stream_ai_response(
-            "foot_traffic_strategy",
-            client=event.target_company,
-            location=event.location_name,
-            devices=event.device_count,
-            duration=f"{event.avg_duration_minutes or 90} min avg",
-            date=event.occurred_at.strftime("%b %d"),
-            threat=event.threat_assessment or "Competitor engagement detected",
-            severity=event.severity.upper(),
-        ),
-        headers=sse_headers(),
+    """AI counter-strategy — removed from production."""
+    return JSONResponse(
+        status_code=410,
+        content={"error": "AI brief generation has been removed from production."},
     )
 
 
@@ -438,72 +260,12 @@ async def list_satellite(
 @router.post("/satellite/{signal_id}/brief")
 async def satellite_brief(
     signal_id: int,
-    db: AsyncSession = Depends(get_db),
     claims: TokenClaims = Depends(require_auth),
-    request: Request = None,
 ):
-    await enforce_rate_limit(request, "ai", str(claims.user_id))
-
-    cache_key = f"geo:v1:sat_brief:{signal_id}"
-    cached = await cache.get(cache_key)
-    if cached:
-        return cached
-
-    result = await db.execute(select(SatelliteSignal).where(SatelliteSignal.id == signal_id))
-    sig = result.scalars().first()
-    if not sig:
-        raise HTTPException(status_code=404, detail="Signal not found")
-
-    brief = await ai.generate(
-        "satellite_brief",
-        company=sig.company,
-        location=sig.location,
-        observation=sig.observation,
-        inference=sig.legal_inference,
-        signal_type=sig.signal_type,
-        confidence=sig.confidence,
-        urgency=sig.urgency.upper(),
-    )
-
-    data = {"brief": brief, "signal_id": signal_id, "company": sig.company}
-    await cache.set(cache_key, data, ttl=TTL_AI)
-
-    await log_event(
-        AuditEventType.ai_generate,
-        user_id=claims.user_id,
-        resource_type="satellite",
-        resource_id=signal_id,
-        detail={"prompt_key": "satellite_brief", "company": sig.company},
-        **(extract_request_meta(request) if request else {}),
-    )
-    return data
-
-
-@router.get("/satellite/{signal_id}/brief/stream")
-async def satellite_brief_stream(
-    signal_id: int,
-    db: AsyncSession = Depends(get_db),
-    claims: TokenClaims = Depends(require_auth),
-    request: Request = None,
-):
-    await enforce_rate_limit(request, "ai", str(claims.user_id))
-    result = await db.execute(select(SatelliteSignal).where(SatelliteSignal.id == signal_id))
-    sig = result.scalars().first()
-    if not sig:
-        raise HTTPException(status_code=404, detail="Signal not found")
-
-    return StreamingResponse(
-        stream_ai_response(
-            "satellite_brief",
-            company=sig.company,
-            location=sig.location,
-            observation=sig.observation,
-            inference=sig.legal_inference,
-            signal_type=sig.signal_type,
-            confidence=sig.confidence,
-            urgency=sig.urgency.upper(),
-        ),
-        headers=sse_headers(),
+    """AI exposure brief — removed from production."""
+    return JSONResponse(
+        status_code=410,
+        content={"error": "AI brief generation has been removed from production."},
     )
 
 
@@ -540,86 +302,10 @@ async def list_permits(
 @router.post("/permits/{permit_id}/brief")
 async def permit_brief(
     permit_id: int,
-    db: AsyncSession = Depends(get_db),
     claims: TokenClaims = Depends(require_auth),
-    request: Request = None,
 ):
-    await enforce_rate_limit(request, "ai", str(claims.user_id))
-
-    cache_key = f"geo:v1:permit_brief:{permit_id}"
-    cached = await cache.get(cache_key)
-    if cached:
-        return cached
-
-    result = await db.execute(select(PermitFiling).where(PermitFiling.id == permit_id))
-    permit = result.scalars().first()
-    if not permit:
-        raise HTTPException(status_code=404, detail="Permit not found")
-
-    rel_line = (
-        f"Existing relationship: {permit.lead_partner}"
-        if permit.lead_partner
-        else "No existing relationship — prospect outreach required"
-    )
-
-    brief = await ai.generate(
-        "permit_brief",
-        company=permit.company,
-        permit=permit.permit_type,
-        location=permit.location,
-        filed=permit.filed_at.strftime("%b %d, %Y"),
-        project_type=permit.project_type or "Major project",
-        work=", ".join(permit.legal_work_triggered or []),
-        fee=permit.estimated_fee or "TBD",
-        urgency=permit.urgency.upper(),
-        relationship_line=rel_line,
-    )
-
-    data = {"brief": brief, "permit_id": permit_id, "company": permit.company}
-    await cache.set(cache_key, data, ttl=TTL_AI)
-
-    await log_event(
-        AuditEventType.ai_generate,
-        user_id=claims.user_id,
-        resource_type="permit",
-        resource_id=permit_id,
-        detail={"prompt_key": "permit_brief", "company": permit.company},
-        **(extract_request_meta(request) if request else {}),
-    )
-    return data
-
-
-@router.get("/permits/{permit_id}/brief/stream")
-async def permit_brief_stream(
-    permit_id: int,
-    db: AsyncSession = Depends(get_db),
-    claims: TokenClaims = Depends(require_auth),
-    request: Request = None,
-):
-    await enforce_rate_limit(request, "ai", str(claims.user_id))
-    result = await db.execute(select(PermitFiling).where(PermitFiling.id == permit_id))
-    permit = result.scalars().first()
-    if not permit:
-        raise HTTPException(status_code=404, detail="Permit not found")
-
-    rel_line = (
-        f"Existing relationship: {permit.lead_partner}"
-        if permit.lead_partner
-        else "No existing relationship — prospect outreach required"
-    )
-
-    return StreamingResponse(
-        stream_ai_response(
-            "permit_brief",
-            company=permit.company,
-            permit=permit.permit_type,
-            location=permit.location,
-            filed=permit.filed_at.strftime("%b %d, %Y"),
-            project_type=permit.project_type or "Major project",
-            work=", ".join(permit.legal_work_triggered or []),
-            fee=permit.estimated_fee or "TBD",
-            urgency=permit.urgency.upper(),
-            relationship_line=rel_line,
-        ),
-        headers=sse_headers(),
+    """AI outreach brief — removed from production."""
+    return JSONResponse(
+        status_code=410,
+        content={"error": "AI brief generation has been removed from production."},
     )
