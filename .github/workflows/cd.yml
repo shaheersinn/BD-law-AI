@@ -89,11 +89,22 @@ jobs:
         with:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
-      - name: Trigger deployment and wait
-        # --wait polls until the deployment reaches a terminal phase (ACTIVE or ERROR).
+      - name: Log in to DigitalOcean Container Registry
+        run: doctl registry login --expiry-seconds 1200
+
+      - name: Build and push backend image
+        run: |
+          cd backend
+          docker build -t registry.digitalocean.com/oracle-containers/oracle-backend:latest \
+                       -t registry.digitalocean.com/oracle-containers/oracle-backend:${{ github.sha }} .
+          docker push registry.digitalocean.com/oracle-containers/oracle-backend:latest
+          docker push registry.digitalocean.com/oracle-containers/oracle-backend:${{ github.sha }}
+
+      - name: Update DO App Spec and Deploy
+        # Applies the updated do-app.yaml and triggers a new deployment
         # NEVER runs alembic upgrade head — migrations are manual via scripts/run_migrations.sh
         run: |
-          doctl apps create-deployment ${{ secrets.DO_APP_ID }} --wait
+          doctl apps update ${{ secrets.DO_APP_ID }} --spec do-app.yaml --wait
 
       - name: Verify deployment succeeded
         run: |

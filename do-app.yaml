@@ -19,14 +19,11 @@ region: tor1
 services:
   # ── FastAPI Backend ──────────────────────────────────────────────────────
   - name: api
-    source_dir: backend
-    github:
-      repo: shaheersinn/BD-law-AI
-      branch: main
-      deploy_on_push: true
-    dockerfile_path: Dockerfile
-    # professional-s: 2 vCPU / 4 GB RAM — required for building heavy ML dependencies
-    instance_size_slug: professional-s
+    image:
+      registry_type: DOCR
+      repository: oracle-backend
+      tag: latest
+    instance_size_slug: basic-s
     instance_count: 1
     min_instance_count: 1
     http_port: 8000
@@ -57,14 +54,11 @@ services:
 
   # ── Celery Worker ────────────────────────────────────────────────────────
   - name: worker
-    source_dir: backend
-    github:
-      repo: shaheersinn/BD-law-AI
-      branch: main
-      deploy_on_push: true
-    dockerfile_path: Dockerfile
-    # professional-s: 2 vCPU / 4 GB RAM — required for in-process ML scoring
-    instance_size_slug: professional-s
+    image:
+      registry_type: DOCR
+      repository: oracle-backend
+      tag: latest
+    instance_size_slug: professional-xs
     instance_count: 1
     min_instance_count: 1
     run_command: >
@@ -81,12 +75,10 @@ services:
 
   # ── Celery Beat Scheduler ────────────────────────────────────────────────
   - name: beat
-    source_dir: backend
-    github:
-      repo: shaheersinn/BD-law-AI
-      branch: main
-      deploy_on_push: true
-    dockerfile_path: Dockerfile
+    image:
+      registry_type: DOCR
+      repository: oracle-backend
+      tag: latest
     instance_size_slug: basic-xxs
     instance_count: 1
     run_command: >
