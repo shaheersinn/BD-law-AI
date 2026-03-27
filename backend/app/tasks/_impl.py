@@ -18,15 +18,15 @@ All tasks follow these conventions:
 from __future__ import annotations
 
 import asyncio
-import logging
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
+import structlog
 from celery import Task
 
 from app.tasks.celery_app import celery_app
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger(__name__)
 
 
 def _run_async(coro: Any) -> Any:  # type: ignore[misc]

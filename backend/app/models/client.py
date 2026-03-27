@@ -143,3 +143,21 @@ class ChurnSignal(Base):
     )
 
     client: Mapped["Client"] = relationship("Client", back_populates="churn_signals")
+
+
+class Prospect(Base):
+    """Companies on the watchlist that are not yet clients."""
+
+    __tablename__ = "prospects"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    name: Mapped[str] = mapped_column(String(200), nullable=False, index=True)
+    industry: Mapped[str | None] = mapped_column(String(100))
+    region: Mapped[str | None] = mapped_column(String(100))
+    predicted_need: Mapped[str | None] = mapped_column(String(200))
+    legal_urgency_score: Mapped[int] = mapped_column(Integer, default=0)
+    company_id: Mapped[int | None] = mapped_column(Integer, index=True)
+    added_by: Mapped[int | None] = mapped_column(Integer)
+    notes: Mapped[str | None] = mapped_column(Text)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

@@ -168,8 +168,11 @@ class Signal(Base):
     )
 
     # ── Extra Metadata ────────────────────────────────────────────────────────
-    metadata: Mapped[dict | None] = mapped_column(
-        JSONB, nullable=True, comment="Source-specific fields (fine amount, case number, etc.)"
+    signal_metadata: Mapped[dict | None] = mapped_column(
+        "metadata",
+        JSONB,
+        nullable=True,
+        comment="Source-specific fields (fine amount, case number, etc.)",
     )
 
     # ── Timestamps ────────────────────────────────────────────────────────────

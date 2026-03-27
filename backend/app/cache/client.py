@@ -28,6 +28,13 @@ from app.config import get_settings
 log = logging.getLogger(__name__)
 settings = get_settings()
 
+# Standard TTL tiers (seconds)
+TTL_SHORT = 300  # 5 minutes
+TTL_MEDIUM = 3600  # 1 hour
+TTL_LONG = 21_600  # 6 hours
+TTL_AI = 21_600  # 6 hours — AI-generated briefs
+TTL_GEO = 43_200  # 12 hours — geospatial data
+
 T = TypeVar("T")
 
 # ── Cache TTL Constants (seconds) ─────────────────────────────────────────────
@@ -295,6 +302,18 @@ class RedisCache:
     def trigger_feed_key(self, category: str, limit: int, offset: int) -> str:
         """Cache key for a paginated trigger feed."""
         return f"triggers:v1:live:{category}:{limit}:{offset}"
+
+    def churn_brief_key(self, client_id: int) -> str:
+        """Cache key for a client churn brief."""
+        return f"client:v1:churn_brief:{client_id}"
+
+    def geo_intensity_key(self) -> str:
+        """Cache key for geo intensity data."""
+        return "geo:v1:intensity"
+
+    async def invalidate_pattern(self, pattern: str) -> int:
+        """Alias for delete_pattern for convenience."""
+        return await self.delete_pattern(pattern)
 
     async def close(self) -> None:
         """Close the Redis connection pool. Called on application shutdown."""

@@ -23,15 +23,15 @@ Authentication: Bearer token in Authorization header
 
 from __future__ import annotations
 
-import logging
 from datetime import UTC, datetime
 from typing import Any
 
 import httpx
+import structlog
 
 from app.config import get_settings
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger(__name__)
 settings = get_settings()
 
 # ── Constants ──────────────────────────────────────────────────────────────────

@@ -645,3 +645,74 @@ class TestRouteSerializers:
         d = _label_to_dict(label)
         assert d["created_at"] is None
         assert d["is_validated"] is True
+
+
+# ── Additional Tests ──────────────────────────────────────────────────────────
+
+
+class TestLabelerSedarHit:
+    def test_labeler_assigns_positive_on_sedar_hit(self) -> None:
+        """A SEDAR filing signal (sedar_filing) should produce positive labels for Securities."""
+        from app.ground_truth.labeler import RetrospectiveLabeler
+
+        # sedar_filing maps to Securities/Capital Markets
+        db = _make_mock_db_with_rows([(50, "sedar_filing")])
+        labeler = RetrospectiveLabeler()
+        now = datetime(2026, 3, 24, 12, 0, 0, tzinfo=UTC)
+        labels = _run(labeler.label_company(company_id=10, run_id=1, now=now, db=db))
+
+        # sedar_filing maps to ["Securities/Capital Markets"] → 3 horizons
+        assert len(labels) == 3
+        for lbl in labels:
+            assert lbl.label_type == "positive"
+            assert lbl.practice_area == "Securities/Capital Markets"
+            assert lbl.company_id == 10
+
+
+class TestNegativeSamplerRatio:
+    def test_negative_sampler_ratio(self) -> None:
+        """With 10 candidates per sector and default max_per_sector, all 10 should be sampled.
+        The default MAX_NEGATIVE_SAMPLES_PER_SECTOR is 50, so 10 < 50 means all are sampled."""
+        from app.ground_truth.negative_sampler import NegativeSampler
+
+        # 10 candidates in one sector
+        rows = [(i, "Technology", [i * 10]) for i in range(1, 11)]
+        db = _make_mock_db_with_rows(rows)
+        sampler = NegativeSampler(seed=42)
+        now = datetime(2026, 3, 24, 12, 0, 0, tzinfo=UTC)
+        result = _run(sampler.sample(run_id=1, db=db, now=now))
+        # All 10 should be sampled since 10 < MAX_NEGATIVE_SAMPLES_PER_SECTOR (50)
+        assert result["negative_labels_created"] == 10
+
+    def test_negative_sampler_caps_at_max_per_sector(self) -> None:
+        """When candidates exceed max_per_sector, it should be capped."""
+        from app.ground_truth.negative_sampler import NegativeSampler
+
+        rows = [(i, "Finance", [i]) for i in range(1, 20)]
+        db = _make_mock_db_with_rows(rows)
+        sampler = NegativeSampler(seed=42)
+        now = datetime(2026, 3, 24, 12, 0, 0, tzinfo=UTC)
+        # Explicitly set max_per_sector=5
+        result = _run(sampler.sample(run_id=1, db=db, now=now, max_per_sector=5))
+        assert result["negative_labels_created"] == 5
+
+
+class TestLabelingPipelineIdempotent:
+    def test_labeling_pipeline_idempotent(self) -> None:
+        """Running label_company twice with same data produces same results."""
+        from app.ground_truth.labeler import RetrospectiveLabeler
+
+        db = _make_mock_db_with_rows([(42, "ccaa_filing")])
+        labeler = RetrospectiveLabeler()
+        now = datetime(2026, 3, 24, 12, 0, 0, tzinfo=UTC)
+
+        labels_run1 = _run(labeler.label_company(company_id=5, run_id=1, now=now, db=db))
+        labels_run2 = _run(labeler.label_company(company_id=5, run_id=1, now=now, db=db))
+
+        assert len(labels_run1) == len(labels_run2)
+        for l1, l2 in zip(labels_run1, labels_run2):
+            assert l1.label_type == l2.label_type
+            assert l1.practice_area == l2.practice_area
+            assert l1.horizon_days == l2.horizon_days
+            assert l1.confidence_score == l2.confidence_score
+            assert l1.company_id == l2.company_id

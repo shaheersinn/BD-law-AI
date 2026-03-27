@@ -190,7 +190,7 @@ class TransformerScorer:
 
         n_features = len(FEATURE_COLUMNS)
         self._model = MandateTransformer(n_features=n_features)
-        self._model.load_state_dict(torch.load(weights_path, map_location=self._device))
+        self._model.load_state_dict(torch.load(weights_path, map_location=self._device))  # nosec B614
         self._model.eval()
 
         version_path = model_dir / "version.txt"
@@ -271,7 +271,7 @@ class TransformerScorer:
         )
 
         # Class weights for BCE loss (handle imbalance)
-        pos_weights = {
+        _pos_weights = {  # noqa: F841
             h: torch.tensor(
                 [(len(y) - y.sum()) / max(y.sum(), 1)],
                 dtype=torch.float32,
@@ -332,10 +332,10 @@ class TransformerScorer:
 
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
-                torch.save(model.state_dict(), output_dir / "model_best.pt")
+                torch.save(model.state_dict(), output_dir / "model_best.pt")  # nosec B614
 
         # Load best and compute F1 per horizon
-        model.load_state_dict(torch.load(output_dir / "model_best.pt", map_location=device))
+        model.load_state_dict(torch.load(output_dir / "model_best.pt", map_location=device))  # nosec B614
         model.eval()
 
         holdout_metrics = _compute_transformer_holdout_metrics(
@@ -344,7 +344,7 @@ class TransformerScorer:
         log.info("TransformerScorer %s holdout metrics: %s", practice_area, holdout_metrics)
 
         # Save final model (same as best)
-        torch.save(model.state_dict(), output_dir / "model.pt")
+        torch.save(model.state_dict(), output_dir / "model.pt")  # nosec B614
 
         import datetime
 

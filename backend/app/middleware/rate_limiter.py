@@ -28,6 +28,43 @@ log = structlog.get_logger(__name__)
 EXEMPT_PATHS = {"/api/health", "/api/ready", "/api/version", "/api/docs", "/api/redoc"}
 
 
+async def enforce_rate_limit(
+    request: Request | None,
+    category: str,
+    user_id: str,
+    limit: int = 20,
+    window_seconds: int = 3600,
+) -> None:
+    """
+    Standalone rate limit check for AI endpoints and other expensive operations.
+    Raises 429 if rate limit exceeded. Fails open if Redis is unavailable.
+    """
+    if request is None:
+        return
+
+    key = f"rate_limit:{category}:{user_id}"
+
+    try:
+        from app.cache.client import cache as redis_cache
+
+        allowed, remaining = await redis_cache.check_rate_limit(
+            key=key,
+            limit=limit,
+            window_seconds=window_seconds,
+        )
+    except Exception as e:
+        log.warning("Rate limit check failed (Redis unavailable), allowing request", error=str(e))
+        return
+
+    if not allowed:
+        from fastapi import HTTPException
+
+        raise HTTPException(
+            status_code=429,
+            detail="Rate limit exceeded. Please slow down.",
+        )
+
+
 class RateLimitMiddleware(BaseHTTPMiddleware):
     """
     Sliding window rate limiter using Redis sorted sets.

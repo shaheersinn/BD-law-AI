@@ -45,7 +45,9 @@ class Base(DeclarativeBase):
     Metadata is shared across all models for Alembic migration discovery.
     """
 
-    pass
+    def to_dict(self) -> dict:
+        """Return a dict of all column values."""
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 
 # ── PostgreSQL Engine ──────────────────────────────────────────────────────────
@@ -123,7 +125,7 @@ async def check_db_connection() -> bool:
             await conn.execute(text("SELECT 1"))
         return True
     except Exception as e:
-        log.error("PostgreSQL health check failed", error=str(e))  # type: ignore[call-arg]
+        log.error("PostgreSQL health check failed: %s", str(e))
         return False
 
 
@@ -211,7 +213,7 @@ async def check_mongo_connection() -> bool:
         await client.admin.command("ping")
         return True
     except Exception as e:
-        log.error("MongoDB health check failed", error=str(e))  # type: ignore[call-arg]
+        log.error("MongoDB health check failed: %s", str(e))
         return False
 
 

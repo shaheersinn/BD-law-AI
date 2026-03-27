@@ -19,14 +19,14 @@ Weekly Celery task: agents.run_drift_detector (Agent 031)
 
 from __future__ import annotations
 
-import logging
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
+import structlog
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger(__name__)
 
 DRIFT_THRESHOLD = 0.10  # 10 percentage-point accuracy drop triggers an alert
 MIN_SAMPLES = 10  # Minimum confirmations per window to run the test
@@ -246,7 +246,9 @@ async def _insert_alert(
         "ks_statistic": ks_statistic,
         "ks_pvalue": ks_pvalue,
         "status": "open",
-        "detected_at": detected_at.isoformat() if hasattr(detected_at, "isoformat") else str(detected_at),
+        "detected_at": detected_at.isoformat()
+        if hasattr(detected_at, "isoformat")
+        else str(detected_at),
     }
 
 

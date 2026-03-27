@@ -15,14 +15,14 @@ Weekly Celery task: agents.compute_prediction_accuracy (Agent 030)
 
 from __future__ import annotations
 
-import logging
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
+import structlog
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger(__name__)
 
 HORIZONS = (30, 60, 90)
 DEFAULT_THRESHOLD = 0.5
@@ -109,11 +109,7 @@ async def compute_accuracy_for_confirmation(
         pa_scores = scores_json.get(practice_area, {})
         horizon_key = f"{horizon}d"
         score_key_alt = f"score_{horizon}d"
-        predicted_score = (
-            pa_scores.get(horizon_key)
-            or pa_scores.get(score_key_alt)
-            or 0.0
-        )
+        predicted_score = pa_scores.get(horizon_key) or pa_scores.get(score_key_alt) or 0.0
         was_correct = float(predicted_score) >= threshold
 
         if scored_at.tzinfo is None:

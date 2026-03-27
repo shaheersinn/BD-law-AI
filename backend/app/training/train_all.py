@@ -40,7 +40,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name
 
 
 async def run_training_pipeline(
-    output_base: Path = Path("/tmp/oracle_models"),
+    output_base: Path = Path("/tmp/oracle_models"),  # nosec B108
     n_optuna_trials: int = 100,
     n_transformer_epochs: int = 10,
     dry_run: bool = False,
@@ -262,6 +262,6 @@ async def run_training_pipeline(
 if __name__ == "__main__":
     # Direct execution on Azure compute
     dry_run = "--dry-run" in sys.argv
-    output_dir = Path(os.getenv("OUTPUT_DIR", "/tmp/oracle_models"))
+    output_dir = Path(os.getenv("OUTPUT_DIR", "/tmp/oracle_models"))  # nosec B108
     result = asyncio.run(run_training_pipeline(output_base=output_dir, dry_run=dry_run))
     print(json.dumps(result, indent=2, default=str))

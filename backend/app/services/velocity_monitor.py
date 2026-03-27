@@ -23,17 +23,17 @@ Score cache:
 
 from __future__ import annotations
 
-import logging
 import time
 from datetime import UTC, datetime
 from typing import Any
 
 import redis.asyncio as aioredis
+import structlog
 from redis.asyncio import Redis
 
 from app.config import get_settings
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger(__name__)
 settings = get_settings()
 
 # ── Constants ──────────────────────────────────────────────────────────────────

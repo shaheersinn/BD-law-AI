@@ -137,8 +137,8 @@ def mine_rules(
     # Convert to table rows
     output_rules: list[dict[str, Any]] = []
     for _, row in rules.iterrows():
-        antecedents = sorted(list(row["antecedents"]))
-        consequents = sorted(list(row["consequents"]))
+        antecedents = sorted(row["antecedents"])
+        consequents = sorted(row["consequents"])
         output_rules.append(
             {
                 "practice_area": practice_area,

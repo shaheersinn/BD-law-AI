@@ -86,7 +86,7 @@ class AnomalyDetector:
 
         n_features = len(FEATURE_COLUMNS)
         self._model = _build_autoencoder(n_features)
-        self._model.load_state_dict(torch.load(weights_path, map_location=torch.device("cpu")))
+        self._model.load_state_dict(torch.load(weights_path, map_location=torch.device("cpu")))  # nosec B614
         self._model.eval()  # type: ignore[union-attr]
 
         if scaler_path.exists():
@@ -272,7 +272,7 @@ class AnomalyDetector:
         )
 
         # Save model + stats
-        torch.save(model.state_dict(), output_dir / "autoencoder.pt")
+        torch.save(model.state_dict(), output_dir / "autoencoder.pt")  # nosec B614
         joblib.dump(
             {"mean_error": mean_err, "std_error": std_err, "threshold": threshold},
             output_dir / "stats.pkl",

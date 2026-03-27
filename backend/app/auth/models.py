@@ -91,3 +91,18 @@ class User(Base):
     def can_manage_users(self) -> bool:
         """Check if user can create/modify other users."""
         return self.role == "admin"
+
+    @property
+    def user_id(self) -> int:
+        """Alias for id — used by route handlers via TokenClaims."""
+        return self.id
+
+    @property
+    def is_admin(self) -> bool:
+        """Check if user has admin role."""
+        return self.role == "admin"
+
+    @property
+    def partner_id(self) -> int | None:
+        """Partner ID — stub returns None; override when partner table is linked."""
+        return None

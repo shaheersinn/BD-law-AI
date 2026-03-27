@@ -11,14 +11,14 @@ Agent 032), this service:
 
 from __future__ import annotations
 
-import logging
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
+import structlog
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger(__name__)
 
 SCORE_THRESHOLD = 0.5  # Score that constitutes a "positive" prediction
 
@@ -175,7 +175,9 @@ async def get_confirmation_stats(
 
     try:
         if practice_area:
-            result = await db.execute(_STATS_BY_PA, {"since": since, "practice_area": practice_area})
+            result = await db.execute(
+                _STATS_BY_PA, {"since": since, "practice_area": practice_area}
+            )
         else:
             result = await db.execute(_STATS_ALL, {"since": since})
         rows = result.fetchall()

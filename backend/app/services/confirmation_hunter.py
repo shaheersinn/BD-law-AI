@@ -17,17 +17,17 @@ scoring at threshold 82.0 — no additional fuzzy logic needed here.
 
 from __future__ import annotations
 
-import logging
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
+import structlog
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.entity_resolution import resolver
 from app.services.mandate_confirmation import confirm_mandate
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger(__name__)
 
 # Scrapers to hunt from (name prefix or exact match)
 CANLII_SCRAPER = "canlii_live"
@@ -240,7 +240,9 @@ async def _resolve_and_confirm(
         match = resolver.resolve(raw_name)
 
         if not match.matched:
-            results.append({"signal_id": sig["signal_id"], "confirmed": False, "reason": "no_match"})
+            results.append(
+                {"signal_id": sig["signal_id"], "confirmed": False, "reason": "no_match"}
+            )
             continue
 
         practice_area = sig["primary_practice_area"] or FALLBACK_PRACTICE_AREA
@@ -259,19 +261,23 @@ async def _resolve_and_confirm(
                 evidence_url=sig.get("source_url"),
                 is_auto_detected=True,
             )
-            results.append({
-                "signal_id": sig["signal_id"],
-                "confirmed": True,
-                "confirmation_id": confirmation.get("confirmation_id"),
-                "matched_entity_id": match.entity_id,
-                "match_score": match.score,
-            })
+            results.append(
+                {
+                    "signal_id": sig["signal_id"],
+                    "confirmed": True,
+                    "confirmation_id": confirmation.get("confirmation_id"),
+                    "matched_entity_id": match.entity_id,
+                    "match_score": match.score,
+                }
+            )
         except Exception:
             log.exception(
                 "auto-confirm failed",
                 signal_id=sig["signal_id"],
                 entity_id=match.entity_id,
             )
-            results.append({"signal_id": sig["signal_id"], "confirmed": False, "reason": "db_error"})
+            results.append(
+                {"signal_id": sig["signal_id"], "confirmed": False, "reason": "db_error"}
+            )
 
     return results

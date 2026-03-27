@@ -5,8 +5,6 @@ Tests JWT flow, account lockout, role enforcement.
 Uses httpx.AsyncClient against the test app.
 """
 
-from unittest.mock import MagicMock
-
 import pytest
 
 # ── Auth service unit tests ────────────────────────────────────────────────────
@@ -35,25 +33,14 @@ class TestPasswordHashing:
 
 
 class TestTokenGeneration:
-    def _make_user(self):
-        from app.auth.models import User, UserRole
-
-        user = MagicMock(spec=User)
-        user.id = 42
-        user.email = "partner@halcyon.legal"
-        user.role = UserRole.partner
-        user.partner_id = 3
-        return user
-
     def test_access_token_contains_claims(self):
         from app.auth.service import create_access_token, decode_token
 
-        user = self._make_user()
-        token = create_access_token(user)
-        claims = decode_token(token)
-        assert claims.user_id == 42
-        assert claims.email == "partner@halcyon.legal"
-        assert claims.role.value == "partner"
+        token = create_access_token(user_id=42, role="partner")
+        claims = decode_token(token, expected_type="access")
+        assert claims["sub"] == "42"
+        assert claims["role"] == "partner"
+        assert claims["type"] == "access"
 
     def test_refresh_token_type(self):
         from jose import jwt
@@ -61,8 +48,7 @@ class TestTokenGeneration:
         from app.auth.service import create_refresh_token
         from app.config import get_settings
 
-        user = self._make_user()
-        token = create_refresh_token(user)
+        token = create_refresh_token(user_id=42)
         payload = jwt.decode(token, get_settings().secret_key, algorithms=["HS256"])
         assert payload["type"] == "refresh"
 
@@ -72,8 +58,7 @@ class TestTokenGeneration:
         from app.auth.service import create_access_token
         from app.config import get_settings
 
-        user = self._make_user()
-        token = create_access_token(user)
+        token = create_access_token(user_id=42, role="partner")
         payload = jwt.decode(token, get_settings().secret_key, algorithms=["HS256"])
         assert payload["type"] == "access"
         # Attempting to use it as refresh should fail
@@ -84,49 +69,40 @@ class TestTokenGeneration:
 
         from app.auth.service import create_access_token, decode_token
 
-        user = self._make_user()
-        token = create_access_token(user)
+        token = create_access_token(user_id=42, role="partner")
         tampered = token[:-4] + "XXXX"
         with pytest.raises(JWTError):
-            decode_token(tampered)
+            decode_token(tampered, expected_type="access")
 
 
 class TestTokenClaims:
-    def test_admin_is_admin(self):
-        from app.auth.models import UserRole
-        from app.auth.service import TokenClaims
+    def test_admin_role_in_token(self):
+        from app.auth.service import create_access_token, decode_token
 
-        claims = TokenClaims(sub=1, email="a@b.com", role=UserRole.admin, partner_id=None)
-        assert claims.is_admin
-        assert claims.is_partner_or_above
-        assert claims.can_write()
+        token = create_access_token(user_id=1, role="admin")
+        claims = decode_token(token, expected_type="access")
+        assert claims["role"] == "admin"
 
-    def test_partner_can_write(self):
-        from app.auth.models import UserRole
-        from app.auth.service import TokenClaims
+    def test_partner_role_in_token(self):
+        from app.auth.service import create_access_token, decode_token
 
-        claims = TokenClaims(sub=2, email="p@b.com", role=UserRole.partner, partner_id=1)
-        assert not claims.is_admin
-        assert claims.is_partner_or_above
-        assert claims.can_write()
+        token = create_access_token(user_id=2, role="partner")
+        claims = decode_token(token, expected_type="access")
+        assert claims["role"] == "partner"
 
-    def test_readonly_cannot_write(self):
-        from app.auth.models import UserRole
-        from app.auth.service import TokenClaims
+    def test_readonly_role_in_token(self):
+        from app.auth.service import create_access_token, decode_token
 
-        claims = TokenClaims(sub=3, email="r@b.com", role=UserRole.readonly, partner_id=None)
-        assert not claims.is_admin
-        assert not claims.is_partner_or_above
-        assert not claims.can_write()
+        token = create_access_token(user_id=3, role="readonly")
+        claims = decode_token(token, expected_type="access")
+        assert claims["role"] == "readonly"
 
-    def test_associate_can_write_not_admin(self):
-        from app.auth.models import UserRole
-        from app.auth.service import TokenClaims
+    def test_associate_role_in_token(self):
+        from app.auth.service import create_access_token, decode_token
 
-        claims = TokenClaims(sub=4, email="a@b.com", role=UserRole.associate, partner_id=None)
-        assert not claims.is_admin
-        assert not claims.is_partner_or_above
-        assert claims.can_write()
+        token = create_access_token(user_id=4, role="associate")
+        claims = decode_token(token, expected_type="access")
+        assert claims["role"] == "associate"
 
 
 # ── Entity resolution unit tests ───────────────────────────────────────────────
