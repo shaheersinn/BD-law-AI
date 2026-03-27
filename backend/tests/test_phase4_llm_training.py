@@ -836,3 +836,136 @@ class TestRouteSerializers:
         assert d["created_at"] is None
         assert d["completed_at"] is None
         assert d["duration_seconds"] is None
+
+
+# ── Additional Tests ──────────────────────────────────────────────────────────
+
+
+class TestJsonlFieldsPresent:
+    def test_jsonl_fields_present(self) -> None:
+        """Curator CSV export contains all required columns for ML training."""
+        import tempfile
+
+        from app.training.curator import TrainingDataCurator
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            curator = TrainingDataCurator(export_dir=tmpdir)
+            rows = [
+                {
+                    "company_id": 1,
+                    "practice_area": "M&A/Corporate",
+                    "horizon_days": 30,
+                    "label_type": "positive",
+                    "label_int": 1,
+                    "confidence_score": 0.85,
+                    "label_source": "retrospective",
+                },
+            ]
+            path = curator._export(rows, fmt="csv")
+            with open(path) as f:
+                reader = csv.DictReader(f)
+                data = list(reader)
+
+            assert len(data) == 1
+            required_fields = [
+                "company_id",
+                "practice_area",
+                "horizon_days",
+                "label_type",
+                "label_int",
+                "confidence_score",
+                "label_source",
+            ]
+            for field in required_fields:
+                assert field in data[0], f"Missing required field: {field}"
+
+
+class TestGroqClientRetries429:
+    def test_groq_client_retries_on_http_error(self) -> None:
+        """When _call_once raises (simulating 429), classify_signals falls back to uncertain."""
+        from app.training.groq_client import GroqClient, SignalInput
+
+        client = GroqClient(api_key="test")
+        signals = [
+            SignalInput(signal_id=1, signal_type="news", signal_text="test", company_id=1),
+            SignalInput(signal_id=2, signal_type="filing", signal_text="test2", company_id=2),
+        ]
+
+        call_count = 0
+
+        async def failing_call(prompt: str) -> str:
+            nonlocal call_count
+            call_count += 1
+            import httpx
+
+            # Simulate a 429 Too Many Requests error
+            raise httpx.HTTPStatusError(
+                "429 Too Many Requests",
+                request=MagicMock(),
+                response=MagicMock(status_code=429),
+            )
+
+        client._call_once = failing_call  # type: ignore[method-assign]
+        results = _run(client.classify_signals(signals))
+
+        # All results should be uncertain due to the error
+        assert len(results) == 2
+        for r in results:
+            assert r.label_type == "uncertain"
+            assert r.parse_error is True
+
+
+class TestPseudoLabelerFiltersLowConfidence:
+    def test_pseudo_labeler_filters_low_confidence(self) -> None:
+        """Labels below PSEUDO_LABEL_CONFIDENCE_FLOOR (0.60) are rejected."""
+        from app.training.groq_client import ClassificationResult, GroqClient
+        from app.training.pseudo_labeler import PSEUDO_LABEL_CONFIDENCE_FLOOR, PseudoLabeler
+
+        db = _make_mock_db(
+            rows=[
+                (701, 5, "news_article", "Some news about a company", None),
+            ]
+        )
+
+        mock_groq = MagicMock(spec=GroqClient)
+        mock_groq.classify_signals = AsyncMock(
+            return_value=[
+                ClassificationResult(
+                    signal_id=701,
+                    label_type="positive",
+                    practice_areas=["Tax"],
+                    confidence=0.50,  # below the floor of 0.60
+                )
+            ]
+        )
+
+        result = _run(PseudoLabeler(groq_client=mock_groq).run(run_id=10, db=db))
+        assert result["pseudo_labels_created"] == 0
+        assert result["rejected_low_confidence"] == 1
+
+    def test_pseudo_labeler_accepts_above_floor(self) -> None:
+        """Labels at or above PSEUDO_LABEL_CONFIDENCE_FLOOR are accepted."""
+        from app.training.groq_client import ClassificationResult, GroqClient
+        from app.training.pseudo_labeler import PSEUDO_LABEL_CONFIDENCE_FLOOR, PseudoLabeler
+
+        db = _make_mock_db(
+            rows=[
+                (702, 5, "enforcement_action", "SEC enforcement", None),
+            ]
+        )
+
+        mock_groq = MagicMock(spec=GroqClient)
+        mock_groq.classify_signals = AsyncMock(
+            return_value=[
+                ClassificationResult(
+                    signal_id=702,
+                    label_type="positive",
+                    practice_areas=["Securities/Capital Markets"],
+                    confidence=PSEUDO_LABEL_CONFIDENCE_FLOOR + 0.05,  # above floor
+                )
+            ]
+        )
+
+        result = _run(PseudoLabeler(groq_client=mock_groq).run(run_id=11, db=db))
+        assert result["pseudo_labels_created"] == 1
+        assert result["rejected_low_confidence"] == 0

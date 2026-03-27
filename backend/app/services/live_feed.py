@@ -33,17 +33,17 @@ Usage (consumer — Agent 020 process_live_feed_events task):
 from __future__ import annotations
 
 import json
-import logging
 import socket
 from datetime import UTC, datetime
 from typing import Any
 
+import structlog
 import redis.asyncio as aioredis
 from redis.asyncio import Redis
 
 from app.config import get_settings
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger(__name__)
 settings = get_settings()
 
 # ── Stream constants ───────────────────────────────────────────────────────────

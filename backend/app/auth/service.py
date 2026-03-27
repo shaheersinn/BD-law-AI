@@ -36,6 +36,9 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__rounds
 # Token type literals
 TokenType = Literal["access", "refresh"]
 
+# Alias for use in route type annotations (resolves to User model from auth deps)
+TokenClaims = User
+
 
 # ── Password Utilities ─────────────────────────────────────────────────────────
 

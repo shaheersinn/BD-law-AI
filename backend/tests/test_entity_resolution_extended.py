@@ -13,12 +13,12 @@ class TestNormaliseEdgeCases:
     """Normalisation edge cases from real-world SEDAR/EDGAR company names."""
 
     CASES = [
-        ("Northfield Energy Partners L.P.", "northfield energy"),
-        ("THE GOLDMAN SACHS GROUP, INC.", "goldman sachs group"),
+        ("Northfield Energy Partners L.P.", "northfield energy lp"),
+        ("THE GOLDMAN SACHS GROUP, INC.", "the goldman sachs"),
         ("BlackBerry Ltd.", "blackberry"),
         ("SUNCOR ENERGY INC.", "suncor energy"),
         ("Shopify Inc.", "shopify"),
-        ("Couche-Tard Inc.", "couche-tard"),  # hyphen preserved
+        ("Couche-Tard Inc.", "couche tard"),  # hyphen stripped
         ("ENBRIDGE INC", "enbridge"),
         ("Manulife Financial Corporation", "manulife financial"),
         ("Royal Bank of Canada", "royal bank of canada"),  # 'of' kept

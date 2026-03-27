@@ -15,14 +15,14 @@ Weekly Celery task: agents.compute_prediction_accuracy (Agent 030)
 
 from __future__ import annotations
 
-import logging
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
+import structlog
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger(__name__)
 
 HORIZONS = (30, 60, 90)
 DEFAULT_THRESHOLD = 0.5

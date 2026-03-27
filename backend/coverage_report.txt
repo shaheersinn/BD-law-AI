@@ -1,0 +1,1292 @@
+/usr/local/lib/python3.11/dist-packages/pytest_asyncio/plugin.py:207: PytestDeprecationWarning: The configuration option "asyncio_default_fixture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the fixture caching scope. Future versions of pytest-asyncio will default the loop scope for asynchronous fixtures to function scope. Set the default fixture loop scope explicitly in order to avoid unexpected behavior in the future. Valid fixture loop scopes are: "function", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
+============================= test session starts ==============================
+platform linux -- Python 3.11.14, pytest-8.3.4, pluggy-1.6.0 -- /usr/local/bin/python
+cachedir: .pytest_cache
+rootdir: /home/user/BD-law-AI/backend
+configfile: pyproject.toml
+plugins: cov-6.0.0, mock-3.14.0, asyncio-1.3.0, Faker-33.1.0, respx-0.21.1, anyio-4.13.0
+asyncio: mode=Mode.AUTO, asyncio_default_fixture_loop_scope=None
+collecting ... collected 452 items
+
+tests/ml/test_phase6_ml.py::test_practice_area_count PASSED              [  0%]
+tests/ml/test_phase6_ml.py::test_feature_column_count PASSED             [  0%]
+tests/ml/test_phase6_ml.py::TestBayesianEngine::test_invalid_practice_area PASSED [  0%]
+tests/ml/test_phase6_ml.py::TestBayesianEngine::test_score_raises_if_not_loaded PASSED [  0%]
+tests/ml/test_phase6_ml.py::TestBayesianEngine::test_horizon_scores_output PASSED [  1%]
+tests/ml/test_phase6_ml.py::TestBayesianEngine::test_output_is_34x3_matrix PASSED [  1%]
+tests/ml/test_phase6_ml.py::TestBayesianEngine::test_probabilities_clipped PASSED [  1%]
+tests/ml/test_phase6_ml.py::TestTransformerScorer::test_model_architecture PASSED [  1%]
+tests/ml/test_phase6_ml.py::TestTransformerScorer::test_sequence_to_tensor_padding PASSED [  1%]
+tests/ml/test_phase6_ml.py::TestTransformerScorer::test_scorer_raises_if_not_loaded PASSED [  2%]
+tests/ml/test_phase6_ml.py::TestVelocityScorer::test_compute_velocity_basic PASSED [  2%]
+tests/ml/test_phase6_ml.py::TestVelocityScorer::test_velocity_clamped PASSED [  2%]
+tests/ml/test_phase6_ml.py::TestVelocityScorer::test_velocity_negative PASSED [  2%]
+tests/ml/test_phase6_ml.py::TestVelocityScorer::test_aggregate_velocity_range PASSED [  3%]
+tests/ml/test_phase6_ml.py::TestTemporalDecay::test_apply_decay_zero_age PASSED [  3%]
+tests/ml/test_phase6_ml.py::TestTemporalDecay::test_apply_decay_reduces_weight PASSED [  3%]
+tests/ml/test_phase6_ml.py::TestTemporalDecay::test_half_life_formula PASSED [  3%]
+tests/ml/test_phase6_ml.py::TestTemporalDecay::test_lambda_floor_enforced PASSED [  3%]
+tests/ml/test_phase6_ml.py::TestAnomalyDetector::test_anomaly_score_range PASSED [  4%]
+tests/ml/test_phase6_ml.py::TestAnomalyDetector::test_batch_score_returns_list PASSED [  4%]
+tests/ml/test_phase6_ml.py::TestCooccurrenceMining::test_empty_events PASSED [  4%]
+tests/ml/test_phase6_ml.py::TestCooccurrenceMining::test_transaction_matrix_shape PASSED [  4%]
+tests/ml/test_phase6_ml.py::TestCrossJurisdiction::test_propagation_decay PASSED [  5%]
+tests/ml/test_phase6_ml.py::TestCrossJurisdiction::test_unknown_link_type_returns_zero PASSED [  5%]
+tests/ml/test_phase6_ml.py::TestCrossJurisdiction::test_propagate_skips_weak_signals PASSED [  5%]
+tests/ml/test_phase6_ml.py::TestCrossJurisdiction::test_aggregate_convergence PASSED [  5%]
+tests/ml/test_phase6_ml.py::TestOrchestrator::test_bayesian_default_when_no_registry PASSED [  5%]
+tests/ml/test_phase6_ml.py::TestOrchestrator::test_transformer_requires_f1_threshold PASSED [  6%]
+tests/ml/test_phase6_ml.py::TestCeleryTasks::test_phase6_tasks_registered PASSED [  6%]
+tests/ml/test_phase6_ml.py::test_phase6_migration_exists PASSED          [  6%]
+tests/ml/test_phase6_ml.py::test_phase6_migration_valid_python PASSED    [  6%]
+tests/ml/test_phase6_ml.py::test_cooccurrence_max_rules_cap PASSED       [  7%]
+tests/ml/test_phase6_ml.py::test_default_decay_config_has_lambda_floor PASSED [  7%]
+tests/ml/test_phase6_ml.py::TestBayesianEngineScore::test_score_returns_horizon_scores PASSED [  7%]
+tests/ml/test_phase6_ml.py::TestBayesianEngineScore::test_score_all_34_practice_areas_valid PASSED [  7%]
+tests/ml/test_phase6_ml.py::TestBayesianEngineScore::test_score_missing_features_fills_zeros PASSED [  7%]
+tests/ml/test_phase6_ml.py::TestBayesianEngineScore::test_batch_score_raises_if_not_loaded PASSED [  8%]
+tests/ml/test_phase6_ml.py::TestOrchestratorExtended::test_selects_bayesian_when_transformer_not_trained PASSED [  8%]
+tests/ml/test_phase6_ml.py::TestOrchestratorExtended::test_selects_transformer_when_beats_bayesian_on_holdout PASSED [  8%]
+tests/ml/test_phase6_ml.py::TestOrchestratorExtended::test_score_company_returns_34_practice_areas PASSED [  8%]
+tests/ml/test_phase6_ml.py::TestVelocityScorerExtended::test_compute_velocity_positive_for_accelerating_signal PASSED [  9%]
+tests/ml/test_phase6_ml.py::TestVelocityScorerExtended::test_flag_high_velocity_companies PASSED [  9%]
+tests/ml/test_phase6_ml.py::TestVelocityScorerExtended::test_empty_velocities_aggregate_to_zero PASSED [  9%]
+tests/ml/test_phase6_ml.py::TestVelocityScorerExtended::test_velocity_from_history_insufficient PASSED [  9%]
+tests/ml/test_phase6_ml.py::TestAnomalyDetectorExtended::test_not_loaded_returns_zero PASSED [  9%]
+tests/ml/test_phase6_ml.py::TestAnomalyDetectorExtended::test_batch_not_loaded_returns_zeros PASSED [ 10%]
+tests/ml/test_phase6_ml.py::TestAllEnhancementsMinimalInput::test_enhancement_1_multi_horizon PASSED [ 10%]
+tests/ml/test_phase6_ml.py::TestAllEnhancementsMinimalInput::test_enhancement_2_velocity PASSED [ 10%]
+tests/ml/test_phase6_ml.py::TestAllEnhancementsMinimalInput::test_enhancement_3_graph_centrality PASSED [ 10%]
+tests/ml/test_phase6_ml.py::TestAllEnhancementsMinimalInput::test_enhancement_4_active_learning PASSED [ 11%]
+tests/ml/test_phase6_ml.py::TestAllEnhancementsMinimalInput::test_enhancement_5_cooccurrence PASSED [ 11%]
+tests/ml/test_phase6_ml.py::TestAllEnhancementsMinimalInput::test_enhancement_6_sector_weights PASSED [ 11%]
+tests/ml/test_phase6_ml.py::TestAllEnhancementsMinimalInput::test_enhancement_7_counterfactuals PASSED [ 11%]
+tests/ml/test_phase6_ml.py::TestAllEnhancementsMinimalInput::test_enhancement_8_cross_jurisdiction PASSED [ 11%]
+tests/ml/test_phase6_ml.py::TestAllEnhancementsMinimalInput::test_enhancement_9_anomaly_detector PASSED [ 12%]
+tests/ml/test_phase6_ml.py::TestAllEnhancementsMinimalInput::test_enhancement_10_temporal_decay PASSED [ 12%]
+tests/scrapers/test_phase1_scrapers.py::test_all_scrapers_registered PASSED [ 12%]
+tests/scrapers/test_phase1_scrapers.py::test_base_scraper_contract PASSED [ 12%]
+tests/scrapers/test_phase1_scrapers.py::test_base_scraper_requires_source_id PASSED [ 13%]
+tests/scrapers/test_phase1_scrapers.py::test_normalize_company_name_basic PASSED [ 13%]
+tests/scrapers/test_phase1_scrapers.py::test_normalize_company_name_unicode PASSED [ 13%]
+tests/scrapers/test_phase1_scrapers.py::test_normalize_company_name_legal_suffixes PASSED [ 13%]
+tests/scrapers/test_phase1_scrapers.py::test_scraper_result_defaults PASSED [ 13%]
+tests/scrapers/test_phase1_scrapers.py::test_scraper_result_with_values PASSED [ 14%]
+tests/scrapers/test_phase1_scrapers.py::test_rate_limit_rps_values PASSED [ 14%]
+tests/scrapers/test_phase1_scrapers.py::test_law_blog_27_firms PASSED    [ 14%]
+tests/scrapers/test_phase1_scrapers.py::test_law_blog_all_firms_registered PASSED [ 14%]
+tests/scrapers/test_phase1_scrapers.py::test_circuit_breaker_opens_after_threshold PASSED [ 15%]
+tests/scrapers/test_phase1_scrapers.py::test_circuit_breaker_recovers_after_timeout PASSED [ 15%]
+tests/scrapers/test_phase1_scrapers.py::test_registry_by_category PASSED [ 15%]
+tests/scrapers/test_phase1_scrapers.py::test_parse_date_formats PASSED   [ 15%]
+tests/scrapers/test_phase1_scrapers.py::test_browser_headers_no_python_ua PASSED [ 15%]
+tests/scrapers/test_phase1_scrapers.py::test_browser_headers_extra_merge PASSED [ 16%]
+tests/scrapers/test_phase1_scrapers.py::test_registry_all_ids_sorted PASSED [ 16%]
+tests/scrapers/test_phase1_scrapers.py::test_alembic_migration_syntax SKIPPED [ 16%]
+tests/scrapers/test_phase1_scrapers.py::test_base_scraper_fetch_retries_3x PASSED [ 16%]
+tests/scrapers/test_phase1_scrapers.py::test_budget_manager_blocks_over_limit PASSED [ 17%]
+tests/scrapers/test_phase1_scrapers.py::test_entity_resolver_returns_none_for_garbage PASSED [ 17%]
+tests/scrapers/test_phase1_scrapers.py::test_registry_has_at_least_65_scrapers PASSED [ 17%]
+tests/scrapers/test_phase1b_audit.py::TestValidateSignal::test_valid_signal_passes PASSED [ 17%]
+tests/scrapers/test_phase1b_audit.py::TestValidateSignal::test_missing_source_id_is_error PASSED [ 17%]
+tests/scrapers/test_phase1b_audit.py::TestValidateSignal::test_missing_signal_type_is_error PASSED [ 18%]
+tests/scrapers/test_phase1b_audit.py::TestValidateSignal::test_confidence_above_1_is_error PASSED [ 18%]
+tests/scrapers/test_phase1b_audit.py::TestValidateSignal::test_confidence_below_0_is_error PASSED [ 18%]
+tests/scrapers/test_phase1b_audit.py::TestValidateSignal::test_confidence_at_boundaries_is_valid PASSED [ 18%]
+tests/scrapers/test_phase1b_audit.py::TestValidateSignal::test_future_published_at_warns PASSED [ 19%]
+tests/scrapers/test_phase1b_audit.py::TestValidateSignal::test_past_published_at_no_warning PASSED [ 19%]
+tests/scrapers/test_phase1b_audit.py::TestValidateSignal::test_unknown_practice_area_warns PASSED [ 19%]
+tests/scrapers/test_phase1b_audit.py::TestValidateSignal::test_known_practice_area_no_warning PASSED [ 19%]
+tests/scrapers/test_phase1b_audit.py::TestValidateSignal::test_non_http_url_warns PASSED [ 19%]
+tests/scrapers/test_phase1b_audit.py::TestValidateSignal::test_no_source_url_is_valid PASSED [ 20%]
+tests/scrapers/test_phase1b_audit.py::TestValidateSignal::test_non_serializable_signal_value_is_error PASSED [ 20%]
+tests/scrapers/test_phase1b_audit.py::TestValidateSignal::test_long_company_name_warns PASSED [ 20%]
+tests/scrapers/test_phase1b_audit.py::TestCanarySignal::test_canary_signal_validates PASSED [ 20%]
+tests/scrapers/test_phase1b_audit.py::TestValidateBatch::test_batch_all_valid PASSED [ 21%]
+tests/scrapers/test_phase1b_audit.py::TestValidateBatch::test_batch_pass_rate PASSED [ 21%]
+tests/scrapers/test_phase1b_audit.py::TestValidateBatch::test_batch_empty PASSED [ 21%]
+tests/scrapers/test_phase1b_audit.py::TestValidateBatch::test_batch_duplicate_url_warns PASSED [ 21%]
+tests/scrapers/test_phase1b_audit.py::TestValidateBatch::test_batch_details_structure PASSED [ 21%]
+tests/scrapers/test_phase1b_audit.py::TestScraperHealthModel::test_record_success_resets_failures PASSED [ 22%]
+tests/scrapers/test_phase1b_audit.py::TestScraperHealthModel::test_record_failure_increments PASSED [ 22%]
+tests/scrapers/test_phase1b_audit.py::TestScraperHealthModel::test_failure_rate_zero_runs PASSED [ 22%]
+tests/scrapers/test_phase1b_audit.py::TestScraperHealthModel::test_failure_rate_calculation PASSED [ 22%]
+tests/scrapers/test_phase1b_audit.py::TestScraperHealthModel::test_failing_after_3_consecutive PASSED [ 23%]
+tests/scrapers/test_phase1b_audit.py::TestScraperHealthModel::test_status_improves_after_success PASSED [ 23%]
+tests/test_auth.py::TestPasswordHashing::test_hash_and_verify PASSED     [ 23%]
+tests/test_auth.py::TestPasswordHashing::test_wrong_password_fails PASSED [ 23%]
+tests/test_auth.py::TestPasswordHashing::test_empty_password_fails PASSED [ 23%]
+tests/test_auth.py::TestTokenGeneration::test_access_token_contains_claims PASSED [ 24%]
+tests/test_auth.py::TestTokenGeneration::test_refresh_token_type PASSED  [ 24%]
+tests/test_auth.py::TestTokenGeneration::test_access_token_not_accepted_as_refresh PASSED [ 24%]
+tests/test_auth.py::TestTokenGeneration::test_tampered_token_rejected PASSED [ 24%]
+tests/test_auth.py::TestTokenClaims::test_admin_role_in_token PASSED     [ 25%]
+tests/test_auth.py::TestTokenClaims::test_partner_role_in_token PASSED   [ 25%]
+tests/test_auth.py::TestTokenClaims::test_readonly_role_in_token PASSED  [ 25%]
+tests/test_auth.py::TestTokenClaims::test_associate_role_in_token PASSED [ 25%]
+tests/test_auth.py::TestEntityResolution::test_normalise_strips_legal_suffix PASSED [ 25%]
+tests/test_auth.py::TestEntityResolution::test_normalise_handles_empty PASSED [ 26%]
+tests/test_auth.py::TestEntityResolution::test_normalise_strips_punctuation PASSED [ 26%]
+tests/test_auth.py::TestEntityResolution::test_resolver_exact_match PASSED [ 26%]
+tests/test_auth.py::TestEntityResolution::test_resolver_fuzzy_match PASSED [ 26%]
+tests/test_auth.py::TestEntityResolution::test_resolver_no_match_below_threshold PASSED [ 26%]
+tests/test_auth.py::TestEntityResolution::test_resolver_empty_index PASSED [ 27%]
+tests/test_auth.py::TestEntityResolution::test_add_entity_live_update PASSED [ 27%]
+tests/test_auth.py::TestCacheClient::test_ai_response_key_deterministic PASSED [ 27%]
+tests/test_auth.py::TestCacheClient::test_ai_response_key_differs_by_params PASSED [ 27%]
+tests/test_auth.py::TestCacheClient::test_client_key_format PASSED       [ 28%]
+tests/test_auth.py::TestCacheClient::test_trigger_feed_key_format PASSED [ 28%]
+tests/test_convergence.py::test_empty_signals_returns_zero PASSED        [ 28%]
+tests/test_convergence.py::test_single_strong_signal PASSED              [ 28%]
+tests/test_convergence.py::test_single_signal_decays_over_time PASSED    [ 28%]
+tests/test_convergence.py::test_convergence_multiplier_applied PASSED    [ 29%]
+tests/test_convergence.py::test_score_capped_at_100 PASSED               [ 29%]
+tests/test_convergence.py::test_practice_area_ma_from_sedar PASSED       [ 29%]
+tests/test_convergence.py::test_practice_area_litigation_from_canlii PASSED [ 29%]
+tests/test_convergence.py::test_practice_area_unknown_for_empty PASSED   [ 30%]
+tests/test_convergence.py::test_crossed_threshold_detects_crossing PASSED [ 30%]
+tests/test_convergence.py::test_crossed_threshold_no_crossing PASSED     [ 30%]
+tests/test_convergence.py::test_decayed_weight_at_zero_days PASSED       [ 30%]
+tests/test_convergence.py::test_decayed_weight_at_half_life PASSED       [ 30%]
+tests/test_convergence.py::test_five_category_boost PASSED               [ 31%]
+tests/test_entity_resolution_extended.py::TestNormaliseEdgeCases::test_normalise[Northfield Energy Partners L.P.-northfield energy lp] PASSED [ 31%]
+tests/test_entity_resolution_extended.py::TestNormaliseEdgeCases::test_normalise[THE GOLDMAN SACHS GROUP, INC.-the goldman sachs] PASSED [ 31%]
+tests/test_entity_resolution_extended.py::TestNormaliseEdgeCases::test_normalise[BlackBerry Ltd.-blackberry] PASSED [ 31%]
+tests/test_entity_resolution_extended.py::TestNormaliseEdgeCases::test_normalise[SUNCOR ENERGY INC.-suncor energy] PASSED [ 32%]
+tests/test_entity_resolution_extended.py::TestNormaliseEdgeCases::test_normalise[Shopify Inc.-shopify] PASSED [ 32%]
+tests/test_entity_resolution_extended.py::TestNormaliseEdgeCases::test_normalise[Couche-Tard Inc.-couche tard] PASSED [ 32%]
+tests/test_entity_resolution_extended.py::TestNormaliseEdgeCases::test_normalise[ENBRIDGE INC-enbridge] PASSED [ 32%]
+tests/test_entity_resolution_extended.py::TestNormaliseEdgeCases::test_normalise[Manulife Financial Corporation-manulife financial] PASSED [ 32%]
+tests/test_entity_resolution_extended.py::TestNormaliseEdgeCases::test_normalise[Royal Bank of Canada-royal bank of canada] PASSED [ 33%]
+tests/test_entity_resolution_extended.py::TestNormaliseEdgeCases::test_normalise[BCE Inc.-bce] PASSED [ 33%]
+tests/test_entity_resolution_extended.py::TestNormaliseEdgeCases::test_normalise[Canadian Natural Resources Limited-canadian natural resources] PASSED [ 33%]
+tests/test_entity_resolution_extended.py::TestNormaliseEdgeCases::test_normalise[Barrick Gold Corporation-barrick gold] PASSED [ 33%]
+tests/test_entity_resolution_extended.py::TestNormaliseEdgeCases::test_normalise[TC Energy Corp-tc energy] PASSED [ 34%]
+tests/test_entity_resolution_extended.py::TestNormaliseEdgeCases::test_normalise[Pembina Pipeline Corp.-pembina pipeline] PASSED [ 34%]
+tests/test_entity_resolution_extended.py::TestNormaliseEdgeCases::test_normalise[Fortis Inc.-fortis] PASSED [ 34%]
+tests/test_entity_resolution_extended.py::TestResolverBatchOperations::test_batch_resolve_all_match PASSED [ 34%]
+tests/test_entity_resolution_extended.py::TestResolverBatchOperations::test_batch_resolve_partial_match PASSED [ 34%]
+tests/test_entity_resolution_extended.py::TestResolverBatchOperations::test_resolve_order_independence PASSED [ 35%]
+tests/test_entity_resolution_extended.py::TestResolverBatchOperations::test_score_ordering PASSED [ 35%]
+tests/test_entity_resolution_extended.py::TestResolverBatchOperations::test_known_sedar_variations PASSED [ 35%]
+tests/test_health.py::test_health_endpoint_returns_ok PASSED             [ 35%]
+tests/test_health.py::test_ready_endpoint PASSED                         [ 36%]
+tests/test_health.py::test_version_endpoint PASSED                       [ 36%]
+tests/test_health.py::test_login_endpoint_registered PASSED              [ 36%]
+tests/test_health.py::test_login_invalid_credentials PASSED              [ 36%]
+tests/test_health.py::test_protected_endpoint_requires_auth PASSED       [ 36%]
+tests/test_health.py::test_request_id_in_response_headers PASSED         [ 37%]
+tests/test_health.py::test_cors_headers_present PASSED                   [ 37%]
+tests/test_health.py::test_404_returns_json PASSED                       [ 37%]
+tests/test_phase0_scaffold.py::TestSettings::test_settings_load_development PASSED [ 37%]
+tests/test_phase0_scaffold.py::TestSettings::test_settings_has_required_fields PASSED [ 38%]
+tests/test_phase0_scaffold.py::TestSettings::test_settings_db_pool_defaults PASSED [ 38%]
+tests/test_phase0_scaffold.py::TestSettings::test_settings_is_production_property PASSED [ 38%]
+tests/test_phase0_scaffold.py::TestSettings::test_settings_production_requires_strong_secret PASSED [ 38%]
+tests/test_phase0_scaffold.py::TestSettings::test_settings_production_rejects_localhost_db PASSED [ 38%]
+tests/test_phase0_scaffold.py::TestSettings::test_settings_feature_flags PASSED [ 39%]
+tests/test_phase0_scaffold.py::TestSettings::test_settings_rate_limit_defaults PASSED [ 39%]
+tests/test_phase0_scaffold.py::TestHealthEndpoint::test_health_returns_status_and_components PASSED [ 39%]
+tests/test_phase0_scaffold.py::TestHealthEndpoint::test_health_includes_ml_ready PASSED [ 39%]
+tests/test_phase0_scaffold.py::TestReadyEndpoint::test_ready_returns_503_when_db_unreachable PASSED [ 40%]
+tests/test_phase0_scaffold.py::TestReadyEndpoint::test_ready_returns_200_when_db_reachable PASSED [ 40%]
+tests/test_phase0_scaffold.py::TestCORS::test_cors_preflight_returns_headers PASSED [ 40%]
+tests/test_phase0_scaffold.py::TestCORS::test_cors_allows_configured_origin PASSED [ 40%]
+tests/test_phase0_scaffold.py::TestVersionEndpoint::test_version_returns_expected_fields PASSED [ 40%]
+tests/test_phase0_scaffold.py::TestVersionEndpoint::test_404_returns_json PASSED [ 41%]
+tests/test_phase10_hardening.py::test_sync_url_converts_asyncpg_to_psycopg2 PASSED [ 41%]
+tests/test_phase10_hardening.py::test_sync_url_preserves_credentials_and_path PASSED [ 41%]
+tests/test_phase10_hardening.py::test_security_headers_x_frame_options PASSED [ 41%]
+tests/test_phase10_hardening.py::test_security_headers_x_content_type_options PASSED [ 42%]
+tests/test_phase10_hardening.py::test_security_headers_hsts_present_in_production PASSED [ 42%]
+tests/test_phase10_hardening.py::test_security_headers_hsts_absent_in_development PASSED [ 42%]
+tests/test_phase10_hardening.py::test_metrics_router_exists PASSED       [ 42%]
+tests/test_phase10_hardening.py::test_metrics_gauge_helper_output PASSED [ 42%]
+tests/test_phase10_hardening.py::test_phase6_tasks_import_get_sync_db PASSED [ 43%]
+tests/test_phase10_hardening.py::test_phase6_tasks_no_asyncio_run_for_sql_tasks PASSED [ 43%]
+tests/test_phase10_hardening.py::test_psycopg2_binary_in_requirements PASSED [ 43%]
+tests/test_phase10_hardening.py::test_prometheus_client_in_requirements PASSED [ 43%]
+tests/test_phase10_hardening.py::test_locust_in_requirements_dev PASSED  [ 44%]
+tests/test_phase10_hardening.py::test_sentry_celery_integration_in_main PASSED [ 44%]
+tests/test_phase10_hardening.py::test_security_headers_middleware_registered PASSED [ 44%]
+tests/test_phase10_hardening.py::test_metrics_router_registered_in_main PASSED [ 44%]
+tests/test_phase10_hardening.py::test_rate_limiter_returns_429 PASSED    [ 44%]
+tests/test_phase10_hardening.py::test_expired_jwt_returns_401 PASSED     [ 45%]
+tests/test_phase10_hardening.py::test_nosniff_header_on_all_responses PASSED [ 45%]
+tests/test_phase10_hardening.py::test_x_frame_options_on_all_responses PASSED [ 45%]
+tests/test_phase10_hardening.py::test_csp_header_on_all_responses PASSED [ 45%]
+tests/test_phase10_hardening.py::test_metrics_endpoint_returns_prometheus_format PASSED [ 46%]
+tests/test_phase10_hardening.py::test_error_handler_middleware_registered PASSED [ 46%]
+tests/test_phase10_hardening.py::test_rate_limiter_middleware_registered PASSED [ 46%]
+tests/test_phase11_deployment.py::TestEnvVarMapping::test_env_example_vars_have_config_fields PASSED [ 46%]
+tests/test_phase11_deployment.py::TestEnvVarMapping::test_config_fields_have_env_example_entries PASSED [ 46%]
+tests/test_phase11_deployment.py::TestHealthSchema::test_health_schema_fields PASSED [ 47%]
+tests/test_phase11_deployment.py::TestHealthSchema::test_health_components_schema PASSED [ 47%]
+tests/test_phase11_deployment.py::TestHealthSchema::test_health_component_values PASSED [ 47%]
+tests/test_phase11_deployment.py::TestReadyEndpoint::test_ready_503_when_db_down PASSED [ 47%]
+tests/test_phase11_deployment.py::TestReadyEndpoint::test_ready_200_when_db_up PASSED [ 48%]
+tests/test_phase11_deployment.py::TestInfrastructureFiles::test_ci_workflow_exists PASSED [ 48%]
+tests/test_phase11_deployment.py::TestInfrastructureFiles::test_cd_workflow_exists PASSED [ 48%]
+tests/test_phase11_deployment.py::TestInfrastructureFiles::test_do_app_yaml_exists PASSED [ 48%]
+tests/test_phase11_deployment.py::TestInfrastructureFiles::test_dockerfile_exists PASSED [ 48%]
+tests/test_phase11_deployment.py::TestInfrastructureFiles::test_docker_compose_exists PASSED [ 49%]
+tests/test_phase11_deployment.py::TestInfrastructureFiles::test_env_example_exists PASSED [ 49%]
+tests/test_phase12_optimization.py::TestCachePerformance::test_cache_key_format PASSED [ 49%]
+tests/test_phase12_optimization.py::TestCachePerformance::test_ttl_is_6_hours PASSED [ 49%]
+tests/test_phase12_optimization.py::TestCachePerformance::test_cached_score_returns_fast PASSED [ 50%]
+tests/test_phase12_optimization.py::TestCachePerformance::test_cache_miss_queries_db PASSED [ 50%]
+tests/test_phase12_optimization.py::TestCachePerformance::test_invalidate_cache_deletes_key PASSED [ 50%]
+tests/test_phase12_optimization.py::TestDriftReEvaluation::test_drift_detector_flags_large_accuracy_drop PASSED [ 50%]
+tests/test_phase12_optimization.py::TestDriftReEvaluation::test_drift_triggers_orchestrator_refresh PASSED [ 50%]
+tests/test_phase12_optimization.py::TestActiveLearningQueue::test_uncertain_companies_identified PASSED [ 51%]
+tests/test_phase12_optimization.py::TestActiveLearningQueue::test_low_accuracy_triggers_queue PASSED [ 51%]
+tests/test_phase2_features.py::TestFeatureVectorShape::test_34_practice_areas PASSED [ 51%]
+tests/test_phase2_features.py::TestFeatureVectorShape::test_feature_columns_count PASSED [ 51%]
+tests/test_phase2_features.py::TestFeatureVectorShape::test_feature_columns_are_unique PASSED [ 51%]
+tests/test_phase2_features.py::TestFeatureVectorShape::test_feature_columns_contain_critical_features PASSED [ 52%]
+tests/test_phase2_features.py::TestTemporalDecay::test_zero_age_preserves_weight PASSED [ 52%]
+tests/test_phase2_features.py::TestTemporalDecay::test_decay_reduces_weight PASSED [ 52%]
+tests/test_phase2_features.py::TestTemporalDecay::test_90_day_decay_exceeds_50_percent PASSED [ 52%]
+tests/test_phase2_features.py::TestTemporalDecay::test_negative_age_returns_base_weight PASSED [ 53%]
+tests/test_phase2_features.py::TestTemporalDecay::test_decay_never_negative PASSED [ 53%]
+tests/test_phase2_features.py::TestTemporalDecay::test_half_life_formula PASSED [ 53%]
+tests/test_phase2_features.py::TestTemporalDecay::test_lambda_from_half_life_inverse PASSED [ 53%]
+tests/test_phase2_features.py::TestTemporalDecay::test_lambda_floor_enforced PASSED [ 53%]
+tests/test_phase2_features.py::TestTemporalDecay::test_zero_lambda_gives_infinite_half_life PASSED [ 54%]
+tests/test_phase2_features.py::TestMissingFields::test_empty_signals_returns_zero PASSED [ 54%]
+tests/test_phase2_features.py::TestMissingFields::test_missing_signal_type_uses_default_lambda PASSED [ 54%]
+tests/test_phase2_features.py::TestMissingFields::test_missing_age_days_uses_zero PASSED [ 54%]
+tests/test_phase2_features.py::TestMissingFields::test_missing_base_weight_uses_default PASSED [ 55%]
+tests/test_phase2_features.py::TestDecayFeatures::test_decay_features_output_keys PASSED [ 55%]
+tests/test_phase2_features.py::TestDecayFeatures::test_decay_features_empty_categories PASSED [ 55%]
+tests/test_phase2_features.py::TestDecayFeatures::test_decay_features_with_signals PASSED [ 55%]
+tests/test_phase2_features.py::TestLambdaCalibration::test_calibrate_with_few_events_returns_default PASSED [ 55%]
+tests/test_phase2_features.py::TestLambdaCalibration::test_calibrate_enforces_floor PASSED [ 56%]
+tests/test_phase2_features.py::TestLambdaCalibration::test_build_default_decay_config_rows PASSED [ 56%]
+tests/test_phase2_features.py::TestLambdaCalibration::test_default_lambdas_all_above_floor PASSED [ 56%]
+tests/test_phase3_ground_truth.py::TestConstants::test_all_34_practice_areas_present PASSED [ 56%]
+tests/test_phase3_ground_truth.py::TestConstants::test_no_duplicate_practice_areas PASSED [ 57%]
+tests/test_phase3_ground_truth.py::TestConstants::test_positive_signal_types_nonempty PASSED [ 57%]
+tests/test_phase3_ground_truth.py::TestConstants::test_signal_type_maps_to_known_practice_areas PASSED [ 57%]
+tests/test_phase3_ground_truth.py::TestConstants::test_insolvency_signals_map_correctly PASSED [ 57%]
+tests/test_phase3_ground_truth.py::TestConstants::test_data_breach_maps_to_privacy_and_data PASSED [ 57%]
+tests/test_phase3_ground_truth.py::TestConstants::test_horizons_are_30_60_90 PASSED [ 58%]
+tests/test_phase3_ground_truth.py::TestConstants::test_positive_signal_types_matches_keys PASSED [ 58%]
+tests/test_phase3_ground_truth.py::TestConstants::test_negative_signal_types_disjoint_from_positive PASSED [ 58%]
+tests/test_phase3_ground_truth.py::TestConstants::test_default_confidence_is_float PASSED [ 58%]
+tests/test_phase3_ground_truth.py::TestConstants::test_max_negative_samples_positive_int PASSED [ 59%]
+tests/test_phase3_ground_truth.py::TestLabelingRunModel::test_total_labels_property PASSED [ 59%]
+tests/test_phase3_ground_truth.py::TestLabelingRunModel::test_total_labels_zero_when_empty PASSED [ 59%]
+tests/test_phase3_ground_truth.py::TestLabelingRunModel::test_duration_seconds_none_when_incomplete PASSED [ 59%]
+tests/test_phase3_ground_truth.py::TestLabelingRunModel::test_duration_seconds_calculated_correctly PASSED [ 59%]
+tests/test_phase3_ground_truth.py::TestLabelingRunModel::test_duration_seconds_none_when_only_start PASSED [ 60%]
+tests/test_phase3_ground_truth.py::TestGroundTruthEnums::test_label_type_values PASSED [ 60%]
+tests/test_phase3_ground_truth.py::TestGroundTruthEnums::test_run_type_values PASSED [ 60%]
+tests/test_phase3_ground_truth.py::TestGroundTruthEnums::test_run_status_values PASSED [ 60%]
+tests/test_phase3_ground_truth.py::TestGroundTruthEnums::test_label_source_values PASSED [ 61%]
+tests/test_phase3_ground_truth.py::TestRetrospectiveLabeler::test_no_signals_returns_no_labels PASSED [ 61%]
+tests/test_phase3_ground_truth.py::TestRetrospectiveLabeler::test_positive_signal_generates_label PASSED [ 61%]
+tests/test_phase3_ground_truth.py::TestRetrospectiveLabeler::test_label_contains_evidence_ids PASSED [ 61%]
+tests/test_phase3_ground_truth.py::TestRetrospectiveLabeler::test_horizon_days_set_correctly PASSED [ 61%]
+tests/test_phase3_ground_truth.py::TestRetrospectiveLabeler::test_db_error_returns_empty PASSED [ 62%]
+tests/test_phase3_ground_truth.py::TestRetrospectiveLabeler::test_multi_practice_area_signal_creates_multiple_labels PASSED [ 62%]
+tests/test_phase3_ground_truth.py::TestRetrospectiveLabeler::test_batch_run_returns_summary PASSED [ 62%]
+tests/test_phase3_ground_truth.py::TestRetrospectiveLabeler::test_get_all_company_ids_returns_list PASSED [ 62%]
+tests/test_phase3_ground_truth.py::TestRetrospectiveLabeler::test_get_all_company_ids_db_error_returns_empty PASSED [ 63%]
+tests/test_phase3_ground_truth.py::TestRetrospectiveLabeler::test_confidence_score_set_to_default PASSED [ 63%]
+tests/test_phase3_ground_truth.py::TestRetrospectiveLabeler::test_label_source_is_retrospective PASSED [ 63%]
+tests/test_phase3_ground_truth.py::TestRetrospectiveLabeler::test_is_validated_false_by_default PASSED [ 63%]
+tests/test_phase3_ground_truth.py::TestNegativeSampler::test_no_candidates_returns_zero_labels PASSED [ 63%]
+tests/test_phase3_ground_truth.py::TestNegativeSampler::test_creates_negative_label_for_candidate PASSED [ 64%]
+tests/test_phase3_ground_truth.py::TestNegativeSampler::test_sector_cap_limits_samples PASSED [ 64%]
+tests/test_phase3_ground_truth.py::TestNegativeSampler::test_multiple_sectors_sampled_independently PASSED [ 64%]
+tests/test_phase3_ground_truth.py::TestNegativeSampler::test_negative_label_practice_area_is_none PASSED [ 64%]
+tests/test_phase3_ground_truth.py::TestNegativeSampler::test_sectors_sampled_count_returned PASSED [ 65%]
+tests/test_phase3_ground_truth.py::TestNegativeSampler::test_no_errors_on_clean_run PASSED [ 65%]
+tests/test_phase3_ground_truth.py::TestNegativeSampler::test_unknown_sector_treated_as_unknown PASSED [ 65%]
+tests/test_phase3_ground_truth.py::TestGroundTruthPipeline::test_get_run_by_id_not_found PASSED [ 65%]
+tests/test_phase3_ground_truth.py::TestGroundTruthPipeline::test_get_run_by_id_db_error_returns_none PASSED [ 65%]
+tests/test_phase3_ground_truth.py::TestGroundTruthPipeline::test_get_run_by_id_found PASSED [ 66%]
+tests/test_phase3_ground_truth.py::TestRouteSerializers::test_label_to_dict_structure PASSED [ 66%]
+tests/test_phase3_ground_truth.py::TestRouteSerializers::test_run_to_dict_structure PASSED [ 66%]
+tests/test_phase3_ground_truth.py::TestRouteSerializers::test_label_to_dict_none_evidence_returns_empty_list PASSED [ 66%]
+tests/test_phase3_ground_truth.py::TestRouteSerializers::test_label_to_dict_missing_created_at PASSED [ 67%]
+tests/test_phase3_ground_truth.py::TestLabelerSedarHit::test_labeler_assigns_positive_on_sedar_hit PASSED [ 67%]
+tests/test_phase3_ground_truth.py::TestNegativeSamplerRatio::test_negative_sampler_ratio PASSED [ 67%]
+tests/test_phase3_ground_truth.py::TestNegativeSamplerRatio::test_negative_sampler_caps_at_max_per_sector PASSED [ 67%]
+tests/test_phase3_ground_truth.py::TestLabelingPipelineIdempotent::test_labeling_pipeline_idempotent PASSED [ 67%]
+tests/test_phase4_llm_training.py::TestGroqClient::test_classify_signals_empty_input PASSED [ 68%]
+tests/test_phase4_llm_training.py::TestGroqClient::test_parse_response_valid_json PASSED [ 68%]
+tests/test_phase4_llm_training.py::TestGroqClient::test_parse_response_malformed_json_returns_uncertain PASSED [ 68%]
+tests/test_phase4_llm_training.py::TestGroqClient::test_parse_response_strips_markdown_fences PASSED [ 68%]
+tests/test_phase4_llm_training.py::TestGroqClient::test_parse_response_fills_missing_signals_with_uncertain PASSED [ 69%]
+tests/test_phase4_llm_training.py::TestGroqClient::test_parse_response_clamps_confidence PASSED [ 69%]
+tests/test_phase4_llm_training.py::TestGroqClient::test_parse_response_invalid_label_type_becomes_uncertain PASSED [ 69%]
+tests/test_phase4_llm_training.py::TestGroqClient::test_batch_splits_correctly PASSED [ 69%]
+tests/test_phase4_llm_training.py::TestGroqClient::test_batch_error_falls_back_to_uncertain PASSED [ 69%]
+tests/test_phase4_llm_training.py::TestPrompts::test_build_prompt_contains_signal_ids PASSED [ 70%]
+tests/test_phase4_llm_training.py::TestPrompts::test_build_prompt_contains_json_schema_hint PASSED [ 70%]
+tests/test_phase4_llm_training.py::TestPrompts::test_build_prompt_contains_practice_areas PASSED [ 70%]
+tests/test_phase4_llm_training.py::TestPrompts::test_build_prompt_has_few_shot_examples PASSED [ 70%]
+tests/test_phase4_llm_training.py::TestPrompts::test_build_prompt_no_text_signal PASSED [ 71%]
+tests/test_phase4_llm_training.py::TestPrompts::test_system_prompt_not_empty PASSED [ 71%]
+tests/test_phase4_llm_training.py::TestPrompts::test_few_shot_examples_valid PASSED [ 71%]
+tests/test_phase4_llm_training.py::TestPseudoLabeler::test_no_unlabeled_signals_returns_zero PASSED [ 71%]
+tests/test_phase4_llm_training.py::TestPseudoLabeler::test_confident_positive_creates_label PASSED [ 71%]
+tests/test_phase4_llm_training.py::TestPseudoLabeler::test_low_confidence_rejected PASSED [ 72%]
+tests/test_phase4_llm_training.py::TestPseudoLabeler::test_negative_label_created_with_no_practice_area PASSED [ 72%]
+tests/test_phase4_llm_training.py::TestPseudoLabeler::test_multi_practice_area_creates_multiple_labels PASSED [ 72%]
+tests/test_phase4_llm_training.py::TestPseudoLabeler::test_resolve_practice_areas_case_insensitive PASSED [ 72%]
+tests/test_phase4_llm_training.py::TestPseudoLabeler::test_resolve_practice_areas_unknown_dropped PASSED [ 73%]
+tests/test_phase4_llm_training.py::TestPseudoLabeler::test_label_source_is_pseudo_label PASSED [ 73%]
+tests/test_phase4_llm_training.py::TestPseudoLabeler::test_groq_failure_returns_error_count PASSED [ 73%]
+tests/test_phase4_llm_training.py::TestTrainingDataCurator::test_empty_db_produces_zero_label_dataset PASSED [ 73%]
+tests/test_phase4_llm_training.py::TestTrainingDataCurator::test_deduplicate_keeps_highest_confidence PASSED [ 73%]
+tests/test_phase4_llm_training.py::TestTrainingDataCurator::test_deduplicate_different_keys_kept_separately PASSED [ 74%]
+tests/test_phase4_llm_training.py::TestTrainingDataCurator::test_deduplicate_adds_label_int PASSED [ 74%]
+tests/test_phase4_llm_training.py::TestTrainingDataCurator::test_csv_export_creates_file PASSED [ 74%]
+tests/test_phase4_llm_training.py::TestTrainingDataCurator::test_csv_export_empty_rows PASSED [ 74%]
+tests/test_phase4_llm_training.py::TestTrainingDataCurator::test_confidence_filter_applied PASSED [ 75%]
+tests/test_phase4_llm_training.py::TestTrainingDataCurator::test_curate_creates_training_dataset_record PASSED [ 75%]
+tests/test_phase4_llm_training.py::TestTrainingDatasetModel::test_dataset_status_values PASSED [ 75%]
+tests/test_phase4_llm_training.py::TestTrainingDatasetModel::test_duration_seconds_none_when_incomplete PASSED [ 75%]
+tests/test_phase4_llm_training.py::TestTrainingDatasetModel::test_duration_seconds_calculated PASSED [ 75%]
+tests/test_phase4_llm_training.py::TestTrainingDatasetModel::test_dataset_has_tablename PASSED [ 76%]
+tests/test_phase4_llm_training.py::TestGroundTruthEnumExtensions::test_label_source_pseudo_label_exists PASSED [ 76%]
+tests/test_phase4_llm_training.py::TestGroundTruthEnumExtensions::test_run_type_pseudo_label_exists PASSED [ 76%]
+tests/test_phase4_llm_training.py::TestGroundTruthEnumExtensions::test_label_source_all_values PASSED [ 76%]
+tests/test_phase4_llm_training.py::TestGroundTruthEnumExtensions::test_run_type_all_values PASSED [ 76%]
+tests/test_phase4_llm_training.py::TestRouteSerializers::test_dataset_to_dict_structure PASSED [ 77%]
+tests/test_phase4_llm_training.py::TestRouteSerializers::test_dataset_to_dict_none_timestamps PASSED [ 77%]
+tests/test_phase4_llm_training.py::TestJsonlFieldsPresent::test_jsonl_fields_present PASSED [ 77%]
+tests/test_phase4_llm_training.py::TestGroqClientRetries429::test_groq_client_retries_on_http_error PASSED [ 77%]
+tests/test_phase4_llm_training.py::TestPseudoLabelerFiltersLowConfidence::test_pseudo_labeler_filters_low_confidence PASSED [ 78%]
+tests/test_phase4_llm_training.py::TestPseudoLabelerFiltersLowConfidence::test_pseudo_labeler_accepts_above_floor PASSED [ 78%]
+tests/test_phase5_live_feeds.py::TestLiveFeedRouter::test_push_signal_returns_msg_id PASSED [ 78%]
+tests/test_phase5_live_feeds.py::TestLiveFeedRouter::test_push_signal_disabled_returns_none PASSED [ 78%]
+tests/test_phase5_live_feeds.py::TestLiveFeedRouter::test_push_signal_stamps_pushed_at PASSED [ 78%]
+tests/test_phase5_live_feeds.py::TestLiveFeedRouter::test_push_signal_json_serializes_dicts PASSED [ 79%]
+tests/test_phase5_live_feeds.py::TestLiveFeedRouter::test_push_signal_redis_error_returns_none PASSED [ 79%]
+tests/test_phase5_live_feeds.py::TestLiveFeedRouter::test_ensure_consumer_group_creates_group PASSED [ 79%]
+tests/test_phase5_live_feeds.py::TestLiveFeedRouter::test_ensure_consumer_group_ignores_busygroup PASSED [ 79%]
+tests/test_phase5_live_feeds.py::TestLiveFeedRouter::test_read_events_returns_empty_when_no_messages PASSED [ 80%]
+tests/test_phase5_live_feeds.py::TestLiveFeedRouter::test_read_events_parses_messages PASSED [ 80%]
+tests/test_phase5_live_feeds.py::TestLiveFeedRouter::test_acknowledge_returns_true_on_success PASSED [ 80%]
+tests/test_phase5_live_feeds.py::TestLiveFeedRouter::test_acknowledge_returns_false_on_error PASSED [ 80%]
+tests/test_phase5_live_feeds.py::TestLiveFeedRouter::test_stream_length_returns_int PASSED [ 80%]
+tests/test_phase5_live_feeds.py::TestLiveFeedRouter::test_stream_length_returns_zero_on_error PASSED [ 81%]
+tests/test_phase5_live_feeds.py::TestLiveFeedRouter::test_pending_count_returns_int PASSED [ 81%]
+tests/test_phase5_live_feeds.py::TestLiveFeedRouter::test_module_singleton_exists PASSED [ 81%]
+tests/test_phase5_live_feeds.py::TestVelocityMonitor::test_signal_key_format PASSED [ 81%]
+tests/test_phase5_live_feeds.py::TestVelocityMonitor::test_score_key_format PASSED [ 82%]
+tests/test_phase5_live_feeds.py::TestVelocityMonitor::test_record_signal_calls_pipeline PASSED [ 82%]
+tests/test_phase5_live_feeds.py::TestVelocityMonitor::test_record_signal_no_crash_on_redis_error PASSED [ 82%]
+tests/test_phase5_live_feeds.py::TestVelocityMonitor::test_get_velocity_ratio_zero_baseline PASSED [ 82%]
+tests/test_phase5_live_feeds.py::TestVelocityMonitor::test_get_velocity_ratio_normal PASSED [ 82%]
+tests/test_phase5_live_feeds.py::TestVelocityMonitor::test_get_velocity_ratio_high_velocity PASSED [ 83%]
+tests/test_phase5_live_feeds.py::TestVelocityMonitor::test_get_velocity_score_returns_float PASSED [ 83%]
+tests/test_phase5_live_feeds.py::TestVelocityMonitor::test_get_velocity_score_returns_zero_when_missing PASSED [ 83%]
+tests/test_phase5_live_feeds.py::TestVelocityMonitor::test_compute_and_cache_scores_empty_list PASSED [ 83%]
+tests/test_phase5_live_feeds.py::TestVelocityMonitor::test_compute_and_cache_scores_returns_summary PASSED [ 84%]
+tests/test_phase5_live_feeds.py::TestVelocityMonitor::test_compute_and_cache_scores_detects_high_velocity PASSED [ 84%]
+tests/test_phase5_live_feeds.py::TestVelocityMonitor::test_module_singleton_exists PASSED [ 84%]
+tests/test_phase5_live_feeds.py::TestLinkedInTrigger::test_today_budget_key_format PASSED [ 84%]
+tests/test_phase5_live_feeds.py::TestLinkedInTrigger::test_check_budget_available PASSED [ 84%]
+tests/test_phase5_live_feeds.py::TestLinkedInTrigger::test_check_budget_exhausted PASSED [ 85%]
+tests/test_phase5_live_feeds.py::TestLinkedInTrigger::test_run_returns_budget_exhausted_when_no_budget PASSED [ 85%]
+tests/test_phase5_live_feeds.py::TestLinkedInTrigger::test_run_returns_not_found_on_none_profile PASSED [ 85%]
+tests/test_phase5_live_feeds.py::TestLinkedInTrigger::test_run_returns_success_on_valid_profile PASSED [ 85%]
+tests/test_phase5_live_feeds.py::TestLinkedInTrigger::test_lookup_executive_skips_when_no_api_key PASSED [ 86%]
+tests/test_phase5_live_feeds.py::TestLinkedInTrigger::test_lookup_executive_returns_none_on_missing_params PASSED [ 86%]
+tests/test_phase5_live_feeds.py::TestLinkedInTrigger::test_module_singleton_exists PASSED [ 86%]
+tests/test_phase5_live_feeds.py::TestDeadSignalResurrector::test_expected_intervals_populated PASSED [ 86%]
+tests/test_phase5_live_feeds.py::TestDeadSignalResurrector::test_live_scrapers_have_short_intervals PASSED [ 86%]
+tests/test_phase5_live_feeds.py::TestDeadSignalResurrector::test_category_task_map_covers_all_categories PASSED [ 87%]
+tests/test_phase5_live_feeds.py::TestDeadSignalResurrector::test_trigger_rerun_returns_false_for_unknown_category PASSED [ 87%]
+tests/test_phase5_live_feeds.py::TestDeadSignalResurrector::test_trigger_rerun_dispatches_celery_task PASSED [ 87%]
+tests/test_phase5_live_feeds.py::TestDeadSignalResurrector::test_run_returns_summary_structure PASSED [ 87%]
+tests/test_phase5_live_feeds.py::TestDeadSignalResurrector::test_run_with_fresh_scraper_no_alert PASSED [ 88%]
+tests/test_phase5_live_feeds.py::TestDeadSignalResurrector::test_run_detects_dead_scraper PASSED [ 88%]
+tests/test_phase5_live_feeds.py::TestDeadSignalResurrector::test_module_singleton_exists PASSED [ 88%]
+tests/test_phase5_live_feeds.py::TestPhase5CeleryTasks::test_all_phase5_tasks_registered PASSED [ 88%]
+tests/test_phase5_live_feeds.py::TestPhase5CeleryTasks::test_live_scraper_tasks_have_short_time_limits PASSED [ 88%]
+tests/test_phase5_live_feeds.py::TestPhase5CeleryTasks::test_process_live_feed_events_has_short_time_limit PASSED [ 89%]
+tests/test_phase5_live_feeds.py::TestPhase5CeleryTasks::test_trigger_linkedin_lookup_has_very_short_time_limit PASSED [ 89%]
+tests/test_phase5_live_feeds.py::TestPhase5BeatSchedule::test_all_phase5_beat_entries_present PASSED [ 89%]
+tests/test_phase5_live_feeds.py::TestPhase5BeatSchedule::test_live_scrapers_routed_to_scrapers_queue PASSED [ 89%]
+tests/test_phase5_live_feeds.py::TestPhase5BeatSchedule::test_process_live_feed_events_routed_to_scoring PASSED [ 90%]
+tests/test_phase5_live_feeds.py::TestPhase5BeatSchedule::test_velocity_monitor_routed_to_agents PASSED [ 90%]
+tests/test_phase5_live_feeds.py::TestPhase5BeatSchedule::test_resurrector_routed_to_agents PASSED [ 90%]
+tests/test_phase5_live_feeds.py::TestPhase5BeatSchedule::test_phase5_task_routing_rules_present PASSED [ 90%]
+tests/test_phase5_live_feeds.py::TestServicesInit::test_live_feed_imports PASSED [ 90%]
+tests/test_phase5_live_feeds.py::TestServicesInit::test_velocity_monitor_imports PASSED [ 91%]
+tests/test_phase5_live_feeds.py::TestServicesInit::test_linkedin_trigger_imports PASSED [ 91%]
+tests/test_phase5_live_feeds.py::TestServicesInit::test_resurrector_imports PASSED [ 91%]
+tests/test_phase7_api.py::test_get_score_returns_200_with_schema PASSED  [ 91%]
+tests/test_phase7_api.py::test_get_score_returns_404_when_no_score PASSED [ 92%]
+tests/test_phase7_api.py::test_get_score_requires_auth PASSED            [ 92%]
+tests/test_phase7_api.py::test_get_explain_returns_200 PASSED            [ 92%]
+tests/test_phase7_api.py::test_batch_scores_returns_200 PASSED           [ 92%]
+tests/test_phase7_api.py::test_batch_scores_rejects_over_50_ids PASSED   [ 92%]
+tests/test_phase7_api.py::test_company_search_returns_list PASSED        [ 93%]
+tests/test_phase7_api.py::test_get_company_returns_404_for_unknown PASSED [ 93%]
+tests/test_phase7_api.py::test_get_signals_returns_200 PASSED            [ 93%]
+tests/test_phase7_api.py::test_trends_returns_200 PASSED                 [ 93%]
+tests/test_phase7_api.py::test_health_includes_ml_ready PASSED           [ 94%]
+tests/test_phase7_api.py::test_invalidate_score_cache_deletes_correct_key PASSED [ 94%]
+tests/test_phase7_api.py::test_company_search_requires_auth PASSED       [ 94%]
+tests/test_phase7_api.py::test_get_score_returns_34_practice_areas PASSED [ 94%]
+tests/test_phase7_api.py::test_score_horizons_are_30_60_90 PASSED        [ 94%]
+tests/test_phase7_api.py::test_batch_rejects_over_100_ids PASSED         [ 95%]
+tests/test_phase7_api.py::test_unauthenticated_scores_returns_401 PASSED [ 95%]
+tests/test_phase7_api.py::test_readonly_cannot_post_mandate PASSED       [ 95%]
+tests/test_phase7_api.py::test_partner_can_post_mandate PASSED           [ 95%]
+tests/test_phase9_feedback.py::test_confirm_mandate_inserts_row PASSED   [ 96%]
+tests/test_phase9_feedback.py::test_confirm_mandate_computes_lead_days PASSED [ 96%]
+tests/test_phase9_feedback.py::test_confirm_mandate_no_lead_days_when_no_score PASSED [ 96%]
+tests/test_phase9_feedback.py::test_accuracy_log_idempotent PASSED       [ 96%]
+tests/test_phase9_feedback.py::test_drift_detector_flags_ten_point_drop PASSED [ 96%]
+tests/test_phase9_feedback.py::test_drift_detector_does_not_flag_small_drop PASSED [ 97%]
+tests/test_phase9_feedback.py::test_auto_detected_confirmation_flag PASSED [ 97%]
+tests/test_phase9_feedback.py::test_confirmation_hunter_uses_fuzzy_matching PASSED [ 97%]
+tests/test_phase9_feedback.py::test_feedback_mandate_requires_partner_role PASSED [ 97%]
+tests/test_phase9_feedback.py::test_feedback_mandate_returns_schema PASSED [ 98%]
+tests/test_phase9_feedback.py::test_feedback_accuracy_endpoint PASSED    [ 98%]
+tests/test_phase9_feedback.py::test_feedback_drift_endpoint PASSED       [ 98%]
+tests/test_phase9_feedback.py::test_phase9_celery_tasks_registered PASSED [ 98%]
+tests/test_phase9_feedback.py::test_migration_0008_is_valid_python PASSED [ 98%]
+tests/test_phase9_feedback.py::test_confirm_mandate_writes_to_both_tables PASSED [ 99%]
+tests/test_phase9_feedback.py::test_lead_days_positive_when_prediction_precedes PASSED [ 99%]
+tests/test_phase9_feedback.py::test_ks_test_flags_15pp_drop PASSED       [ 99%]
+tests/test_phase9_feedback.py::test_auto_detected_has_flag PASSED        [ 99%]
+tests/test_phase9_feedback.py::test_accuracy_computation_idempotent PASSED [100%]
+ERROR: Coverage failure: total of 44 is less than fail-under=70
+/usr/local/lib/python3.11/dist-packages/pytest_cov/plugin.py:355: CovFailUnderWarning: Coverage failure: total of 44 is less than fail-under=70
+  warnings.warn(CovFailUnderWarning(message), stacklevel=1)
+
+
+=============================== warnings summary ===============================
+../../../../usr/local/lib/python3.11/dist-packages/passlib/utils/__init__.py:854
+  /usr/local/lib/python3.11/dist-packages/passlib/utils/__init__.py:854: DeprecationWarning: 'crypt' is deprecated and slated for removal in Python 3.13
+    from crypt import crypt as _crypt
+
+tests/ml/test_phase6_ml.py::TestTransformerScorer::test_model_architecture
+  /home/user/BD-law-AI/backend/app/ml/transformer_scorer.py:114: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
+    self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=n_layers)
+
+tests/scrapers/test_phase1_scrapers.py::test_all_scrapers_registered
+  /usr/local/lib/python3.11/dist-packages/bs4/css.py:8: UserWarning: The soupsieve package is not installed. CSS selectors cannot be used.
+    warnings.warn(
+
+tests/scrapers/test_phase1_scrapers.py::test_base_scraper_fetch_retries_3x
+tests/scrapers/test_phase1_scrapers.py::test_budget_manager_blocks_over_limit
+  /usr/local/lib/python3.11/dist-packages/pytest_asyncio/plugin.py:854: DeprecationWarning: The event_loop fixture provided by pytest-asyncio has been redefined in
+  /home/user/BD-law-AI/backend/tests/scrapers/test_phase1_scrapers.py:28
+  Replacing the event_loop fixture with a custom implementation is deprecated
+  and will lead to errors in the future.
+  If you want to request an asyncio event loop with a scope other than function
+  scope, use the "scope" argument to the asyncio mark when marking the tests.
+  If you want to return different types of event loops, use the event_loop_policy
+  fixture.
+  
+    warnings.warn(
+
+tests/test_health.py::test_login_invalid_credentials
+tests/test_phase10_hardening.py::test_metrics_endpoint_returns_prometheus_format
+  /usr/local/lib/python3.11/dist-packages/structlog/_base.py:165: UserWarning: Remove `format_exc_info` from your processor chain if you want pretty exceptions.
+    event_dict = proc(self._logger, method_name, event_dict)
+
+tests/test_phase5_live_feeds.py::TestDeadSignalResurrector::test_run_with_fresh_scraper_no_alert
+  /home/user/BD-law-AI/backend/app/services/resurrector.py:121: RuntimeWarning: coroutine 'TestDeadSignalResurrector.test_run_returns_summary_structure.<locals>._mock_db' was never awaited
+    from sqlalchemy import select
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+
+---------- coverage: platform linux, python 3.11.14-final-0 ----------
+Name                                              Stmts   Miss  Cover   Missing
+-------------------------------------------------------------------------------
+app/__init__.py                                       0      0   100%
+app/agents/__init__.py                                0      0   100%
+app/auth/__init__.py                                  0      0   100%
+app/auth/dependencies.py                             39      9    77%   56, 63, 72-77, 97, 108-113
+app/auth/models.py                                   47     10    79%   71, 76-78, 83, 88, 93, 98, 103, 108
+app/auth/router.py                                   84     31    63%   102-116, 136-161, 175-177, 183, 199-206, 221-222
+app/auth/service.py                                  62     25    60%   123, 134, 139-140, 161-189, 212-223
+app/cache/__init__.py                                 0      0   100%
+app/cache/client.py                                 128     46    64%   107, 122-124, 153, 160-166, 178-187, 191-196, 224-230, 269-273, 289, 308, 312, 316, 320-322, 337
+app/config.py                                        88      1    99%   200
+app/database.py                                      65     16    75%   50, 128-129, 140-141, 187-190, 204, 217, 229-233
+app/database_sync.py                                 48     31    35%   53-82, 98-111, 120-126
+app/features/__init__.py                              0      0   100%
+app/features/geo/__init__.py                          0      0   100%
+app/features/macro/__init__.py                        0      0   100%
+app/features/nlp/__init__.py                          0      0   100%
+app/ground_truth/__init__.py                          4      0   100%
+app/ground_truth/constants.py                         9      0   100%
+app/ground_truth/labeler.py                          72      8    89%   175, 191-197, 201-204
+app/ground_truth/negative_sampler.py                 60     14    77%   63, 75-77, 113-119, 123-126, 212-214
+app/ground_truth/pipeline.py                         66     40    39%   57-95, 108-121, 134-144, 164-174
+app/main.py                                         134     55    59%   65-81, 104-157, 228-230, 317-333, 380-401
+app/middleware/__init__.py                            0      0   100%
+app/middleware/error_handler.py                      35      0   100%
+app/middleware/rate_limiter.py                       57     23    60%   42-62, 97-98, 116-148, 164
+app/middleware/security_headers.py                   23      0   100%
+app/ml/__init__.py                                    0      0   100%
+app/ml/active_learning.py                            27      6    78%   73-86
+app/ml/anomaly_detector.py                          150    118    21%   35-46, 69-102, 123-153, 160-188, 209-281, 297-300
+app/ml/bayesian_engine.py                           222    112    50%   231-236, 247, 285-286, 291-297, 315-351, 386-542, 550-559, 564-571, 576-581, 603-604
+app/ml/churn_model.py                               114    114     0%   11-247
+app/ml/convergence.py                                62      9    85%   287-295
+app/ml/convergence/__init__.py                       11      0   100%
+app/ml/cooccurrence.py                               65     36    45%   53, 89-160, 174-179
+app/ml/counterfactuals.py                            72     60    17%   71-152, 176-199, 204-218
+app/ml/cross_jurisdiction.py                         74     25    66%   105, 118, 122-133, 171, 192-202, 213-228
+app/ml/graph_features.py                             78     61    22%   49-68, 91-123, 135-136, 154-163, 182-193, 203-210, 220-238
+app/ml/orchestrator.py                              109     23    79%   112, 115-116, 146, 189, 196, 199-214, 221-225, 231, 247-248, 269
+app/ml/practice_classifier.py                        70     70     0%   9-156
+app/ml/sector_weights.py                             49     37    24%   55-97, 115-118, 137-139
+app/ml/temporal_decay.py                             78      3    96%   105, 239, 246
+app/ml/transformer_scorer.py                        178     85    52%   172, 191-201, 221-235, 253-354, 390-396, 406-423
+app/ml/urgency_model.py                             112    112     0%   14-217
+app/ml/velocity_scorer.py                            52     22    58%   81, 124-154
+app/models/__init__.py                                6      0   100%
+app/models/bd_activity.py                           100      0   100%
+app/models/client.py                                 90      5    94%   84-88
+app/models/company.py                               109    109     0%   5-154
+app/models/geo.py                                    64      4    94%   40, 75, 105, 139
+app/models/ground_truth.py                           68      0   100%
+app/models/scraper_health.py                         79     37    53%   107, 115-117, 122-136, 141-153, 157-164, 168-172
+app/models/signal.py                                 43      9    79%   200, 207-210, 214-216, 221
+app/models/training.py                               33      0   100%
+app/models/trigger.py                                38      1    97%   43
+app/routes/__init__.py                                0      0   100%
+app/routes/ai.py                                    238    238     0%   12-697
+app/routes/analytics.py                             160    108    32%   83-186, 196-232, 246-291, 315-357
+app/routes/clients.py                               134     77    43%   67-84, 93-117, 126-136, 147-166, 176-184, 194-229, 239-247, 269-270
+app/routes/companies.py                              71     46    35%   45-46, 53-55, 71-109, 121-204
+app/routes/feedback.py                               77     14    82%   104-110, 152-154, 176-178, 196-205
+app/routes/geo.py                                   197    148    25%   133, 147-175, 184-189, 213-230, 241-278, 288-294, 322-339, 349-383, 393-399, 423-435, 445-479, 489-495, 520-537, 547-589, 599-611
+app/routes/ground_truth.py                          115     84    27%   55-78, 97-115, 135-193, 220-258, 273-290, 309-315
+app/routes/metrics.py                                63     29    54%   44-45, 55-60, 130-182
+app/routes/scores.py                                 53      0   100%
+app/routes/scores_8b_addition.py                      2      2     0%   35-61
+app/routes/scrapers.py                              110     47    57%   95-107, 117-124, 135-155, 161, 172-191, 214-229
+app/routes/signals.py                                26      5    81%   57-58, 64-66
+app/routes/training.py                               89     65    27%   61-86, 95-109, 128-143, 163-170, 186-208, 218-227
+app/routes/trends.py                                 29     10    66%   47-67, 79-80
+app/routes/triggers.py                              145     88    39%   93-134, 143-212, 221-225, 240-281, 297-337, 348-355
+app/routes/watchlist.py                             143     90    37%   86-115, 127-156, 173-180, 200-261, 278-321, 337-364
+app/scrapers/__init__.py                              0      0   100%
+app/scrapers/base.py                                205     93    55%   161, 188, 199-241, 292-302, 306-309, 320-323, 333-344, 348-350, 356-360, 379, 383, 390-419, 446, 453-462, 466-473, 478-483, 486
+app/scrapers/budget_manager.py                       76     32    58%   95-100, 136-147, 157-164, 176-182, 199-203, 215-217
+app/scrapers/canlii.py                               42     42     0%   7-91
+app/scrapers/corporate/__init__.py                    0      0   100%
+app/scrapers/corporate/bank_of_canada.py             33     33     0%   7-66
+app/scrapers/corporate/canada_gazette.py             51     51     0%   20-133
+app/scrapers/corporate/ciro.py                       37     37     0%   7-71
+app/scrapers/corporate/corps_canada.py               34     34     0%   7-61
+app/scrapers/corporate/edgar.py                      68     68     0%   22-182
+app/scrapers/corporate/iaac.py                       28     28     0%   7-53
+app/scrapers/corporate/provincial_registries.py      30     30     0%   7-60
+app/scrapers/corporate/sedar.py                      91     91     0%   28-236
+app/scrapers/corporate/sedi.py                       69     69     0%   18-145
+app/scrapers/corporate/tmx.py                        36     36     0%   8-68
+app/scrapers/edgar.py                                39     39     0%   6-89
+app/scrapers/enforcement.py                          33     33     0%   7-100
+app/scrapers/entity_resolver.py                     118     91    23%   97-99, 116-206, 210-229, 232-243, 246-251
+app/scrapers/filings/bank_of_canada.py               36     23    36%   22-65
+app/scrapers/filings/canada_gazette.py               35     21    40%   38-71
+app/scrapers/filings/ciro.py                         30     17    43%   21-54
+app/scrapers/filings/corporations_canada.py          35     23    34%   19-58
+app/scrapers/filings/edgar.py                       141    115    18%   145-163, 167-185, 194-260, 278-321, 325-354, 358-378
+app/scrapers/filings/iaac.py                         30     18    40%   19-53
+app/scrapers/filings/osfi_regulated.py               29     17    41%   20-55
+app/scrapers/filings/sedar.py                       100     79    21%   143-166, 170-199, 203-251, 272-304
+app/scrapers/filings/sedi.py                         36     24    33%   19-64
+app/scrapers/filings/tmx_listings.py                 45     31    31%   22-37, 40-67
+app/scrapers/geo/__init__.py                          0      0   100%
+app/scrapers/geo/cbsa_trade.py                       16      1    94%   35
+app/scrapers/geo/cipo_patents.py                      1      0   100%
+app/scrapers/geo/commodity_prices.py                 16      1    94%   35
+app/scrapers/geo/cra_liens.py                        16      1    94%   35
+app/scrapers/geo/dark_web.py                         16      1    94%   35
+app/scrapers/geo/dbrs.py                             16      1    94%   35
+app/scrapers/geo/geo_scrapers.py                    122     65    47%   42-76, 100-128, 157-161, 187-224, 248-270
+app/scrapers/geo/google_trends.py                    53     33    38%   77-142
+app/scrapers/geo/labour_relations.py                 16      1    94%   35
+app/scrapers/geo/lobbyist_registry.py                16      1    94%   35
+app/scrapers/geo/municipal_permits.py                16      1    94%   35
+app/scrapers/geo/opensky.py                          16      1    94%   35
+app/scrapers/geo/procurement.py                       1      0   100%
+app/scrapers/geo/pytrends.py                         16      1    94%   38
+app/scrapers/geo/stats_canada.py                      1      0   100%
+app/scrapers/geo/statscan.py                         42     20    52%   61-105
+app/scrapers/geo/wsib.py                             16      1    94%   35
+app/scrapers/jobs.py                                 32     32     0%   7-93
+app/scrapers/jobs/__init__.py                         0      0   100%
+app/scrapers/jobs/company_careers.py                 28     15    46%   29-58
+app/scrapers/jobs/glassdoor_jobs.py                  25     13    48%   20-50
+app/scrapers/jobs/indeed.py                          30     17    43%   35-67
+app/scrapers/jobs/job_bank.py                        28     15    46%   24-50
+app/scrapers/jobs/linkedin_jobs.py                   47     32    32%   21-65, 68-83
+app/scrapers/law_blogs/__init__.py                    0      0   100%
+app/scrapers/law_blogs/firm_blogs.py                119     66    45%   302-319, 322-365, 368-413, 417-424, 427-455, 498
+app/scrapers/law_blogs/trend_detector.py             40     30    25%   44-105
+app/scrapers/lawfirms/__init__.py                     0      0   100%
+app/scrapers/lawfirms/tier1.py                        1      1     0%   7
+app/scrapers/lawfirms/tier2.py                        1      1     0%   7
+app/scrapers/legal/__init__.py                        0      0   100%
+app/scrapers/legal/canlii.py                         64     40    38%   66-91, 103-142, 145-155
+app/scrapers/legal/competition_tribunal.py           28     12    57%   26-48
+app/scrapers/legal/federal_court.py                  28     12    57%   26-48
+app/scrapers/legal/osb.py                            39     20    49%   48-90
+app/scrapers/legal/osb_insolvency.py                 33     21    36%   23-59
+app/scrapers/legal/refugee_law_lab.py                27     11    59%   29-54
+app/scrapers/legal/scac.py                           35     35     0%   3-60
+app/scrapers/legal/scc.py                            54     36    33%   40-69, 72-90
+app/scrapers/legal/stanford_scac.py                  30     20    33%   18-50
+app/scrapers/legal/tribunals_ontario.py              29     13    55%   27-53
+app/scrapers/market/__init__.py                       0      0   100%
+app/scrapers/market/alpha_vantage.py                 45     30    33%   21-64, 67-82
+app/scrapers/market/sedar_bar.py                     31     19    39%   20-56
+app/scrapers/market/tmx_datalinx.py                  46     33    28%   19-58, 61-76
+app/scrapers/market/yahoo_finance.py                 39     26    33%   24-76
+app/scrapers/news/__init__.py                         0      0   100%
+app/scrapers/news/bnn_bloomberg.py                   38     25    34%   21-57
+app/scrapers/news/cbc_business.py                    32     19    41%   21-51
+app/scrapers/news/financial_post.py                  35     22    37%   24-65
+app/scrapers/news/globe_mail.py                      38     25    34%   24-67
+app/scrapers/news/google_news.py                     27     14    48%   34-59
+app/scrapers/news/reuters.py                         43     30    30%   24-69
+app/scrapers/news/seeking_alpha.py                   33     20    39%   24-58
+app/scrapers/opensky.py                              63     63     0%   7-191
+app/scrapers/quality_validator.py                    65      0   100%
+app/scrapers/registry.py                            122     17    86%   38-39, 41, 169-170, 186-188, 201, 215, 219, 223, 249-250, 258, 269-270
+app/scrapers/regulatory/amf_quebec.py                40     23    42%   36-75
+app/scrapers/regulatory/asc.py                       16      1    94%   34
+app/scrapers/regulatory/bcsc.py                      16      1    94%   34
+app/scrapers/regulatory/competition_bureau.py        40     23    42%   36-75
+app/scrapers/regulatory/crtc.py                      16      1    94%   34
+app/scrapers/regulatory/eccc.py                      31     15    52%   26-56
+app/scrapers/regulatory/fintrac.py                   34     19    44%   24-55
+app/scrapers/regulatory/fsra.py                      16      1    94%   34
+app/scrapers/regulatory/health_canada.py             27     12    56%   24-54
+app/scrapers/regulatory/opc.py                       16      1    94%   34
+app/scrapers/regulatory/osc.py                       16      1    94%   34
+app/scrapers/regulatory/osfi_enforcement.py          16      1    94%   34
+app/scrapers/regulatory/sec_aaer.py                  16      1    94%   34
+app/scrapers/regulatory/us_doj.py                    16      1    94%   34
+app/scrapers/sedar.py                                51     51     0%   9-116
+app/scrapers/social/__init__.py                       0      0   100%
+app/scrapers/social/linkedin_social.py               16      1    94%   34
+app/scrapers/social/reddit.py                        16      1    94%   34
+app/scrapers/social/sedar_forums.py                  16      1    94%   34
+app/scrapers/social/stockhouse.py                    16      1    94%   34
+app/scrapers/social/twitter.py                       16      1    94%   34
+app/scrapers/storage.py                              72     72     0%   13-180
+app/services/__init__.py                              0      0   100%
+app/services/accuracy_tracker.py                     80     40    50%   56-58, 61-62, 66, 92-99, 103, 107, 120, 148-155, 178-214, 225-248
+app/services/anthropic_service.py                    38     23    39%   251-253, 260-274, 277-283, 290-306
+app/services/audit_log.py                            43      8    81%   82-98, 106
+app/services/churn_feature_service.py                54     54     0%   10-158
+app/services/confirmation_hunter.py                  82     82     0%   18-277
+app/services/drift_detector.py                      101     85    16%   50-128, 141-159, 170-180, 185-198, 211-240, 255-270, 288-302
+app/services/entity_resolution.py                    76     18    76%   98-121, 177
+app/services/linkedin_trigger.py                     93     45    52%   63-81, 85-104, 143, 145-146, 153-192
+app/services/live_feed.py                           114     20    82%   72, 113, 143, 159-162, 185, 216-218, 231, 263-268, 272-274
+app/services/mandate_confirmation.py                 70     33    53%   121-123, 127, 174-186, 245-267
+app/services/resurrector.py                          60     11    82%   153, 173-174, 222-244
+app/services/scoring_service.py                      87     52    40%   81-83, 88-90, 107-165, 176-212, 232, 254-261
+app/services/streaming.py                            47     37    21%   43-90, 95
+app/services/velocity_monitor.py                    124     30    76%   62, 146, 150-157, 172-174, 245-247, 258-282, 286-288
+app/tasks/__init__.py                                 0      0   100%
+app/tasks/celery_app.py                              12      0   100%
+app/tasks/phase6_tasks.py                           209    188    10%   55-90, 112-158, 178-201, 223-224, 248-308, 333-424, 441-499, 520-556
+app/tasks/phase9_tasks.py                            76     65    14%   50-72, 98-138, 168-190
+app/tasks/scraper_tasks.py                          152    152     0%   25-400
+app/training/__init__.py                              0      0   100%
+app/training/curator.py                             101     22    78%   127-133, 144, 182-184, 222-229, 260-277
+app/training/dataset_builder.py                     172    172     0%   9-364
+app/training/groq_client.py                         105     13    88%   155-174, 213, 217, 220-221, 224, 232
+app/training/model_registry.py                       39     39     0%   9-144
+app/training/prompts.py                              27      1    96%   173
+app/training/pseudo_labeler.py                       93     15    84%   73-75, 132-133, 145-151, 155-158, 298-300
+app/training/spaces_uploader.py                      86     86     0%   8-165
+app/training/train_all.py                           113    113     0%   26-267
+-------------------------------------------------------------------------------
+TOTAL                                             10877   6140    44%
+
+FAIL Required test coverage of 70.0% not reached. Total coverage: 43.55%
+================= 451 passed, 1 skipped, 8 warnings in 17.59s ==================
+/usr/local/lib/python3.11/dist-packages/pytest_asyncio/plugin.py:207: PytestDeprecationWarning: The configuration option "asyncio_default_fixture_loop_scope" is unset.
+The event loop scope for asynchronous fixtures will default to the fixture caching scope. Future versions of pytest-asyncio will default the loop scope for asynchronous fixtures to function scope. Set the default fixture loop scope explicitly in order to avoid unexpected behavior in the future. Valid fixture loop scopes are: "function", "class", "module", "package", "session"
+
+  warnings.warn(PytestDeprecationWarning(_DEFAULT_FIXTURE_LOOP_SCOPE_UNSET))
+============================= test session starts ==============================
+platform linux -- Python 3.11.14, pytest-8.3.4, pluggy-1.6.0 -- /usr/local/bin/python
+cachedir: .pytest_cache
+rootdir: /home/user/BD-law-AI/backend
+configfile: pyproject.toml
+plugins: cov-6.0.0, mock-3.14.0, asyncio-1.3.0, Faker-33.1.0, respx-0.21.1, anyio-4.13.0
+asyncio: mode=Mode.AUTO, asyncio_default_fixture_loop_scope=None
+collecting ... collected 452 items
+
+tests/ml/test_phase6_ml.py::test_practice_area_count PASSED              [  0%]
+tests/ml/test_phase6_ml.py::test_feature_column_count PASSED             [  0%]
+tests/ml/test_phase6_ml.py::TestBayesianEngine::test_invalid_practice_area PASSED [  0%]
+tests/ml/test_phase6_ml.py::TestBayesianEngine::test_score_raises_if_not_loaded PASSED [  0%]
+tests/ml/test_phase6_ml.py::TestBayesianEngine::test_horizon_scores_output PASSED [  1%]
+tests/ml/test_phase6_ml.py::TestBayesianEngine::test_output_is_34x3_matrix PASSED [  1%]
+tests/ml/test_phase6_ml.py::TestBayesianEngine::test_probabilities_clipped PASSED [  1%]
+tests/ml/test_phase6_ml.py::TestTransformerScorer::test_model_architecture PASSED [  1%]
+tests/ml/test_phase6_ml.py::TestTransformerScorer::test_sequence_to_tensor_padding PASSED [  1%]
+tests/ml/test_phase6_ml.py::TestTransformerScorer::test_scorer_raises_if_not_loaded PASSED [  2%]
+tests/ml/test_phase6_ml.py::TestVelocityScorer::test_compute_velocity_basic PASSED [  2%]
+tests/ml/test_phase6_ml.py::TestVelocityScorer::test_velocity_clamped PASSED [  2%]
+tests/ml/test_phase6_ml.py::TestVelocityScorer::test_velocity_negative PASSED [  2%]
+tests/ml/test_phase6_ml.py::TestVelocityScorer::test_aggregate_velocity_range PASSED [  3%]
+tests/ml/test_phase6_ml.py::TestTemporalDecay::test_apply_decay_zero_age PASSED [  3%]
+tests/ml/test_phase6_ml.py::TestTemporalDecay::test_apply_decay_reduces_weight PASSED [  3%]
+tests/ml/test_phase6_ml.py::TestTemporalDecay::test_half_life_formula PASSED [  3%]
+tests/ml/test_phase6_ml.py::TestTemporalDecay::test_lambda_floor_enforced PASSED [  3%]
+tests/ml/test_phase6_ml.py::TestAnomalyDetector::test_anomaly_score_range PASSED [  4%]
+tests/ml/test_phase6_ml.py::TestAnomalyDetector::test_batch_score_returns_list PASSED [  4%]
+tests/ml/test_phase6_ml.py::TestCooccurrenceMining::test_empty_events PASSED [  4%]
+tests/ml/test_phase6_ml.py::TestCooccurrenceMining::test_transaction_matrix_shape PASSED [  4%]
+tests/ml/test_phase6_ml.py::TestCrossJurisdiction::test_propagation_decay PASSED [  5%]
+tests/ml/test_phase6_ml.py::TestCrossJurisdiction::test_unknown_link_type_returns_zero PASSED [  5%]
+tests/ml/test_phase6_ml.py::TestCrossJurisdiction::test_propagate_skips_weak_signals PASSED [  5%]
+tests/ml/test_phase6_ml.py::TestCrossJurisdiction::test_aggregate_convergence PASSED [  5%]
+tests/ml/test_phase6_ml.py::TestOrchestrator::test_bayesian_default_when_no_registry PASSED [  5%]
+tests/ml/test_phase6_ml.py::TestOrchestrator::test_transformer_requires_f1_threshold PASSED [  6%]
+tests/ml/test_phase6_ml.py::TestCeleryTasks::test_phase6_tasks_registered PASSED [  6%]
+tests/ml/test_phase6_ml.py::test_phase6_migration_exists PASSED          [  6%]
+tests/ml/test_phase6_ml.py::test_phase6_migration_valid_python PASSED    [  6%]
+tests/ml/test_phase6_ml.py::test_cooccurrence_max_rules_cap PASSED       [  7%]
+tests/ml/test_phase6_ml.py::test_default_decay_config_has_lambda_floor PASSED [  7%]
+tests/ml/test_phase6_ml.py::TestBayesianEngineScore::test_score_returns_horizon_scores PASSED [  7%]
+tests/ml/test_phase6_ml.py::TestBayesianEngineScore::test_score_all_34_practice_areas_valid PASSED [  7%]
+tests/ml/test_phase6_ml.py::TestBayesianEngineScore::test_score_missing_features_fills_zeros PASSED [  7%]
+tests/ml/test_phase6_ml.py::TestBayesianEngineScore::test_batch_score_raises_if_not_loaded PASSED [  8%]
+tests/ml/test_phase6_ml.py::TestOrchestratorExtended::test_selects_bayesian_when_transformer_not_trained PASSED [  8%]
+tests/ml/test_phase6_ml.py::TestOrchestratorExtended::test_selects_transformer_when_beats_bayesian_on_holdout PASSED [  8%]
+tests/ml/test_phase6_ml.py::TestOrchestratorExtended::test_score_company_returns_34_practice_areas PASSED [  8%]
+tests/ml/test_phase6_ml.py::TestVelocityScorerExtended::test_compute_velocity_positive_for_accelerating_signal PASSED [  9%]
+tests/ml/test_phase6_ml.py::TestVelocityScorerExtended::test_flag_high_velocity_companies PASSED [  9%]
+tests/ml/test_phase6_ml.py::TestVelocityScorerExtended::test_empty_velocities_aggregate_to_zero PASSED [  9%]
+tests/ml/test_phase6_ml.py::TestVelocityScorerExtended::test_velocity_from_history_insufficient PASSED [  9%]
+tests/ml/test_phase6_ml.py::TestAnomalyDetectorExtended::test_not_loaded_returns_zero PASSED [  9%]
+tests/ml/test_phase6_ml.py::TestAnomalyDetectorExtended::test_batch_not_loaded_returns_zeros PASSED [ 10%]
+tests/ml/test_phase6_ml.py::TestAllEnhancementsMinimalInput::test_enhancement_1_multi_horizon PASSED [ 10%]
+tests/ml/test_phase6_ml.py::TestAllEnhancementsMinimalInput::test_enhancement_2_velocity PASSED [ 10%]
+tests/ml/test_phase6_ml.py::TestAllEnhancementsMinimalInput::test_enhancement_3_graph_centrality PASSED [ 10%]
+tests/ml/test_phase6_ml.py::TestAllEnhancementsMinimalInput::test_enhancement_4_active_learning PASSED [ 11%]
+tests/ml/test_phase6_ml.py::TestAllEnhancementsMinimalInput::test_enhancement_5_cooccurrence PASSED [ 11%]
+tests/ml/test_phase6_ml.py::TestAllEnhancementsMinimalInput::test_enhancement_6_sector_weights PASSED [ 11%]
+tests/ml/test_phase6_ml.py::TestAllEnhancementsMinimalInput::test_enhancement_7_counterfactuals PASSED [ 11%]
+tests/ml/test_phase6_ml.py::TestAllEnhancementsMinimalInput::test_enhancement_8_cross_jurisdiction PASSED [ 11%]
+tests/ml/test_phase6_ml.py::TestAllEnhancementsMinimalInput::test_enhancement_9_anomaly_detector PASSED [ 12%]
+tests/ml/test_phase6_ml.py::TestAllEnhancementsMinimalInput::test_enhancement_10_temporal_decay PASSED [ 12%]
+tests/scrapers/test_phase1_scrapers.py::test_all_scrapers_registered PASSED [ 12%]
+tests/scrapers/test_phase1_scrapers.py::test_base_scraper_contract PASSED [ 12%]
+tests/scrapers/test_phase1_scrapers.py::test_base_scraper_requires_source_id PASSED [ 13%]
+tests/scrapers/test_phase1_scrapers.py::test_normalize_company_name_basic PASSED [ 13%]
+tests/scrapers/test_phase1_scrapers.py::test_normalize_company_name_unicode PASSED [ 13%]
+tests/scrapers/test_phase1_scrapers.py::test_normalize_company_name_legal_suffixes PASSED [ 13%]
+tests/scrapers/test_phase1_scrapers.py::test_scraper_result_defaults PASSED [ 13%]
+tests/scrapers/test_phase1_scrapers.py::test_scraper_result_with_values PASSED [ 14%]
+tests/scrapers/test_phase1_scrapers.py::test_rate_limit_rps_values PASSED [ 14%]
+tests/scrapers/test_phase1_scrapers.py::test_law_blog_27_firms PASSED    [ 14%]
+tests/scrapers/test_phase1_scrapers.py::test_law_blog_all_firms_registered PASSED [ 14%]
+tests/scrapers/test_phase1_scrapers.py::test_circuit_breaker_opens_after_threshold PASSED [ 15%]
+tests/scrapers/test_phase1_scrapers.py::test_circuit_breaker_recovers_after_timeout PASSED [ 15%]
+tests/scrapers/test_phase1_scrapers.py::test_registry_by_category PASSED [ 15%]
+tests/scrapers/test_phase1_scrapers.py::test_parse_date_formats PASSED   [ 15%]
+tests/scrapers/test_phase1_scrapers.py::test_browser_headers_no_python_ua PASSED [ 15%]
+tests/scrapers/test_phase1_scrapers.py::test_browser_headers_extra_merge PASSED [ 16%]
+tests/scrapers/test_phase1_scrapers.py::test_registry_all_ids_sorted PASSED [ 16%]
+tests/scrapers/test_phase1_scrapers.py::test_alembic_migration_syntax SKIPPED [ 16%]
+tests/scrapers/test_phase1_scrapers.py::test_base_scraper_fetch_retries_3x PASSED [ 16%]
+tests/scrapers/test_phase1_scrapers.py::test_budget_manager_blocks_over_limit PASSED [ 17%]
+tests/scrapers/test_phase1_scrapers.py::test_entity_resolver_returns_none_for_garbage PASSED [ 17%]
+tests/scrapers/test_phase1_scrapers.py::test_registry_has_at_least_65_scrapers PASSED [ 17%]
+tests/scrapers/test_phase1b_audit.py::TestValidateSignal::test_valid_signal_passes PASSED [ 17%]
+tests/scrapers/test_phase1b_audit.py::TestValidateSignal::test_missing_source_id_is_error PASSED [ 17%]
+tests/scrapers/test_phase1b_audit.py::TestValidateSignal::test_missing_signal_type_is_error PASSED [ 18%]
+tests/scrapers/test_phase1b_audit.py::TestValidateSignal::test_confidence_above_1_is_error PASSED [ 18%]
+tests/scrapers/test_phase1b_audit.py::TestValidateSignal::test_confidence_below_0_is_error PASSED [ 18%]
+tests/scrapers/test_phase1b_audit.py::TestValidateSignal::test_confidence_at_boundaries_is_valid PASSED [ 18%]
+tests/scrapers/test_phase1b_audit.py::TestValidateSignal::test_future_published_at_warns PASSED [ 19%]
+tests/scrapers/test_phase1b_audit.py::TestValidateSignal::test_past_published_at_no_warning PASSED [ 19%]
+tests/scrapers/test_phase1b_audit.py::TestValidateSignal::test_unknown_practice_area_warns PASSED [ 19%]
+tests/scrapers/test_phase1b_audit.py::TestValidateSignal::test_known_practice_area_no_warning PASSED [ 19%]
+tests/scrapers/test_phase1b_audit.py::TestValidateSignal::test_non_http_url_warns PASSED [ 19%]
+tests/scrapers/test_phase1b_audit.py::TestValidateSignal::test_no_source_url_is_valid PASSED [ 20%]
+tests/scrapers/test_phase1b_audit.py::TestValidateSignal::test_non_serializable_signal_value_is_error PASSED [ 20%]
+tests/scrapers/test_phase1b_audit.py::TestValidateSignal::test_long_company_name_warns PASSED [ 20%]
+tests/scrapers/test_phase1b_audit.py::TestCanarySignal::test_canary_signal_validates PASSED [ 20%]
+tests/scrapers/test_phase1b_audit.py::TestValidateBatch::test_batch_all_valid PASSED [ 21%]
+tests/scrapers/test_phase1b_audit.py::TestValidateBatch::test_batch_pass_rate PASSED [ 21%]
+tests/scrapers/test_phase1b_audit.py::TestValidateBatch::test_batch_empty PASSED [ 21%]
+tests/scrapers/test_phase1b_audit.py::TestValidateBatch::test_batch_duplicate_url_warns PASSED [ 21%]
+tests/scrapers/test_phase1b_audit.py::TestValidateBatch::test_batch_details_structure PASSED [ 21%]
+tests/scrapers/test_phase1b_audit.py::TestScraperHealthModel::test_record_success_resets_failures PASSED [ 22%]
+tests/scrapers/test_phase1b_audit.py::TestScraperHealthModel::test_record_failure_increments PASSED [ 22%]
+tests/scrapers/test_phase1b_audit.py::TestScraperHealthModel::test_failure_rate_zero_runs PASSED [ 22%]
+tests/scrapers/test_phase1b_audit.py::TestScraperHealthModel::test_failure_rate_calculation PASSED [ 22%]
+tests/scrapers/test_phase1b_audit.py::TestScraperHealthModel::test_failing_after_3_consecutive PASSED [ 23%]
+tests/scrapers/test_phase1b_audit.py::TestScraperHealthModel::test_status_improves_after_success PASSED [ 23%]
+tests/test_auth.py::TestPasswordHashing::test_hash_and_verify PASSED     [ 23%]
+tests/test_auth.py::TestPasswordHashing::test_wrong_password_fails PASSED [ 23%]
+tests/test_auth.py::TestPasswordHashing::test_empty_password_fails PASSED [ 23%]
+tests/test_auth.py::TestTokenGeneration::test_access_token_contains_claims PASSED [ 24%]
+tests/test_auth.py::TestTokenGeneration::test_refresh_token_type PASSED  [ 24%]
+tests/test_auth.py::TestTokenGeneration::test_access_token_not_accepted_as_refresh PASSED [ 24%]
+tests/test_auth.py::TestTokenGeneration::test_tampered_token_rejected PASSED [ 24%]
+tests/test_auth.py::TestTokenClaims::test_admin_role_in_token PASSED     [ 25%]
+tests/test_auth.py::TestTokenClaims::test_partner_role_in_token PASSED   [ 25%]
+tests/test_auth.py::TestTokenClaims::test_readonly_role_in_token PASSED  [ 25%]
+tests/test_auth.py::TestTokenClaims::test_associate_role_in_token PASSED [ 25%]
+tests/test_auth.py::TestEntityResolution::test_normalise_strips_legal_suffix PASSED [ 25%]
+tests/test_auth.py::TestEntityResolution::test_normalise_handles_empty PASSED [ 26%]
+tests/test_auth.py::TestEntityResolution::test_normalise_strips_punctuation PASSED [ 26%]
+tests/test_auth.py::TestEntityResolution::test_resolver_exact_match PASSED [ 26%]
+tests/test_auth.py::TestEntityResolution::test_resolver_fuzzy_match PASSED [ 26%]
+tests/test_auth.py::TestEntityResolution::test_resolver_no_match_below_threshold PASSED [ 26%]
+tests/test_auth.py::TestEntityResolution::test_resolver_empty_index PASSED [ 27%]
+tests/test_auth.py::TestEntityResolution::test_add_entity_live_update PASSED [ 27%]
+tests/test_auth.py::TestCacheClient::test_ai_response_key_deterministic PASSED [ 27%]
+tests/test_auth.py::TestCacheClient::test_ai_response_key_differs_by_params PASSED [ 27%]
+tests/test_auth.py::TestCacheClient::test_client_key_format PASSED       [ 28%]
+tests/test_auth.py::TestCacheClient::test_trigger_feed_key_format PASSED [ 28%]
+tests/test_convergence.py::test_empty_signals_returns_zero PASSED        [ 28%]
+tests/test_convergence.py::test_single_strong_signal PASSED              [ 28%]
+tests/test_convergence.py::test_single_signal_decays_over_time PASSED    [ 28%]
+tests/test_convergence.py::test_convergence_multiplier_applied PASSED    [ 29%]
+tests/test_convergence.py::test_score_capped_at_100 PASSED               [ 29%]
+tests/test_convergence.py::test_practice_area_ma_from_sedar PASSED       [ 29%]
+tests/test_convergence.py::test_practice_area_litigation_from_canlii PASSED [ 29%]
+tests/test_convergence.py::test_practice_area_unknown_for_empty PASSED   [ 30%]
+tests/test_convergence.py::test_crossed_threshold_detects_crossing PASSED [ 30%]
+tests/test_convergence.py::test_crossed_threshold_no_crossing PASSED     [ 30%]
+tests/test_convergence.py::test_decayed_weight_at_zero_days PASSED       [ 30%]
+tests/test_convergence.py::test_decayed_weight_at_half_life PASSED       [ 30%]
+tests/test_convergence.py::test_five_category_boost PASSED               [ 31%]
+tests/test_entity_resolution_extended.py::TestNormaliseEdgeCases::test_normalise[Northfield Energy Partners L.P.-northfield energy lp] PASSED [ 31%]
+tests/test_entity_resolution_extended.py::TestNormaliseEdgeCases::test_normalise[THE GOLDMAN SACHS GROUP, INC.-the goldman sachs] PASSED [ 31%]
+tests/test_entity_resolution_extended.py::TestNormaliseEdgeCases::test_normalise[BlackBerry Ltd.-blackberry] PASSED [ 31%]
+tests/test_entity_resolution_extended.py::TestNormaliseEdgeCases::test_normalise[SUNCOR ENERGY INC.-suncor energy] PASSED [ 32%]
+tests/test_entity_resolution_extended.py::TestNormaliseEdgeCases::test_normalise[Shopify Inc.-shopify] PASSED [ 32%]
+tests/test_entity_resolution_extended.py::TestNormaliseEdgeCases::test_normalise[Couche-Tard Inc.-couche tard] PASSED [ 32%]
+tests/test_entity_resolution_extended.py::TestNormaliseEdgeCases::test_normalise[ENBRIDGE INC-enbridge] PASSED [ 32%]
+tests/test_entity_resolution_extended.py::TestNormaliseEdgeCases::test_normalise[Manulife Financial Corporation-manulife financial] PASSED [ 32%]
+tests/test_entity_resolution_extended.py::TestNormaliseEdgeCases::test_normalise[Royal Bank of Canada-royal bank of canada] PASSED [ 33%]
+tests/test_entity_resolution_extended.py::TestNormaliseEdgeCases::test_normalise[BCE Inc.-bce] PASSED [ 33%]
+tests/test_entity_resolution_extended.py::TestNormaliseEdgeCases::test_normalise[Canadian Natural Resources Limited-canadian natural resources] PASSED [ 33%]
+tests/test_entity_resolution_extended.py::TestNormaliseEdgeCases::test_normalise[Barrick Gold Corporation-barrick gold] PASSED [ 33%]
+tests/test_entity_resolution_extended.py::TestNormaliseEdgeCases::test_normalise[TC Energy Corp-tc energy] PASSED [ 34%]
+tests/test_entity_resolution_extended.py::TestNormaliseEdgeCases::test_normalise[Pembina Pipeline Corp.-pembina pipeline] PASSED [ 34%]
+tests/test_entity_resolution_extended.py::TestNormaliseEdgeCases::test_normalise[Fortis Inc.-fortis] PASSED [ 34%]
+tests/test_entity_resolution_extended.py::TestResolverBatchOperations::test_batch_resolve_all_match PASSED [ 34%]
+tests/test_entity_resolution_extended.py::TestResolverBatchOperations::test_batch_resolve_partial_match PASSED [ 34%]
+tests/test_entity_resolution_extended.py::TestResolverBatchOperations::test_resolve_order_independence PASSED [ 35%]
+tests/test_entity_resolution_extended.py::TestResolverBatchOperations::test_score_ordering PASSED [ 35%]
+tests/test_entity_resolution_extended.py::TestResolverBatchOperations::test_known_sedar_variations PASSED [ 35%]
+tests/test_health.py::test_health_endpoint_returns_ok PASSED             [ 35%]
+tests/test_health.py::test_ready_endpoint PASSED                         [ 36%]
+tests/test_health.py::test_version_endpoint PASSED                       [ 36%]
+tests/test_health.py::test_login_endpoint_registered PASSED              [ 36%]
+tests/test_health.py::test_login_invalid_credentials PASSED              [ 36%]
+tests/test_health.py::test_protected_endpoint_requires_auth PASSED       [ 36%]
+tests/test_health.py::test_request_id_in_response_headers PASSED         [ 37%]
+tests/test_health.py::test_cors_headers_present PASSED                   [ 37%]
+tests/test_health.py::test_404_returns_json PASSED                       [ 37%]
+tests/test_phase0_scaffold.py::TestSettings::test_settings_load_development PASSED [ 37%]
+tests/test_phase0_scaffold.py::TestSettings::test_settings_has_required_fields PASSED [ 38%]
+tests/test_phase0_scaffold.py::TestSettings::test_settings_db_pool_defaults PASSED [ 38%]
+tests/test_phase0_scaffold.py::TestSettings::test_settings_is_production_property PASSED [ 38%]
+tests/test_phase0_scaffold.py::TestSettings::test_settings_production_requires_strong_secret PASSED [ 38%]
+tests/test_phase0_scaffold.py::TestSettings::test_settings_production_rejects_localhost_db PASSED [ 38%]
+tests/test_phase0_scaffold.py::TestSettings::test_settings_feature_flags PASSED [ 39%]
+tests/test_phase0_scaffold.py::TestSettings::test_settings_rate_limit_defaults PASSED [ 39%]
+tests/test_phase0_scaffold.py::TestHealthEndpoint::test_health_returns_status_and_components PASSED [ 39%]
+tests/test_phase0_scaffold.py::TestHealthEndpoint::test_health_includes_ml_ready PASSED [ 39%]
+tests/test_phase0_scaffold.py::TestReadyEndpoint::test_ready_returns_503_when_db_unreachable PASSED [ 40%]
+tests/test_phase0_scaffold.py::TestReadyEndpoint::test_ready_returns_200_when_db_reachable PASSED [ 40%]
+tests/test_phase0_scaffold.py::TestCORS::test_cors_preflight_returns_headers PASSED [ 40%]
+tests/test_phase0_scaffold.py::TestCORS::test_cors_allows_configured_origin PASSED [ 40%]
+tests/test_phase0_scaffold.py::TestVersionEndpoint::test_version_returns_expected_fields PASSED [ 40%]
+tests/test_phase0_scaffold.py::TestVersionEndpoint::test_404_returns_json PASSED [ 41%]
+tests/test_phase10_hardening.py::test_sync_url_converts_asyncpg_to_psycopg2 PASSED [ 41%]
+tests/test_phase10_hardening.py::test_sync_url_preserves_credentials_and_path PASSED [ 41%]
+tests/test_phase10_hardening.py::test_security_headers_x_frame_options PASSED [ 41%]
+tests/test_phase10_hardening.py::test_security_headers_x_content_type_options PASSED [ 42%]
+tests/test_phase10_hardening.py::test_security_headers_hsts_present_in_production PASSED [ 42%]
+tests/test_phase10_hardening.py::test_security_headers_hsts_absent_in_development PASSED [ 42%]
+tests/test_phase10_hardening.py::test_metrics_router_exists PASSED       [ 42%]
+tests/test_phase10_hardening.py::test_metrics_gauge_helper_output PASSED [ 42%]
+tests/test_phase10_hardening.py::test_phase6_tasks_import_get_sync_db PASSED [ 43%]
+tests/test_phase10_hardening.py::test_phase6_tasks_no_asyncio_run_for_sql_tasks PASSED [ 43%]
+tests/test_phase10_hardening.py::test_psycopg2_binary_in_requirements PASSED [ 43%]
+tests/test_phase10_hardening.py::test_prometheus_client_in_requirements PASSED [ 43%]
+tests/test_phase10_hardening.py::test_locust_in_requirements_dev PASSED  [ 44%]
+tests/test_phase10_hardening.py::test_sentry_celery_integration_in_main PASSED [ 44%]
+tests/test_phase10_hardening.py::test_security_headers_middleware_registered PASSED [ 44%]
+tests/test_phase10_hardening.py::test_metrics_router_registered_in_main PASSED [ 44%]
+tests/test_phase10_hardening.py::test_rate_limiter_returns_429 PASSED    [ 44%]
+tests/test_phase10_hardening.py::test_expired_jwt_returns_401 PASSED     [ 45%]
+tests/test_phase10_hardening.py::test_nosniff_header_on_all_responses PASSED [ 45%]
+tests/test_phase10_hardening.py::test_x_frame_options_on_all_responses PASSED [ 45%]
+tests/test_phase10_hardening.py::test_csp_header_on_all_responses PASSED [ 45%]
+tests/test_phase10_hardening.py::test_metrics_endpoint_returns_prometheus_format PASSED [ 46%]
+tests/test_phase10_hardening.py::test_error_handler_middleware_registered PASSED [ 46%]
+tests/test_phase10_hardening.py::test_rate_limiter_middleware_registered PASSED [ 46%]
+tests/test_phase11_deployment.py::TestEnvVarMapping::test_env_example_vars_have_config_fields PASSED [ 46%]
+tests/test_phase11_deployment.py::TestEnvVarMapping::test_config_fields_have_env_example_entries PASSED [ 46%]
+tests/test_phase11_deployment.py::TestHealthSchema::test_health_schema_fields PASSED [ 47%]
+tests/test_phase11_deployment.py::TestHealthSchema::test_health_components_schema PASSED [ 47%]
+tests/test_phase11_deployment.py::TestHealthSchema::test_health_component_values PASSED [ 47%]
+tests/test_phase11_deployment.py::TestReadyEndpoint::test_ready_503_when_db_down PASSED [ 47%]
+tests/test_phase11_deployment.py::TestReadyEndpoint::test_ready_200_when_db_up PASSED [ 48%]
+tests/test_phase11_deployment.py::TestInfrastructureFiles::test_ci_workflow_exists PASSED [ 48%]
+tests/test_phase11_deployment.py::TestInfrastructureFiles::test_cd_workflow_exists PASSED [ 48%]
+tests/test_phase11_deployment.py::TestInfrastructureFiles::test_do_app_yaml_exists PASSED [ 48%]
+tests/test_phase11_deployment.py::TestInfrastructureFiles::test_dockerfile_exists PASSED [ 48%]
+tests/test_phase11_deployment.py::TestInfrastructureFiles::test_docker_compose_exists PASSED [ 49%]
+tests/test_phase11_deployment.py::TestInfrastructureFiles::test_env_example_exists PASSED [ 49%]
+tests/test_phase12_optimization.py::TestCachePerformance::test_cache_key_format PASSED [ 49%]
+tests/test_phase12_optimization.py::TestCachePerformance::test_ttl_is_6_hours PASSED [ 49%]
+tests/test_phase12_optimization.py::TestCachePerformance::test_cached_score_returns_fast PASSED [ 50%]
+tests/test_phase12_optimization.py::TestCachePerformance::test_cache_miss_queries_db PASSED [ 50%]
+tests/test_phase12_optimization.py::TestCachePerformance::test_invalidate_cache_deletes_key PASSED [ 50%]
+tests/test_phase12_optimization.py::TestDriftReEvaluation::test_drift_detector_flags_large_accuracy_drop PASSED [ 50%]
+tests/test_phase12_optimization.py::TestDriftReEvaluation::test_drift_triggers_orchestrator_refresh PASSED [ 50%]
+tests/test_phase12_optimization.py::TestActiveLearningQueue::test_uncertain_companies_identified PASSED [ 51%]
+tests/test_phase12_optimization.py::TestActiveLearningQueue::test_low_accuracy_triggers_queue PASSED [ 51%]
+tests/test_phase2_features.py::TestFeatureVectorShape::test_34_practice_areas PASSED [ 51%]
+tests/test_phase2_features.py::TestFeatureVectorShape::test_feature_columns_count PASSED [ 51%]
+tests/test_phase2_features.py::TestFeatureVectorShape::test_feature_columns_are_unique PASSED [ 51%]
+tests/test_phase2_features.py::TestFeatureVectorShape::test_feature_columns_contain_critical_features PASSED [ 52%]
+tests/test_phase2_features.py::TestTemporalDecay::test_zero_age_preserves_weight PASSED [ 52%]
+tests/test_phase2_features.py::TestTemporalDecay::test_decay_reduces_weight PASSED [ 52%]
+tests/test_phase2_features.py::TestTemporalDecay::test_90_day_decay_exceeds_50_percent PASSED [ 52%]
+tests/test_phase2_features.py::TestTemporalDecay::test_negative_age_returns_base_weight PASSED [ 53%]
+tests/test_phase2_features.py::TestTemporalDecay::test_decay_never_negative PASSED [ 53%]
+tests/test_phase2_features.py::TestTemporalDecay::test_half_life_formula PASSED [ 53%]
+tests/test_phase2_features.py::TestTemporalDecay::test_lambda_from_half_life_inverse PASSED [ 53%]
+tests/test_phase2_features.py::TestTemporalDecay::test_lambda_floor_enforced PASSED [ 53%]
+tests/test_phase2_features.py::TestTemporalDecay::test_zero_lambda_gives_infinite_half_life PASSED [ 54%]
+tests/test_phase2_features.py::TestMissingFields::test_empty_signals_returns_zero PASSED [ 54%]
+tests/test_phase2_features.py::TestMissingFields::test_missing_signal_type_uses_default_lambda PASSED [ 54%]
+tests/test_phase2_features.py::TestMissingFields::test_missing_age_days_uses_zero PASSED [ 54%]
+tests/test_phase2_features.py::TestMissingFields::test_missing_base_weight_uses_default PASSED [ 55%]
+tests/test_phase2_features.py::TestDecayFeatures::test_decay_features_output_keys PASSED [ 55%]
+tests/test_phase2_features.py::TestDecayFeatures::test_decay_features_empty_categories PASSED [ 55%]
+tests/test_phase2_features.py::TestDecayFeatures::test_decay_features_with_signals PASSED [ 55%]
+tests/test_phase2_features.py::TestLambdaCalibration::test_calibrate_with_few_events_returns_default PASSED [ 55%]
+tests/test_phase2_features.py::TestLambdaCalibration::test_calibrate_enforces_floor PASSED [ 56%]
+tests/test_phase2_features.py::TestLambdaCalibration::test_build_default_decay_config_rows PASSED [ 56%]
+tests/test_phase2_features.py::TestLambdaCalibration::test_default_lambdas_all_above_floor PASSED [ 56%]
+tests/test_phase3_ground_truth.py::TestConstants::test_all_34_practice_areas_present PASSED [ 56%]
+tests/test_phase3_ground_truth.py::TestConstants::test_no_duplicate_practice_areas PASSED [ 57%]
+tests/test_phase3_ground_truth.py::TestConstants::test_positive_signal_types_nonempty PASSED [ 57%]
+tests/test_phase3_ground_truth.py::TestConstants::test_signal_type_maps_to_known_practice_areas PASSED [ 57%]
+tests/test_phase3_ground_truth.py::TestConstants::test_insolvency_signals_map_correctly PASSED [ 57%]
+tests/test_phase3_ground_truth.py::TestConstants::test_data_breach_maps_to_privacy_and_data PASSED [ 57%]
+tests/test_phase3_ground_truth.py::TestConstants::test_horizons_are_30_60_90 PASSED [ 58%]
+tests/test_phase3_ground_truth.py::TestConstants::test_positive_signal_types_matches_keys PASSED [ 58%]
+tests/test_phase3_ground_truth.py::TestConstants::test_negative_signal_types_disjoint_from_positive PASSED [ 58%]
+tests/test_phase3_ground_truth.py::TestConstants::test_default_confidence_is_float PASSED [ 58%]
+tests/test_phase3_ground_truth.py::TestConstants::test_max_negative_samples_positive_int PASSED [ 59%]
+tests/test_phase3_ground_truth.py::TestLabelingRunModel::test_total_labels_property PASSED [ 59%]
+tests/test_phase3_ground_truth.py::TestLabelingRunModel::test_total_labels_zero_when_empty PASSED [ 59%]
+tests/test_phase3_ground_truth.py::TestLabelingRunModel::test_duration_seconds_none_when_incomplete PASSED [ 59%]
+tests/test_phase3_ground_truth.py::TestLabelingRunModel::test_duration_seconds_calculated_correctly PASSED [ 59%]
+tests/test_phase3_ground_truth.py::TestLabelingRunModel::test_duration_seconds_none_when_only_start PASSED [ 60%]
+tests/test_phase3_ground_truth.py::TestGroundTruthEnums::test_label_type_values PASSED [ 60%]
+tests/test_phase3_ground_truth.py::TestGroundTruthEnums::test_run_type_values PASSED [ 60%]
+tests/test_phase3_ground_truth.py::TestGroundTruthEnums::test_run_status_values PASSED [ 60%]
+tests/test_phase3_ground_truth.py::TestGroundTruthEnums::test_label_source_values PASSED [ 61%]
+tests/test_phase3_ground_truth.py::TestRetrospectiveLabeler::test_no_signals_returns_no_labels PASSED [ 61%]
+tests/test_phase3_ground_truth.py::TestRetrospectiveLabeler::test_positive_signal_generates_label PASSED [ 61%]
+tests/test_phase3_ground_truth.py::TestRetrospectiveLabeler::test_label_contains_evidence_ids PASSED [ 61%]
+tests/test_phase3_ground_truth.py::TestRetrospectiveLabeler::test_horizon_days_set_correctly PASSED [ 61%]
+tests/test_phase3_ground_truth.py::TestRetrospectiveLabeler::test_db_error_returns_empty PASSED [ 62%]
+tests/test_phase3_ground_truth.py::TestRetrospectiveLabeler::test_multi_practice_area_signal_creates_multiple_labels PASSED [ 62%]
+tests/test_phase3_ground_truth.py::TestRetrospectiveLabeler::test_batch_run_returns_summary PASSED [ 62%]
+tests/test_phase3_ground_truth.py::TestRetrospectiveLabeler::test_get_all_company_ids_returns_list PASSED [ 62%]
+tests/test_phase3_ground_truth.py::TestRetrospectiveLabeler::test_get_all_company_ids_db_error_returns_empty PASSED [ 63%]
+tests/test_phase3_ground_truth.py::TestRetrospectiveLabeler::test_confidence_score_set_to_default PASSED [ 63%]
+tests/test_phase3_ground_truth.py::TestRetrospectiveLabeler::test_label_source_is_retrospective PASSED [ 63%]
+tests/test_phase3_ground_truth.py::TestRetrospectiveLabeler::test_is_validated_false_by_default PASSED [ 63%]
+tests/test_phase3_ground_truth.py::TestNegativeSampler::test_no_candidates_returns_zero_labels PASSED [ 63%]
+tests/test_phase3_ground_truth.py::TestNegativeSampler::test_creates_negative_label_for_candidate PASSED [ 64%]
+tests/test_phase3_ground_truth.py::TestNegativeSampler::test_sector_cap_limits_samples PASSED [ 64%]
+tests/test_phase3_ground_truth.py::TestNegativeSampler::test_multiple_sectors_sampled_independently PASSED [ 64%]
+tests/test_phase3_ground_truth.py::TestNegativeSampler::test_negative_label_practice_area_is_none PASSED [ 64%]
+tests/test_phase3_ground_truth.py::TestNegativeSampler::test_sectors_sampled_count_returned PASSED [ 65%]
+tests/test_phase3_ground_truth.py::TestNegativeSampler::test_no_errors_on_clean_run PASSED [ 65%]
+tests/test_phase3_ground_truth.py::TestNegativeSampler::test_unknown_sector_treated_as_unknown PASSED [ 65%]
+tests/test_phase3_ground_truth.py::TestGroundTruthPipeline::test_get_run_by_id_not_found PASSED [ 65%]
+tests/test_phase3_ground_truth.py::TestGroundTruthPipeline::test_get_run_by_id_db_error_returns_none PASSED [ 65%]
+tests/test_phase3_ground_truth.py::TestGroundTruthPipeline::test_get_run_by_id_found PASSED [ 66%]
+tests/test_phase3_ground_truth.py::TestRouteSerializers::test_label_to_dict_structure PASSED [ 66%]
+tests/test_phase3_ground_truth.py::TestRouteSerializers::test_run_to_dict_structure PASSED [ 66%]
+tests/test_phase3_ground_truth.py::TestRouteSerializers::test_label_to_dict_none_evidence_returns_empty_list PASSED [ 66%]
+tests/test_phase3_ground_truth.py::TestRouteSerializers::test_label_to_dict_missing_created_at PASSED [ 67%]
+tests/test_phase3_ground_truth.py::TestLabelerSedarHit::test_labeler_assigns_positive_on_sedar_hit PASSED [ 67%]
+tests/test_phase3_ground_truth.py::TestNegativeSamplerRatio::test_negative_sampler_ratio PASSED [ 67%]
+tests/test_phase3_ground_truth.py::TestNegativeSamplerRatio::test_negative_sampler_caps_at_max_per_sector PASSED [ 67%]
+tests/test_phase3_ground_truth.py::TestLabelingPipelineIdempotent::test_labeling_pipeline_idempotent PASSED [ 67%]
+tests/test_phase4_llm_training.py::TestGroqClient::test_classify_signals_empty_input PASSED [ 68%]
+tests/test_phase4_llm_training.py::TestGroqClient::test_parse_response_valid_json PASSED [ 68%]
+tests/test_phase4_llm_training.py::TestGroqClient::test_parse_response_malformed_json_returns_uncertain PASSED [ 68%]
+tests/test_phase4_llm_training.py::TestGroqClient::test_parse_response_strips_markdown_fences PASSED [ 68%]
+tests/test_phase4_llm_training.py::TestGroqClient::test_parse_response_fills_missing_signals_with_uncertain PASSED [ 69%]
+tests/test_phase4_llm_training.py::TestGroqClient::test_parse_response_clamps_confidence PASSED [ 69%]
+tests/test_phase4_llm_training.py::TestGroqClient::test_parse_response_invalid_label_type_becomes_uncertain PASSED [ 69%]
+tests/test_phase4_llm_training.py::TestGroqClient::test_batch_splits_correctly PASSED [ 69%]
+tests/test_phase4_llm_training.py::TestGroqClient::test_batch_error_falls_back_to_uncertain PASSED [ 69%]
+tests/test_phase4_llm_training.py::TestPrompts::test_build_prompt_contains_signal_ids PASSED [ 70%]
+tests/test_phase4_llm_training.py::TestPrompts::test_build_prompt_contains_json_schema_hint PASSED [ 70%]
+tests/test_phase4_llm_training.py::TestPrompts::test_build_prompt_contains_practice_areas PASSED [ 70%]
+tests/test_phase4_llm_training.py::TestPrompts::test_build_prompt_has_few_shot_examples PASSED [ 70%]
+tests/test_phase4_llm_training.py::TestPrompts::test_build_prompt_no_text_signal PASSED [ 71%]
+tests/test_phase4_llm_training.py::TestPrompts::test_system_prompt_not_empty PASSED [ 71%]
+tests/test_phase4_llm_training.py::TestPrompts::test_few_shot_examples_valid PASSED [ 71%]
+tests/test_phase4_llm_training.py::TestPseudoLabeler::test_no_unlabeled_signals_returns_zero PASSED [ 71%]
+tests/test_phase4_llm_training.py::TestPseudoLabeler::test_confident_positive_creates_label PASSED [ 71%]
+tests/test_phase4_llm_training.py::TestPseudoLabeler::test_low_confidence_rejected PASSED [ 72%]
+tests/test_phase4_llm_training.py::TestPseudoLabeler::test_negative_label_created_with_no_practice_area PASSED [ 72%]
+tests/test_phase4_llm_training.py::TestPseudoLabeler::test_multi_practice_area_creates_multiple_labels PASSED [ 72%]
+tests/test_phase4_llm_training.py::TestPseudoLabeler::test_resolve_practice_areas_case_insensitive PASSED [ 72%]
+tests/test_phase4_llm_training.py::TestPseudoLabeler::test_resolve_practice_areas_unknown_dropped PASSED [ 73%]
+tests/test_phase4_llm_training.py::TestPseudoLabeler::test_label_source_is_pseudo_label PASSED [ 73%]
+tests/test_phase4_llm_training.py::TestPseudoLabeler::test_groq_failure_returns_error_count PASSED [ 73%]
+tests/test_phase4_llm_training.py::TestTrainingDataCurator::test_empty_db_produces_zero_label_dataset PASSED [ 73%]
+tests/test_phase4_llm_training.py::TestTrainingDataCurator::test_deduplicate_keeps_highest_confidence PASSED [ 73%]
+tests/test_phase4_llm_training.py::TestTrainingDataCurator::test_deduplicate_different_keys_kept_separately PASSED [ 74%]
+tests/test_phase4_llm_training.py::TestTrainingDataCurator::test_deduplicate_adds_label_int PASSED [ 74%]
+tests/test_phase4_llm_training.py::TestTrainingDataCurator::test_csv_export_creates_file PASSED [ 74%]
+tests/test_phase4_llm_training.py::TestTrainingDataCurator::test_csv_export_empty_rows PASSED [ 74%]
+tests/test_phase4_llm_training.py::TestTrainingDataCurator::test_confidence_filter_applied PASSED [ 75%]
+tests/test_phase4_llm_training.py::TestTrainingDataCurator::test_curate_creates_training_dataset_record PASSED [ 75%]
+tests/test_phase4_llm_training.py::TestTrainingDatasetModel::test_dataset_status_values PASSED [ 75%]
+tests/test_phase4_llm_training.py::TestTrainingDatasetModel::test_duration_seconds_none_when_incomplete PASSED [ 75%]
+tests/test_phase4_llm_training.py::TestTrainingDatasetModel::test_duration_seconds_calculated PASSED [ 75%]
+tests/test_phase4_llm_training.py::TestTrainingDatasetModel::test_dataset_has_tablename PASSED [ 76%]
+tests/test_phase4_llm_training.py::TestGroundTruthEnumExtensions::test_label_source_pseudo_label_exists PASSED [ 76%]
+tests/test_phase4_llm_training.py::TestGroundTruthEnumExtensions::test_run_type_pseudo_label_exists PASSED [ 76%]
+tests/test_phase4_llm_training.py::TestGroundTruthEnumExtensions::test_label_source_all_values PASSED [ 76%]
+tests/test_phase4_llm_training.py::TestGroundTruthEnumExtensions::test_run_type_all_values PASSED [ 76%]
+tests/test_phase4_llm_training.py::TestRouteSerializers::test_dataset_to_dict_structure PASSED [ 77%]
+tests/test_phase4_llm_training.py::TestRouteSerializers::test_dataset_to_dict_none_timestamps PASSED [ 77%]
+tests/test_phase4_llm_training.py::TestJsonlFieldsPresent::test_jsonl_fields_present PASSED [ 77%]
+tests/test_phase4_llm_training.py::TestGroqClientRetries429::test_groq_client_retries_on_http_error PASSED [ 77%]
+tests/test_phase4_llm_training.py::TestPseudoLabelerFiltersLowConfidence::test_pseudo_labeler_filters_low_confidence PASSED [ 78%]
+tests/test_phase4_llm_training.py::TestPseudoLabelerFiltersLowConfidence::test_pseudo_labeler_accepts_above_floor PASSED [ 78%]
+tests/test_phase5_live_feeds.py::TestLiveFeedRouter::test_push_signal_returns_msg_id PASSED [ 78%]
+tests/test_phase5_live_feeds.py::TestLiveFeedRouter::test_push_signal_disabled_returns_none PASSED [ 78%]
+tests/test_phase5_live_feeds.py::TestLiveFeedRouter::test_push_signal_stamps_pushed_at PASSED [ 78%]
+tests/test_phase5_live_feeds.py::TestLiveFeedRouter::test_push_signal_json_serializes_dicts PASSED [ 79%]
+tests/test_phase5_live_feeds.py::TestLiveFeedRouter::test_push_signal_redis_error_returns_none PASSED [ 79%]
+tests/test_phase5_live_feeds.py::TestLiveFeedRouter::test_ensure_consumer_group_creates_group PASSED [ 79%]
+tests/test_phase5_live_feeds.py::TestLiveFeedRouter::test_ensure_consumer_group_ignores_busygroup PASSED [ 79%]
+tests/test_phase5_live_feeds.py::TestLiveFeedRouter::test_read_events_returns_empty_when_no_messages PASSED [ 80%]
+tests/test_phase5_live_feeds.py::TestLiveFeedRouter::test_read_events_parses_messages PASSED [ 80%]
+tests/test_phase5_live_feeds.py::TestLiveFeedRouter::test_acknowledge_returns_true_on_success PASSED [ 80%]
+tests/test_phase5_live_feeds.py::TestLiveFeedRouter::test_acknowledge_returns_false_on_error PASSED [ 80%]
+tests/test_phase5_live_feeds.py::TestLiveFeedRouter::test_stream_length_returns_int PASSED [ 80%]
+tests/test_phase5_live_feeds.py::TestLiveFeedRouter::test_stream_length_returns_zero_on_error PASSED [ 81%]
+tests/test_phase5_live_feeds.py::TestLiveFeedRouter::test_pending_count_returns_int PASSED [ 81%]
+tests/test_phase5_live_feeds.py::TestLiveFeedRouter::test_module_singleton_exists PASSED [ 81%]
+tests/test_phase5_live_feeds.py::TestVelocityMonitor::test_signal_key_format PASSED [ 81%]
+tests/test_phase5_live_feeds.py::TestVelocityMonitor::test_score_key_format PASSED [ 82%]
+tests/test_phase5_live_feeds.py::TestVelocityMonitor::test_record_signal_calls_pipeline PASSED [ 82%]
+tests/test_phase5_live_feeds.py::TestVelocityMonitor::test_record_signal_no_crash_on_redis_error PASSED [ 82%]
+tests/test_phase5_live_feeds.py::TestVelocityMonitor::test_get_velocity_ratio_zero_baseline PASSED [ 82%]
+tests/test_phase5_live_feeds.py::TestVelocityMonitor::test_get_velocity_ratio_normal PASSED [ 82%]
+tests/test_phase5_live_feeds.py::TestVelocityMonitor::test_get_velocity_ratio_high_velocity PASSED [ 83%]
+tests/test_phase5_live_feeds.py::TestVelocityMonitor::test_get_velocity_score_returns_float PASSED [ 83%]
+tests/test_phase5_live_feeds.py::TestVelocityMonitor::test_get_velocity_score_returns_zero_when_missing PASSED [ 83%]
+tests/test_phase5_live_feeds.py::TestVelocityMonitor::test_compute_and_cache_scores_empty_list PASSED [ 83%]
+tests/test_phase5_live_feeds.py::TestVelocityMonitor::test_compute_and_cache_scores_returns_summary PASSED [ 84%]
+tests/test_phase5_live_feeds.py::TestVelocityMonitor::test_compute_and_cache_scores_detects_high_velocity PASSED [ 84%]
+tests/test_phase5_live_feeds.py::TestVelocityMonitor::test_module_singleton_exists PASSED [ 84%]
+tests/test_phase5_live_feeds.py::TestLinkedInTrigger::test_today_budget_key_format PASSED [ 84%]
+tests/test_phase5_live_feeds.py::TestLinkedInTrigger::test_check_budget_available PASSED [ 84%]
+tests/test_phase5_live_feeds.py::TestLinkedInTrigger::test_check_budget_exhausted PASSED [ 85%]
+tests/test_phase5_live_feeds.py::TestLinkedInTrigger::test_run_returns_budget_exhausted_when_no_budget PASSED [ 85%]
+tests/test_phase5_live_feeds.py::TestLinkedInTrigger::test_run_returns_not_found_on_none_profile PASSED [ 85%]
+tests/test_phase5_live_feeds.py::TestLinkedInTrigger::test_run_returns_success_on_valid_profile PASSED [ 85%]
+tests/test_phase5_live_feeds.py::TestLinkedInTrigger::test_lookup_executive_skips_when_no_api_key PASSED [ 86%]
+tests/test_phase5_live_feeds.py::TestLinkedInTrigger::test_lookup_executive_returns_none_on_missing_params PASSED [ 86%]
+tests/test_phase5_live_feeds.py::TestLinkedInTrigger::test_module_singleton_exists PASSED [ 86%]
+tests/test_phase5_live_feeds.py::TestDeadSignalResurrector::test_expected_intervals_populated PASSED [ 86%]
+tests/test_phase5_live_feeds.py::TestDeadSignalResurrector::test_live_scrapers_have_short_intervals PASSED [ 86%]
+tests/test_phase5_live_feeds.py::TestDeadSignalResurrector::test_category_task_map_covers_all_categories PASSED [ 87%]
+tests/test_phase5_live_feeds.py::TestDeadSignalResurrector::test_trigger_rerun_returns_false_for_unknown_category PASSED [ 87%]
+tests/test_phase5_live_feeds.py::TestDeadSignalResurrector::test_trigger_rerun_dispatches_celery_task PASSED [ 87%]
+tests/test_phase5_live_feeds.py::TestDeadSignalResurrector::test_run_returns_summary_structure PASSED [ 87%]
+tests/test_phase5_live_feeds.py::TestDeadSignalResurrector::test_run_with_fresh_scraper_no_alert PASSED [ 88%]
+tests/test_phase5_live_feeds.py::TestDeadSignalResurrector::test_run_detects_dead_scraper PASSED [ 88%]
+tests/test_phase5_live_feeds.py::TestDeadSignalResurrector::test_module_singleton_exists PASSED [ 88%]
+tests/test_phase5_live_feeds.py::TestPhase5CeleryTasks::test_all_phase5_tasks_registered PASSED [ 88%]
+tests/test_phase5_live_feeds.py::TestPhase5CeleryTasks::test_live_scraper_tasks_have_short_time_limits PASSED [ 88%]
+tests/test_phase5_live_feeds.py::TestPhase5CeleryTasks::test_process_live_feed_events_has_short_time_limit PASSED [ 89%]
+tests/test_phase5_live_feeds.py::TestPhase5CeleryTasks::test_trigger_linkedin_lookup_has_very_short_time_limit PASSED [ 89%]
+tests/test_phase5_live_feeds.py::TestPhase5BeatSchedule::test_all_phase5_beat_entries_present PASSED [ 89%]
+tests/test_phase5_live_feeds.py::TestPhase5BeatSchedule::test_live_scrapers_routed_to_scrapers_queue PASSED [ 89%]
+tests/test_phase5_live_feeds.py::TestPhase5BeatSchedule::test_process_live_feed_events_routed_to_scoring PASSED [ 90%]
+tests/test_phase5_live_feeds.py::TestPhase5BeatSchedule::test_velocity_monitor_routed_to_agents PASSED [ 90%]
+tests/test_phase5_live_feeds.py::TestPhase5BeatSchedule::test_resurrector_routed_to_agents PASSED [ 90%]
+tests/test_phase5_live_feeds.py::TestPhase5BeatSchedule::test_phase5_task_routing_rules_present PASSED [ 90%]
+tests/test_phase5_live_feeds.py::TestServicesInit::test_live_feed_imports PASSED [ 90%]
+tests/test_phase5_live_feeds.py::TestServicesInit::test_velocity_monitor_imports PASSED [ 91%]
+tests/test_phase5_live_feeds.py::TestServicesInit::test_linkedin_trigger_imports PASSED [ 91%]
+tests/test_phase5_live_feeds.py::TestServicesInit::test_resurrector_imports PASSED [ 91%]
+tests/test_phase7_api.py::test_get_score_returns_200_with_schema PASSED  [ 91%]
+tests/test_phase7_api.py::test_get_score_returns_404_when_no_score PASSED [ 92%]
+tests/test_phase7_api.py::test_get_score_requires_auth PASSED            [ 92%]
+tests/test_phase7_api.py::test_get_explain_returns_200 PASSED            [ 92%]
+tests/test_phase7_api.py::test_batch_scores_returns_200 PASSED           [ 92%]
+tests/test_phase7_api.py::test_batch_scores_rejects_over_50_ids PASSED   [ 92%]
+tests/test_phase7_api.py::test_company_search_returns_list PASSED        [ 93%]
+tests/test_phase7_api.py::test_get_company_returns_404_for_unknown PASSED [ 93%]
+tests/test_phase7_api.py::test_get_signals_returns_200 PASSED            [ 93%]
+tests/test_phase7_api.py::test_trends_returns_200 PASSED                 [ 93%]
+tests/test_phase7_api.py::test_health_includes_ml_ready PASSED           [ 94%]
+tests/test_phase7_api.py::test_invalidate_score_cache_deletes_correct_key PASSED [ 94%]
+tests/test_phase7_api.py::test_company_search_requires_auth PASSED       [ 94%]
+tests/test_phase7_api.py::test_get_score_returns_34_practice_areas PASSED [ 94%]
+tests/test_phase7_api.py::test_score_horizons_are_30_60_90 PASSED        [ 94%]
+tests/test_phase7_api.py::test_batch_rejects_over_100_ids PASSED         [ 95%]
+tests/test_phase7_api.py::test_unauthenticated_scores_returns_401 PASSED [ 95%]
+tests/test_phase7_api.py::test_readonly_cannot_post_mandate PASSED       [ 95%]
+tests/test_phase7_api.py::test_partner_can_post_mandate PASSED           [ 95%]
+tests/test_phase9_feedback.py::test_confirm_mandate_inserts_row PASSED   [ 96%]
+tests/test_phase9_feedback.py::test_confirm_mandate_computes_lead_days PASSED [ 96%]
+tests/test_phase9_feedback.py::test_confirm_mandate_no_lead_days_when_no_score PASSED [ 96%]
+tests/test_phase9_feedback.py::test_accuracy_log_idempotent PASSED       [ 96%]
+tests/test_phase9_feedback.py::test_drift_detector_flags_ten_point_drop PASSED [ 96%]
+tests/test_phase9_feedback.py::test_drift_detector_does_not_flag_small_drop PASSED [ 97%]
+tests/test_phase9_feedback.py::test_auto_detected_confirmation_flag PASSED [ 97%]
+tests/test_phase9_feedback.py::test_confirmation_hunter_uses_fuzzy_matching PASSED [ 97%]
+tests/test_phase9_feedback.py::test_feedback_mandate_requires_partner_role PASSED [ 97%]
+tests/test_phase9_feedback.py::test_feedback_mandate_returns_schema PASSED [ 98%]
+tests/test_phase9_feedback.py::test_feedback_accuracy_endpoint PASSED    [ 98%]
+tests/test_phase9_feedback.py::test_feedback_drift_endpoint PASSED       [ 98%]
+tests/test_phase9_feedback.py::test_phase9_celery_tasks_registered PASSED [ 98%]
+tests/test_phase9_feedback.py::test_migration_0008_is_valid_python PASSED [ 98%]
+tests/test_phase9_feedback.py::test_confirm_mandate_writes_to_both_tables PASSED [ 99%]
+tests/test_phase9_feedback.py::test_lead_days_positive_when_prediction_precedes PASSED [ 99%]
+tests/test_phase9_feedback.py::test_ks_test_flags_15pp_drop PASSED       [ 99%]
+tests/test_phase9_feedback.py::test_auto_detected_has_flag PASSED        [ 99%]
+tests/test_phase9_feedback.py::test_accuracy_computation_idempotent PASSED [100%]
+ERROR: Coverage failure: total of 42 is less than fail-under=70
+/usr/local/lib/python3.11/dist-packages/pytest_cov/plugin.py:355: CovFailUnderWarning: Coverage failure: total of 42 is less than fail-under=70
+  warnings.warn(CovFailUnderWarning(message), stacklevel=1)
+
+
+=============================== warnings summary ===============================
+../../../../usr/local/lib/python3.11/dist-packages/passlib/utils/__init__.py:854
+  /usr/local/lib/python3.11/dist-packages/passlib/utils/__init__.py:854: DeprecationWarning: 'crypt' is deprecated and slated for removal in Python 3.13
+    from crypt import crypt as _crypt
+
+tests/ml/test_phase6_ml.py::TestTransformerScorer::test_model_architecture
+  /home/user/BD-law-AI/backend/app/ml/transformer_scorer.py:114: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
+    self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=n_layers)
+
+tests/scrapers/test_phase1_scrapers.py::test_all_scrapers_registered
+  /usr/local/lib/python3.11/dist-packages/bs4/css.py:8: UserWarning: The soupsieve package is not installed. CSS selectors cannot be used.
+    warnings.warn(
+
+tests/scrapers/test_phase1_scrapers.py::test_base_scraper_fetch_retries_3x
+tests/scrapers/test_phase1_scrapers.py::test_budget_manager_blocks_over_limit
+  /usr/local/lib/python3.11/dist-packages/pytest_asyncio/plugin.py:854: DeprecationWarning: The event_loop fixture provided by pytest-asyncio has been redefined in
+  /home/user/BD-law-AI/backend/tests/scrapers/test_phase1_scrapers.py:28
+  Replacing the event_loop fixture with a custom implementation is deprecated
+  and will lead to errors in the future.
+  If you want to request an asyncio event loop with a scope other than function
+  scope, use the "scope" argument to the asyncio mark when marking the tests.
+  If you want to return different types of event loops, use the event_loop_policy
+  fixture.
+  
+    warnings.warn(
+
+tests/test_health.py::test_login_invalid_credentials
+tests/test_phase10_hardening.py::test_metrics_endpoint_returns_prometheus_format
+  /usr/local/lib/python3.11/dist-packages/structlog/_base.py:165: UserWarning: Remove `format_exc_info` from your processor chain if you want pretty exceptions.
+    event_dict = proc(self._logger, method_name, event_dict)
+
+tests/test_phase5_live_feeds.py::TestDeadSignalResurrector::test_run_with_fresh_scraper_no_alert
+  /home/user/BD-law-AI/backend/app/services/resurrector.py:121: RuntimeWarning: coroutine 'TestDeadSignalResurrector.test_run_returns_summary_structure.<locals>._mock_db' was never awaited
+    from sqlalchemy import select
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+
+---------- coverage: platform linux, python 3.11.14-final-0 ----------
+Name                                    Stmts   Miss  Cover   Missing
+---------------------------------------------------------------------
+app/ml/__init__.py                          0      0   100%
+app/ml/active_learning.py                  27      6    78%   73-86
+app/ml/anomaly_detector.py                150    118    21%   35-46, 69-102, 123-153, 160-188, 209-281, 297-300
+app/ml/bayesian_engine.py                 222    112    50%   231-236, 247, 285-286, 291-297, 315-351, 386-542, 550-559, 564-571, 576-581, 603-604
+app/ml/churn_model.py                     114    114     0%   11-247
+app/ml/convergence.py                      62      9    85%   287-295
+app/ml/convergence/__init__.py             11      0   100%
+app/ml/cooccurrence.py                     65     36    45%   53, 89-160, 174-179
+app/ml/counterfactuals.py                  72     60    17%   71-152, 176-199, 204-218
+app/ml/cross_jurisdiction.py               74     25    66%   105, 118, 122-133, 171, 192-202, 213-228
+app/ml/graph_features.py                   78     61    22%   49-68, 91-123, 135-136, 154-163, 182-193, 203-210, 220-238
+app/ml/orchestrator.py                    109     23    79%   112, 115-116, 146, 189, 196, 199-214, 221-225, 231, 247-248, 269
+app/ml/practice_classifier.py              70     70     0%   9-156
+app/ml/sector_weights.py                   49     37    24%   55-97, 115-118, 137-139
+app/ml/temporal_decay.py                   78      3    96%   105, 239, 246
+app/ml/transformer_scorer.py              178     85    52%   172, 191-201, 221-235, 253-354, 390-396, 406-423
+app/ml/urgency_model.py                   112    112     0%   14-217
+app/ml/velocity_scorer.py                  52     22    58%   81, 124-154
+app/routes/__init__.py                      0      0   100%
+app/routes/ai.py                          238    238     0%   12-697
+app/routes/analytics.py                   160    108    32%   83-186, 196-232, 246-291, 315-357
+app/routes/clients.py                     134     77    43%   67-84, 93-117, 126-136, 147-166, 176-184, 194-229, 239-247, 269-270
+app/routes/companies.py                    71     46    35%   45-46, 53-55, 71-109, 121-204
+app/routes/feedback.py                     77     14    82%   104-110, 152-154, 176-178, 196-205
+app/routes/geo.py                         197    148    25%   133, 147-175, 184-189, 213-230, 241-278, 288-294, 322-339, 349-383, 393-399, 423-435, 445-479, 489-495, 520-537, 547-589, 599-611
+app/routes/ground_truth.py                115     84    27%   55-78, 97-115, 135-193, 220-258, 273-290, 309-315
+app/routes/metrics.py                      63     29    54%   44-45, 55-60, 130-182
+app/routes/scores.py                       53      0   100%
+app/routes/scores_8b_addition.py            2      2     0%   35-61
+app/routes/scrapers.py                    110     47    57%   95-107, 117-124, 135-155, 161, 172-191, 214-229
+app/routes/signals.py                      26      5    81%   57-58, 64-66
+app/routes/training.py                     89     65    27%   61-86, 95-109, 128-143, 163-170, 186-208, 218-227
+app/routes/trends.py                       29     10    66%   47-67, 79-80
+app/routes/triggers.py                    145     88    39%   93-134, 143-212, 221-225, 240-281, 297-337, 348-355
+app/routes/watchlist.py                   143     90    37%   86-115, 127-156, 173-180, 200-261, 278-321, 337-364
+app/services/__init__.py                    0      0   100%
+app/services/accuracy_tracker.py           80     40    50%   56-58, 61-62, 66, 92-99, 103, 107, 120, 148-155, 178-214, 225-248
+app/services/anthropic_service.py          38     23    39%   251-253, 260-274, 277-283, 290-306
+app/services/audit_log.py                  43      8    81%   82-98, 106
+app/services/churn_feature_service.py      54     54     0%   10-158
+app/services/confirmation_hunter.py        82     82     0%   18-277
+app/services/drift_detector.py            101     85    16%   50-128, 141-159, 170-180, 185-198, 211-240, 255-270, 288-302
+app/services/entity_resolution.py          76     18    76%   98-121, 177
+app/services/linkedin_trigger.py           93     45    52%   63-81, 85-104, 143, 145-146, 153-192
+app/services/live_feed.py                 114     20    82%   72, 113, 143, 159-162, 185, 216-218, 231, 263-268, 272-274
+app/services/mandate_confirmation.py       70     33    53%   121-123, 127, 174-186, 245-267
+app/services/resurrector.py                60     11    82%   153, 173-174, 222-244
+app/services/scoring_service.py            87     52    40%   81-83, 88-90, 107-165, 176-212, 232, 254-261
+app/services/streaming.py                  47     37    21%   43-90, 95
+app/services/velocity_monitor.py          124     30    76%   62, 146, 150-157, 172-174, 245-247, 258-282, 286-288
+---------------------------------------------------------------------
+TOTAL                                    4244   2482    42%
+
+FAIL Required test coverage of 70.0% not reached. Total coverage: 41.52%
+================= 451 passed, 1 skipped, 8 warnings in 16.97s ==================

@@ -294,14 +294,12 @@ from app.routes.analytics import router as analytics_router  # noqa: E402
 from app.routes.geo import router as geo_router  # noqa: E402
 from app.routes.clients import router as clients_router  # noqa: E402
 from app.routes.triggers import router as triggers_router  # noqa: E402
-from app.routes.scores_8b_addition import router as scores_8b_router  # noqa: E402
 
 app.include_router(watchlist_router, prefix=PREFIX)
 app.include_router(analytics_router, prefix=PREFIX)
 app.include_router(geo_router, prefix=PREFIX)
 app.include_router(clients_router, prefix=PREFIX)
 app.include_router(triggers_router, prefix=PREFIX)
-app.include_router(scores_8b_router, prefix=PREFIX)
 
 
 # ── System Endpoints ───────────────────────────────────────────────────────────

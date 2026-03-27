@@ -114,7 +114,7 @@ class TestBayesianEngine:
             inference_ms=5.0,
         )
         d = hs.as_dict()
-        assert set(d.keys()) == {30, 60, 90}
+        assert set(d.keys()) == {"30d", "60d", "90d"}
         assert all(0 <= v <= 1 for v in d.values())
 
     def test_output_is_34x3_matrix(self):
@@ -470,3 +470,279 @@ def test_default_decay_config_has_lambda_floor():
             f"Signal {row['signal_type']} lambda {row['lambda_value']} below floor {LAMBDA_FLOOR}"
         )
         assert row["half_life_days"] > 0
+
+
+# ── BayesianEngine.score() with mock model ─────────────────────────────────
+
+
+class TestBayesianEngineScore:
+    """BayesianEngine.score() returns float in [0, 1] for all 34 practice areas."""
+
+    def test_score_returns_horizon_scores(self, sample_features):
+        """Score with a mock model returns HorizonScores with all 3 horizons."""
+        from app.ml.bayesian_engine import BayesianEngine, PRACTICE_AREAS
+
+        engine = BayesianEngine("ma")
+        # Mock loaded models
+        mock_model = MagicMock()
+        mock_model.predict_proba.return_value = np.array([[0.3, 0.7]])
+        engine._models = {30: mock_model, 60: mock_model, 90: mock_model}
+        engine._thresholds = {30: 0.5, 60: 0.5, 90: 0.5}
+        engine._loaded = True
+
+        result = engine.score(sample_features)
+        assert result.practice_area == "ma"
+        assert 0.001 <= result.score_30d <= 0.999
+        assert 0.001 <= result.score_60d <= 0.999
+        assert 0.001 <= result.score_90d <= 0.999
+
+    def test_score_all_34_practice_areas_valid(self):
+        """All 34 practice areas can be instantiated."""
+        from app.ml.bayesian_engine import BayesianEngine, PRACTICE_AREAS
+
+        for pa in PRACTICE_AREAS:
+            engine = BayesianEngine(pa)
+            assert engine.practice_area == pa
+            assert not engine._loaded
+
+    def test_score_missing_features_fills_zeros(self, sample_features):
+        """Missing features are filled with 0.0, not NaN."""
+        from app.ml.bayesian_engine import BayesianEngine
+
+        engine = BayesianEngine("litigation")
+        mock_model = MagicMock()
+        mock_model.predict_proba.return_value = np.array([[0.4, 0.6]])
+        engine._models = {30: mock_model, 60: mock_model, 90: mock_model}
+        engine._loaded = True
+
+        # Pass only a few features
+        result = engine.score({"filing_frequency_30d": 5.0})
+        assert result.score_30d > 0
+
+    def test_batch_score_raises_if_not_loaded(self):
+        """score_batch raises RuntimeError if not loaded."""
+        from app.ml.bayesian_engine import BayesianEngine
+
+        engine = BayesianEngine("ma")
+        with pytest.raises(RuntimeError, match="not loaded"):
+            engine.score_batch([{"feature": 0.0}])
+
+
+# ── Orchestrator Extended Tests ─────────────────────────────────────────────
+
+
+class TestOrchestratorExtended:
+    """Orchestrator selects correct model based on F1 threshold."""
+
+    def test_selects_bayesian_when_transformer_not_trained(self):
+        """Without transformer trained, bayesian is always selected."""
+        from app.ml.bayesian_engine import PRACTICE_AREAS
+        from app.ml.orchestrator import MandateOrchestrator
+
+        orch = MandateOrchestrator()
+        orch.load(registry=None)
+        orch._loaded = True
+
+        for pa in PRACTICE_AREAS:
+            sel = orch._selections.get(pa)
+            assert sel is not None
+            assert sel.active_model == "bayesian"
+
+    def test_selects_transformer_when_beats_bayesian_on_holdout(self):
+        """Transformer is selected when it beats bayesian by >= threshold."""
+        from app.ml.bayesian_engine import ORCHESTRATOR_F1_THRESHOLD, PRACTICE_AREAS
+        from app.ml.orchestrator import MandateOrchestrator
+
+        orch = MandateOrchestrator()
+        # Simulate a transformer that clearly beats bayesian for 'ma'
+        mock_transformer = MagicMock()
+        mock_transformer._loaded = True
+        orch._transformer_scorers = {"ma": mock_transformer}
+
+        registry = [
+            {
+                "practice_area": "ma",
+                "active_model": "transformer",
+                "bayesian_f1": 0.70,
+                "transformer_f1": 0.70 + ORCHESTRATOR_F1_THRESHOLD + 0.01,
+            }
+        ]
+        orch.load(registry=registry)
+
+        sel = orch._selections.get("ma")
+        assert sel is not None
+        assert sel.active_model == "transformer"
+
+    def test_score_company_returns_34_practice_areas(self):
+        """score_company returns results for all 34 practice areas."""
+        from app.ml.bayesian_engine import PRACTICE_AREAS, HorizonScores
+        from app.ml.orchestrator import MandateOrchestrator
+
+        mock_engine = MagicMock()
+        mock_engine._loaded = True
+        mock_engine.score.return_value = HorizonScores(
+            practice_area="test",
+            score_30d=0.5,
+            score_60d=0.5,
+            score_90d=0.5,
+            model_version="test",
+            inference_ms=1.0,
+        )
+
+        orch = MandateOrchestrator()
+        orch._bayesian_engines = dict.fromkeys(PRACTICE_AREAS, mock_engine)
+        orch._selections = {
+            pa: MagicMock(active_model="bayesian") for pa in PRACTICE_AREAS
+        }
+        orch._loaded = True
+
+        results = orch.score_company({"feature": 0.0})
+        assert len(results) == 34
+
+
+# ── Velocity Scorer Extended Tests ──────────────────────────────────────────
+
+
+class TestVelocityScorerExtended:
+    """Extended velocity scorer tests."""
+
+    def test_compute_velocity_positive_for_accelerating_signal(self):
+        """Accelerating signal produces positive velocity."""
+        from app.ml.velocity_scorer import compute_velocity
+
+        current = {"regulatory": {30: 0.7, 60: 0.65, 90: 0.6}}
+        prior = {"regulatory": {30: 0.3, 60: 0.35, 90: 0.4}}
+        velocities = compute_velocity(current, prior)
+        assert velocities["regulatory"] > 0
+
+    def test_flag_high_velocity_companies(self):
+        """flag_high_velocity_companies returns sorted list."""
+        from app.ml.velocity_scorer import flag_high_velocity_companies
+
+        velocities = {1: 0.5, 2: 0.1, 3: 0.8, 4: 0.2}
+        flagged = flag_high_velocity_companies(velocities, threshold=0.3)
+        assert len(flagged) == 2  # companies 1 and 3
+        assert flagged[0]["company_id"] == 3  # highest first
+        assert flagged[1]["company_id"] == 1
+
+    def test_empty_velocities_aggregate_to_zero(self):
+        """Empty velocity dict aggregates to 0."""
+        from app.ml.velocity_scorer import aggregate_company_velocity
+
+        assert aggregate_company_velocity({}) == 0.0
+
+    def test_velocity_from_history_insufficient(self):
+        """Less than 2 history entries returns None."""
+        from app.ml.velocity_scorer import compute_velocity_from_history
+
+        result = compute_velocity_from_history([{"scored_at": "2026-03-01T00:00:00Z", "score_30d": 0.5}])
+        assert result is None
+
+
+# ── Anomaly Detector Extended Tests ─────────────────────────────────────────
+
+
+class TestAnomalyDetectorExtended:
+    """Extended anomaly detector tests."""
+
+    def test_not_loaded_returns_zero(self):
+        """Unloaded detector returns 0.0 safely (not crash)."""
+        from app.ml.anomaly_detector import AnomalyDetector
+
+        detector = AnomalyDetector()
+        assert detector.score({"feature": 1.0}) == 0.0
+
+    def test_batch_not_loaded_returns_zeros(self):
+        """Unloaded batch returns list of zeros."""
+        from app.ml.anomaly_detector import AnomalyDetector
+
+        detector = AnomalyDetector()
+        result = detector.score_batch([{"f": 1.0}] * 3)
+        assert result == [0.0, 0.0, 0.0]
+
+
+# ── All 10 Enhancements Minimal Input Tests ────────────────────────────────
+
+
+class TestAllEnhancementsMinimalInput:
+    """All 10 enhancements return without crashing on minimal input."""
+
+    def test_enhancement_1_multi_horizon(self):
+        """Multi-horizon: HorizonScores supports 30/60/90."""
+        from app.ml.bayesian_engine import HORIZONS, HorizonScores
+
+        assert HORIZONS == [30, 60, 90]
+        hs = HorizonScores("ma", 0.5, 0.5, 0.5, "v1", 1.0)
+        d = hs.as_dict()
+        assert set(d.keys()) == {"30d", "60d", "90d"}
+
+    def test_enhancement_2_velocity(self):
+        """Velocity: compute on empty returns empty dict."""
+        from app.ml.velocity_scorer import compute_velocity
+
+        assert compute_velocity({}, {}) == {}
+
+    def test_enhancement_3_graph_centrality(self):
+        """Graph features import without crash."""
+        import networkx as nx
+        from app.ml.graph_features import compute_centrality_features
+
+        G = nx.Graph()
+        result = compute_centrality_features(G, [])
+        assert isinstance(result, dict)
+
+    def test_enhancement_4_active_learning(self):
+        """Active learning: identify uncertain companies."""
+        from app.ml.active_learning import identify_uncertain_companies
+
+        # company_scores: {company_id: {practice_area: {horizon: score}}}
+        scores = {
+            1: {"ma": {30: 0.45, 60: 0.5, 90: 0.5}},
+            2: {"ma": {30: 0.85, 60: 0.9, 90: 0.9}},
+            3: {"ma": {30: 0.55, 60: 0.5, 90: 0.5}},
+        }
+        uncertain = identify_uncertain_companies(scores)
+        assert isinstance(uncertain, list)
+
+    def test_enhancement_5_cooccurrence(self):
+        """Co-occurrence: empty produces no rules."""
+        from app.ml.cooccurrence import build_transaction_matrix, mine_rules
+
+        df = build_transaction_matrix([])
+        rules = mine_rules(df, "ma")
+        assert isinstance(rules, list)
+
+    def test_enhancement_6_sector_weights(self):
+        """Sector weights: returns float multiplier."""
+        from app.ml.sector_weights import compute_aggregate_multiplier
+
+        result = compute_aggregate_multiplier({}, "technology", {})
+        assert isinstance(result, float)
+        assert result >= 0.0
+
+    def test_enhancement_7_counterfactuals(self):
+        """Counterfactuals: explain_prediction import works."""
+        from app.ml.counterfactuals import explain_prediction
+
+        assert callable(explain_prediction)
+
+    def test_enhancement_8_cross_jurisdiction(self):
+        """Cross-jurisdiction: propagation with empty returns empty."""
+        from app.ml.cross_jurisdiction import propagate_signals
+
+        result = propagate_signals([], [])
+        assert result == []
+
+    def test_enhancement_9_anomaly_detector(self):
+        """Anomaly detector: unloaded returns 0.0."""
+        from app.ml.anomaly_detector import AnomalyDetector
+
+        detector = AnomalyDetector()
+        assert detector.score({}) == 0.0
+
+    def test_enhancement_10_temporal_decay(self):
+        """Temporal decay: empty signals returns 0.0."""
+        from app.ml.temporal_decay import compute_decayed_signal_aggregate
+
+        result = compute_decayed_signal_aggregate([], {}, {})
+        assert result == 0.0

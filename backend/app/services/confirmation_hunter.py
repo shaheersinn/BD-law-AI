@@ -17,17 +17,17 @@ scoring at threshold 82.0 — no additional fuzzy logic needed here.
 
 from __future__ import annotations
 
-import logging
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
+import structlog
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.entity_resolution import resolver
 from app.services.mandate_confirmation import confirm_mandate
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger(__name__)
 
 # Scrapers to hunt from (name prefix or exact match)
 CANLII_SCRAPER = "canlii_live"

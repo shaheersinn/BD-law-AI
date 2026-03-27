@@ -21,13 +21,14 @@ scraper's own responsibility after each run.
 
 from __future__ import annotations
 
-import logging
 from datetime import UTC, datetime
 from typing import Any
 
+import structlog
+
 from app.config import get_settings
 
-log = logging.getLogger(__name__)
+log = structlog.get_logger(__name__)
 settings = get_settings()
 
 # ── Expected interval map (seconds per scraper_name) ──────────────────────────

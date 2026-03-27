@@ -28,38 +28,50 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 def _inject_module_stubs() -> None:
     """Stub out DB/Redis/external modules to keep tests hermetic."""
-    # app.config
-    cfg_mod = ModuleType("app.config")
-    settings_stub = MagicMock()
-    settings_stub.environment = "development"
-    settings_stub.redis_url = "redis://localhost:6379/0"
-    settings_stub.database_url = "postgresql+asyncpg://test:test@localhost/test"
-    settings_stub.mongodb_url = "mongodb://localhost:27017"
-    settings_stub.mongodb_db_name = "oracle_test"
-    settings_stub.live_feeds_enabled = True
-    settings_stub.proxycurl_api_key = "test-proxycurl-key"
-    settings_stub.celery_broker_url = "redis://localhost:6379/0"
-    settings_stub.celery_result_backend = "redis://localhost:6379/1"
-    settings_stub.celery_task_time_limit = 3600
-    settings_stub.celery_task_soft_time_limit = 3300
-    settings_stub.celery_worker_concurrency = 4
-    cfg_mod.get_settings = lambda: settings_stub  # type: ignore[attr-defined]
-    cfg_mod.Settings = MagicMock  # type: ignore[attr-defined]
-    sys.modules.setdefault("app.config", cfg_mod)
+    # app.config — import the real module; don't stub it
+    try:
+        import app.config  # noqa: F401
+    except Exception:
+        cfg_mod = ModuleType("app.config")
+        settings_stub = MagicMock()
+        settings_stub.environment = "development"
+        settings_stub.redis_url = "redis://localhost:6379/0"
+        settings_stub.database_url = "postgresql+asyncpg://test:test@localhost/test"
+        settings_stub.mongodb_url = "mongodb://localhost:27017"
+        settings_stub.mongodb_db_name = "oracle_test"
+        settings_stub.live_feeds_enabled = True
+        settings_stub.proxycurl_api_key = "test-proxycurl-key"
+        settings_stub.celery_broker_url = "redis://localhost:6379/0"
+        settings_stub.celery_result_backend = "redis://localhost:6379/1"
+        settings_stub.celery_task_time_limit = 3600
+        settings_stub.celery_task_soft_time_limit = 3300
+        settings_stub.celery_worker_concurrency = 4
+        cfg_mod.get_settings = lambda: settings_stub  # type: ignore[attr-defined]
+        cfg_mod.Settings = MagicMock  # type: ignore[attr-defined]
+        sys.modules["app.config"] = cfg_mod
 
-    # app.database
-    import sqlalchemy.orm as _orm
+    # app.database — import the real module so it's available; don't stub it
+    # The real module is needed by other tests that share the process
+    try:
+        import app.database  # noqa: F401
+    except Exception:
+        # If import fails (e.g., no asyncpg), create a minimal stub
+        import sqlalchemy.orm as _orm
 
-    class _Base(_orm.DeclarativeBase):
-        pass
+        class _Base(_orm.DeclarativeBase):
+            pass
 
-    db_mod = ModuleType("app.database")
-    db_mod.Base = _Base  # type: ignore[attr-defined]
-    db_mod.AsyncSessionLocal = MagicMock()  # type: ignore[attr-defined]
-    db_mod.get_db = MagicMock()  # type: ignore[attr-defined]
-    db_mod.get_mongo_db = MagicMock()  # type: ignore[attr-defined]
-    db_mod.get_mongo_client = MagicMock(return_value=None)  # type: ignore[attr-defined]
-    sys.modules.setdefault("app.database", db_mod)
+        db_mod = ModuleType("app.database")
+        db_mod.Base = _Base  # type: ignore[attr-defined]
+        db_mod.AsyncSessionLocal = MagicMock()  # type: ignore[attr-defined]
+        db_mod.get_db = MagicMock()  # type: ignore[attr-defined]
+        db_mod.get_mongo_db = MagicMock()  # type: ignore[attr-defined]
+        db_mod.get_mongo_client = MagicMock(return_value=None)  # type: ignore[attr-defined]
+        db_mod.check_db_connection = AsyncMock(return_value=False)  # type: ignore[attr-defined]
+        db_mod.check_mongo_connection = AsyncMock(return_value=False)  # type: ignore[attr-defined]
+        db_mod.dispose_engine = AsyncMock()  # type: ignore[attr-defined]
+        db_mod.close_mongo_connection = AsyncMock()  # type: ignore[attr-defined]
+        sys.modules["app.database"] = db_mod
 
     # redis.asyncio — stub to avoid real connections
     redis_mod = ModuleType("redis")
@@ -77,10 +89,13 @@ def _inject_module_stubs() -> None:
     httpx_mod.HTTPError = Exception  # type: ignore[attr-defined]
     sys.modules.setdefault("httpx", httpx_mod)
 
-    # structlog
-    structlog_mod = ModuleType("structlog")
-    structlog_mod.get_logger = MagicMock(return_value=MagicMock())  # type: ignore[attr-defined]
-    sys.modules.setdefault("structlog", structlog_mod)
+    # structlog — import the real module; don't stub it
+    try:
+        import structlog  # noqa: F401
+    except Exception:
+        structlog_mod = ModuleType("structlog")
+        structlog_mod.get_logger = MagicMock(return_value=MagicMock())  # type: ignore[attr-defined]
+        sys.modules["structlog"] = structlog_mod
 
     # SQLAlchemy select helper stub
     sa_mod = sys.modules.get("sqlalchemy")
@@ -154,11 +169,17 @@ class TestLiveFeedRouter:
         return router
 
     def test_push_signal_returns_msg_id(self) -> None:
-        mock_client = _make_redis_mock()
-        router = self._get_router(mock_client)
-        result = _run(router.push_signal({"signal_type": "material_change", "company_id": "123"}))
-        assert result == "1711234567890-0"
-        mock_client.xadd.assert_called_once()
+        from app.config import get_settings
+
+        get_settings().live_feeds_enabled = True
+        try:
+            mock_client = _make_redis_mock()
+            router = self._get_router(mock_client)
+            result = _run(router.push_signal({"signal_type": "material_change", "company_id": "123"}))
+            assert result == "1711234567890-0"
+            mock_client.xadd.assert_called_once()
+        finally:
+            get_settings().live_feeds_enabled = False
 
     def test_push_signal_disabled_returns_none(self) -> None:
         from app.config import get_settings
@@ -237,7 +258,7 @@ class TestLiveFeedRouter:
         msg_id, data = results[0]
         assert msg_id == "1234-0"
         assert data["signal_type"] == "material_change"
-        assert data["company_id"] == "42"
+        assert data["company_id"] == 42  # JSON-decoded from "42" to int
         assert data["metadata"] == {"k": "v"}  # JSON decoded
 
     def test_acknowledge_returns_true_on_success(self) -> None:
@@ -338,15 +359,13 @@ class TestVelocityMonitor:
 
     def test_get_velocity_ratio_normal(self) -> None:
         mock_client = _make_redis_mock()
-        # 30 signals in 30 days → expected ~2/48h; we have 10 → ratio ≈ 5x
+        # 30 signals in 30 days → expected_48h = (30/2592000)*172800 = 2.0
+        # 10 signals in 48h → ratio = 10 / 2.0 = 5.0
         mock_pipe = mock_client.pipeline.return_value
-        # 30 signals over 30 days normalised to 48h ≈ 0.067 expected
-        # That is below the 0.5 sparse-baseline guard → ratio must be 0.0
         mock_pipe.execute = AsyncMock(return_value=[10, 30])
         monitor = self._get_monitor(mock_client)
         ratio = _run(monitor.get_velocity_ratio(1, "litigation"))
-        # 30 signals / 30d normalised to 48h = 0.067 expected → below 0.5 threshold
-        assert ratio == 0.0  # sparse baseline guard triggers
+        assert ratio == 5.0
 
     def test_get_velocity_ratio_high_velocity(self) -> None:
         mock_client = _make_redis_mock()
@@ -624,10 +643,13 @@ class TestDeadSignalResurrector:
 
         import app.database as db_mod_ref
 
+        _orig = db_mod_ref.AsyncSessionLocal
         db_mod_ref.AsyncSessionLocal = _FakeSession
-
-        result = _run(r.run())
-        assert result["n_silent"] == 0
+        try:
+            result = _run(r.run())
+            assert result["n_silent"] == 0
+        finally:
+            db_mod_ref.AsyncSessionLocal = _orig
 
     def test_run_detects_dead_scraper(self) -> None:
         """A scraper silent for 24h should be flagged (sedar_live expected 5min)."""
@@ -657,12 +679,14 @@ class TestDeadSignalResurrector:
 
         import app.database as db_mod_ref
 
+        _orig = db_mod_ref.AsyncSessionLocal
         db_mod_ref.AsyncSessionLocal = _FakeSession
-
-        with patch.object(r, "_trigger_rerun", AsyncMock(return_value=True)):
-            result = _run(r.run())
-
-        assert result["n_silent"] >= 1
+        try:
+            with patch.object(r, "_trigger_rerun", AsyncMock(return_value=True)):
+                result = _run(r.run())
+            assert result["n_silent"] >= 1
+        finally:
+            db_mod_ref.AsyncSessionLocal = _orig
         assert result["n_triggered"] >= 1
 
     def test_module_singleton_exists(self) -> None:

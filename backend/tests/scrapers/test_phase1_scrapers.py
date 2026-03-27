@@ -354,3 +354,97 @@ def test_alembic_migration_syntax():
             pytest.fail(f"Migration syntax error: {e}")
     else:
         pytest.skip("Migration file not found")
+
+
+# ── 13. BaseScraper.get() retries 3x on transport error ──────────────────────
+@pytest.mark.asyncio
+async def test_base_scraper_fetch_retries_3x():
+    """Mock httpx.AsyncClient to fail twice then succeed. Verify BaseScraper.get() makes 3 attempts."""
+    from unittest.mock import AsyncMock, MagicMock, patch
+
+    from app.scrapers.base import BaseScraper
+
+    class RetryScraper(BaseScraper):
+        source_id = "test_retry"
+        source_name = "Test Retry"
+        signal_types = ["test"]
+        retry_attempts = 3
+        retry_min_wait = 0.01  # very short for test speed
+        retry_max_wait = 0.02
+
+        async def scrape(self):
+            return []
+
+    scraper = RetryScraper()
+
+    # Build mock responses: two TransportErrors, then a 200
+    import httpx
+
+    success_response = MagicMock(spec=httpx.Response)
+    success_response.status_code = 200
+
+    mock_client = AsyncMock(spec=httpx.AsyncClient)
+    mock_client.is_closed = False
+    mock_client.get = AsyncMock(
+        side_effect=[
+            httpx.TransportError("fail 1"),
+            httpx.TransportError("fail 2"),
+            success_response,
+        ]
+    )
+
+    # Patch _get_client to return our mock
+    scraper._get_client = AsyncMock(return_value=mock_client)
+
+    response = await scraper.get("https://example.com/test")
+    assert response.status_code == 200
+    assert mock_client.get.call_count == 3
+
+
+# ── 14. BudgetManager blocks when over limit ────────────────────────────────
+@pytest.mark.asyncio
+async def test_budget_manager_blocks_over_limit():
+    """ApiBudgetManager.check_budget returns False when daily limit exceeded."""
+    from unittest.mock import AsyncMock, patch
+
+    from app.scrapers.budget_manager import ApiBudgetManager
+
+    manager = ApiBudgetManager()
+    # Patch _get_redis to return None (in-memory mode)
+    manager._get_redis = AsyncMock(return_value=None)
+
+    # alpha_vantage has daily_limit=25
+    # Consume 25 credits
+    for _ in range(25):
+        await manager.consume("alpha_vantage", amount=1)
+
+    # Now check_budget should return False
+    allowed = await manager.check_budget("alpha_vantage")
+    assert allowed is False
+
+    # Unknown source should always be allowed
+    allowed_unknown = await manager.check_budget("unknown_source_xyz")
+    assert allowed_unknown is True
+
+
+# ── 15. EntityResolver returns unmatched for garbage input ───────────────────
+def test_entity_resolver_returns_none_for_garbage():
+    """EntityResolver.resolve with empty index returns matched=False for garbage."""
+    from app.services.entity_resolution import EntityResolver
+
+    resolver = EntityResolver()
+    # Don't rebuild from DB — leave index empty
+    result = resolver.resolve("xyzzy garble 123")
+    assert result.matched is False
+    assert result.entity_id is None
+    assert result.entity_type == "unknown"
+    assert result.score == 0.0
+
+
+# ── 16. Registry has at least 65 scrapers ────────────────────────────────────
+def test_registry_has_at_least_65_scrapers():
+    """ScraperRegistry must have >= 65 scrapers registered."""
+    from app.scrapers.registry import ScraperRegistry
+
+    count = ScraperRegistry.count()
+    assert count >= 65, f"Expected >= 65 scrapers, got {count}"
