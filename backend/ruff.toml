@@ -22,7 +22,7 @@ ignore = [
 ]
 
 [lint.per-file-ignores]
-"tests/**/*.py" = ["S101", "S106"]
+"tests/**/*.py" = ["S101", "S106", "S108", "E501"]
 "scripts/**/*.py" = ["S101"]
 "alembic/**/*.py" = ["E402"]
 # Scrapers parse external RSS/XML (S314) and use safe pseudo-random for jitter (S311)

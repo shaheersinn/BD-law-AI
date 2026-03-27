@@ -141,7 +141,7 @@ class TestBayesianEngine:
 
         results = orchestrator.score_company({"feature": 0.0})
         assert len(results) == 34, f"Expected 34 practice areas, got {len(results)}"
-        for pa, hs in results.items():
+        for _pa, hs in results.items():
             assert hs.score_30d >= 0.0
             assert hs.score_60d >= 0.0
             assert hs.score_90d >= 0.0
@@ -317,7 +317,7 @@ class TestCooccurrenceMining:
         assert not df.empty
         assert df.shape[0] == 3
         assert "sedar_material_change" in df.columns
-        assert df.dtypes["sedar_material_change"] == bool
+        assert df.dtypes["sedar_material_change"] == bool  # noqa: E721  # numpy dtype comparison
 
 
 class TestCrossJurisdiction:
@@ -386,7 +386,7 @@ class TestOrchestrator:
         from app.ml.bayesian_engine import ORCHESTRATOR_F1_THRESHOLD
         from app.ml.orchestrator import MandateOrchestrator
 
-        orch = MandateOrchestrator()
+        MandateOrchestrator()
 
         # Transformer barely beats bayesian (below threshold)
         bayesian_f1 = 0.70
@@ -480,7 +480,7 @@ class TestBayesianEngineScore:
 
     def test_score_returns_horizon_scores(self, sample_features):
         """Score with a mock model returns HorizonScores with all 3 horizons."""
-        from app.ml.bayesian_engine import BayesianEngine, PRACTICE_AREAS
+        from app.ml.bayesian_engine import BayesianEngine
 
         engine = BayesianEngine("ma")
         # Mock loaded models
@@ -498,7 +498,7 @@ class TestBayesianEngineScore:
 
     def test_score_all_34_practice_areas_valid(self):
         """All 34 practice areas can be instantiated."""
-        from app.ml.bayesian_engine import BayesianEngine, PRACTICE_AREAS
+        from app.ml.bayesian_engine import PRACTICE_AREAS, BayesianEngine
 
         for pa in PRACTICE_AREAS:
             engine = BayesianEngine(pa)
@@ -550,7 +550,7 @@ class TestOrchestratorExtended:
 
     def test_selects_transformer_when_beats_bayesian_on_holdout(self):
         """Transformer is selected when it beats bayesian by >= threshold."""
-        from app.ml.bayesian_engine import ORCHESTRATOR_F1_THRESHOLD, PRACTICE_AREAS
+        from app.ml.bayesian_engine import ORCHESTRATOR_F1_THRESHOLD
         from app.ml.orchestrator import MandateOrchestrator
 
         orch = MandateOrchestrator()
@@ -685,6 +685,7 @@ class TestAllEnhancementsMinimalInput:
     def test_enhancement_3_graph_centrality(self):
         """Graph features import without crash."""
         import networkx as nx
+
         from app.ml.graph_features import compute_centrality_features
 
         G = nx.Graph()

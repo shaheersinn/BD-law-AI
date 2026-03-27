@@ -667,7 +667,6 @@ class TestTrainingDataCurator:
         db = _make_mock_db(rows=[])
         db.add = MagicMock()
         execute_calls: list[Any] = []
-        original_execute = db.execute
 
         async def capture_execute(stmt: Any, params: Any = None) -> Any:
             execute_calls.append((stmt, params))
@@ -919,7 +918,7 @@ class TestPseudoLabelerFiltersLowConfidence:
     def test_pseudo_labeler_filters_low_confidence(self) -> None:
         """Labels below PSEUDO_LABEL_CONFIDENCE_FLOOR (0.60) are rejected."""
         from app.training.groq_client import ClassificationResult, GroqClient
-        from app.training.pseudo_labeler import PSEUDO_LABEL_CONFIDENCE_FLOOR, PseudoLabeler
+        from app.training.pseudo_labeler import PseudoLabeler
 
         db = _make_mock_db(
             rows=[

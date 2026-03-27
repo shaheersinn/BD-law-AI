@@ -18,6 +18,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 BACKEND_ROOT = Path(__file__).parent.parent
 REQUIREMENTS = (BACKEND_ROOT / "requirements.txt").read_text()
 REQUIREMENTS_DEV = (BACKEND_ROOT / "requirements-dev.txt").read_text()
@@ -247,7 +249,7 @@ def test_metrics_router_registered_in_main():
 
 def test_rate_limiter_returns_429():
     """Rate limiter returns 429 when Redis check_rate_limit returns (False, 0)."""
-    from unittest.mock import AsyncMock, MagicMock, patch
+    from unittest.mock import patch
 
     from starlette.applications import Starlette
     from starlette.requests import Request
@@ -279,9 +281,6 @@ def test_rate_limiter_returns_429():
 
 
 # ── 15. Expired JWT returns 401 ──────────────────────────────────────────
-
-
-import pytest
 
 
 @pytest.mark.asyncio
