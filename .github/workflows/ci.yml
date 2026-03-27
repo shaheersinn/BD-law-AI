@@ -48,7 +48,7 @@ jobs:
             structlog==25.1.0 \
             python-jose==3.3.0 \
             passlib==1.7.4 \
-            bcrypt==4.2.1 \
+            bcrypt==3.2.2 \
             redis==5.2.1 \
             celery==5.4.0 \
             sentry-sdk==2.20.0 \
