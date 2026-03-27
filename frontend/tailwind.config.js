@@ -4,15 +4,19 @@ export default {
   theme: {
     extend: {
       colors: {
-        // ConstructLex Pro design tokens — reference CSS variables
-        bg:          'var(--cl-background)',
-        surface:     'var(--cl-surface)',
-        'surface-hover': 'var(--cl-surface-hover)',
-        border:      'var(--cl-border)',
-        'text-primary':   'var(--cl-text-primary)',
-        'text-secondary': 'var(--cl-text-secondary)',
-        accent:      'var(--cl-accent-primary)',
-        'accent-2':  'var(--cl-accent-secondary)',
+        primary:                   'var(--color-primary)',
+        'primary-container':       'var(--color-primary-container)',
+        'on-primary':              'var(--color-on-primary)',
+        secondary:                 'var(--color-secondary)',
+        'secondary-container':     'var(--color-secondary-container)',
+        'on-secondary-container':  'var(--color-on-secondary-container)',
+        surface:                   'var(--color-surface)',
+        'surface-lowest':          'var(--color-surface-container-lowest)',
+        'surface-low':             'var(--color-surface-container-low)',
+        'surface-high':            'var(--color-surface-container-high)',
+        'on-surface':              'var(--color-on-surface)',
+        'on-surface-variant':      'var(--color-on-surface-variant)',
+        'outline-variant':         'var(--color-outline-variant)',
         // Score heatmap bands
         'heat-0': '#F0FAFA',
         'heat-1': '#A7D9D4',
@@ -21,9 +25,18 @@ export default {
         'heat-4': '#065F5B',
       },
       fontFamily: {
-        display: ['Cormorant Garamond', 'Georgia', 'serif'],
-        body:    ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
-        mono:    ['JetBrains Mono', 'Menlo', 'monospace'],
+        editorial: ['Newsreader', 'Georgia', 'serif'],
+        data:      ['Manrope', 'system-ui', 'sans-serif'],
+        mono:      ['JetBrains Mono', 'Menlo', 'monospace'],
+      },
+      boxShadow: {
+        ambient: '0 0 40px -10px rgba(25, 28, 30, 0.06)',
+        card:    '0 0 40px -10px rgba(25, 28, 30, 0.06)',
+      },
+      borderRadius: {
+        md:   '0.375rem',
+        xl:   '0.75rem',
+        full: '9999px',
       },
     },
   },

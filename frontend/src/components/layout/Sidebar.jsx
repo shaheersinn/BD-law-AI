@@ -1,18 +1,20 @@
 /**
- * components/layout/Sidebar.jsx — ConstructLex Pro sidebar navigation.
+ * components/layout/Sidebar.jsx — Digital Atelier sidebar navigation.
  *
  * Fixed 240px left sidebar. Collapses to 64px icon-only on demand.
- * Firm logo placeholder at bottom.
+ * Uses surface-container-low background, ambient shadow (no border).
+ * Active state via surface-container-high shift (no colored indicator).
+ * Section headers: Manrope 11px label-sm, all-caps.
  */
 
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import useAuthStore from '../../stores/auth'
 
-/* ── SVG icon primitives ─────────────────────────────────────────────────── */
+/* ── SVG icon primitives (1.5px stroke per DESIGN.md) ──────────────────── */
 const Icon = ({ d, size = 18, stroke = 'currentColor' }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
-    stroke={stroke} strokeWidth={1.75} strokeLinecap="round" strokeLinejoin="round">
+    stroke={stroke} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
     <path d={d} />
   </svg>
 )
@@ -65,27 +67,34 @@ export default function Sidebar() {
           width: '100%',
           padding: collapsed ? '10px 0' : '9px 14px',
           justifyContent: collapsed ? 'center' : 'flex-start',
-          background: active ? 'var(--accent-light)' : 'transparent',
-          border: 'none',
+          background: active
+            ? 'var(--color-surface-container-highest)'
+            : 'transparent',
           borderRadius: 'var(--radius-md)',
-          color: active ? 'var(--accent)' : 'var(--text-secondary)',
+          color: active
+            ? 'var(--color-on-surface)'
+            : 'var(--color-on-surface-variant)',
           fontWeight: active ? 600 : 400,
-          fontSize: 13,
+          fontFamily: 'var(--font-data)',
+          fontSize: 14,
           cursor: 'pointer',
-          transition: 'background var(--transition), color var(--transition)',
+          transition: 'background 150ms ease-out, color 150ms ease-out',
           marginBottom: 2,
-          position: 'relative',
+          letterSpacing: '0.01em',
         }}
-        onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'var(--surface-hover)'; e.currentTarget.style.color = 'var(--text)' }}
-        onMouseLeave={e => { if (!active) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)' } }}
+        onMouseEnter={e => {
+          if (!active) {
+            e.currentTarget.style.background = 'var(--color-surface-container-high)'
+            e.currentTarget.style.color = 'var(--color-on-surface)'
+          }
+        }}
+        onMouseLeave={e => {
+          if (!active) {
+            e.currentTarget.style.background = 'transparent'
+            e.currentTarget.style.color = 'var(--color-on-surface-variant)'
+          }
+        }}
       >
-        {/* Active indicator bar */}
-        {active && (
-          <span style={{
-            position: 'absolute', left: 0, top: '20%', bottom: '20%',
-            width: 3, background: 'var(--accent)', borderRadius: '0 2px 2px 0',
-          }} />
-        )}
         <Icon d={icons[item.icon]} size={16} />
         {!collapsed && <span>{item.label}</span>}
       </button>
@@ -94,45 +103,64 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Sidebar */}
+      {/* Sidebar — surface-container-low bg, ambient shadow, no border */}
       <aside style={{
         position: 'fixed',
         top: 0, left: 0, bottom: 0,
         width: w,
-        background: 'var(--surface)',
-        borderRight: '1px solid var(--border)',
+        background: 'var(--color-surface-container-low)',
+        boxShadow: 'var(--shadow-ambient)',
         display: 'flex',
         flexDirection: 'column',
         zIndex: 100,
-        transition: 'width var(--transition)',
+        transition: 'width 150ms ease-out',
         overflow: 'hidden',
       }}>
         {/* Logo / brand */}
         <div style={{
           padding: collapsed ? '20px 0' : '20px 18px',
-          borderBottom: '1px solid var(--border)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: collapsed ? 'center' : 'space-between',
           flexShrink: 0,
+          marginBottom: 10,
         }}>
           {!collapsed && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              {/* Wordmark */}
               <div style={{
                 width: 32, height: 32,
-                background: 'linear-gradient(135deg, var(--accent), var(--accent-2))',
-                borderRadius: 8,
+                background: 'linear-gradient(to bottom, var(--color-primary), var(--color-primary-container))',
+                borderRadius: 'var(--radius-md)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 flexShrink: 0,
               }}>
-                <span style={{ color: '#fff', fontSize: 14, fontWeight: 700, fontFamily: 'var(--font-display)', letterSpacing: 1 }}>O</span>
+                <span style={{
+                  color: 'var(--color-on-primary)',
+                  fontSize: 14,
+                  fontWeight: 700,
+                  fontFamily: 'var(--font-editorial)',
+                  letterSpacing: 1,
+                }}>O</span>
               </div>
               <div>
-                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 18, color: 'var(--text)', lineHeight: 1.1, letterSpacing: '0.02em' }}>
+                <div style={{
+                  fontFamily: 'var(--font-editorial)',
+                  fontWeight: 500,
+                  fontSize: 18,
+                  color: 'var(--color-primary)',
+                  lineHeight: 1.1,
+                  letterSpacing: '-0.01em',
+                }}>
                   ORACLE
                 </div>
-                <div style={{ fontSize: 10, color: 'var(--text-tertiary)', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 500 }}>
+                <div style={{
+                  fontFamily: 'var(--font-data)',
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: 'var(--color-on-primary-container)',
+                  letterSpacing: '0.05em',
+                  textTransform: 'uppercase',
+                }}>
                   BD Intelligence
                 </div>
               </div>
@@ -141,18 +169,29 @@ export default function Sidebar() {
           {collapsed && (
             <div style={{
               width: 32, height: 32,
-              background: 'linear-gradient(135deg, var(--accent), var(--accent-2))',
-              borderRadius: 8,
+              background: 'linear-gradient(to bottom, var(--color-primary), var(--color-primary-container))',
+              borderRadius: 'var(--radius-md)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
-              <span style={{ color: '#fff', fontSize: 14, fontWeight: 700, fontFamily: 'var(--font-display)' }}>O</span>
+              <span style={{
+                color: 'var(--color-on-primary)',
+                fontSize: 14,
+                fontWeight: 700,
+                fontFamily: 'var(--font-editorial)',
+              }}>O</span>
             </div>
           )}
           {!collapsed && (
             <button
               onClick={() => setCollapsed(true)}
               title="Collapse sidebar"
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', padding: 4, borderRadius: 4 }}
+              style={{
+                background: 'none',
+                cursor: 'pointer',
+                color: 'var(--color-on-surface-variant)',
+                padding: 4,
+                borderRadius: 4,
+              }}
             >
               <Icon d={icons.chevron} size={14} />
             </button>
@@ -170,8 +209,12 @@ export default function Sidebar() {
             <>
               {!collapsed && (
                 <div style={{
-                  fontSize: 10, fontWeight: 600, color: 'var(--text-tertiary)',
-                  textTransform: 'uppercase', letterSpacing: '0.1em',
+                  fontFamily: 'var(--font-data)',
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: 'var(--color-on-surface-variant)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
                   padding: '16px 6px 6px',
                 }}>
                   Admin
@@ -186,14 +229,18 @@ export default function Sidebar() {
         {/* User + sign out */}
         <div style={{
           padding: collapsed ? '12px 8px' : '12px 10px',
-          borderTop: '1px solid var(--border)',
           flexShrink: 0,
         }}>
           {!collapsed && user && (
             <div style={{
-              fontSize: 11, color: 'var(--text-tertiary)',
-              marginBottom: 8, padding: '0 6px',
-              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+              fontFamily: 'var(--font-data)',
+              fontSize: 11,
+              color: 'var(--color-on-surface-variant)',
+              marginBottom: 8,
+              padding: '0 6px',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
             }}>
               {user.email}
             </div>
@@ -202,15 +249,28 @@ export default function Sidebar() {
             onClick={logout}
             title={collapsed ? 'Sign out' : undefined}
             style={{
-              display: 'flex', alignItems: 'center',
+              display: 'flex',
+              alignItems: 'center',
               gap: collapsed ? 0 : 8,
               justifyContent: collapsed ? 'center' : 'flex-start',
-              width: '100%', padding: collapsed ? '8px 0' : '8px 10px',
-              background: 'none', border: 'none', borderRadius: 'var(--radius-md)',
-              color: 'var(--text-secondary)', fontSize: 13, cursor: 'pointer',
+              width: '100%',
+              padding: collapsed ? '8px 0' : '8px 10px',
+              background: 'none',
+              borderRadius: 'var(--radius-md)',
+              color: 'var(--color-on-surface-variant)',
+              fontFamily: 'var(--font-data)',
+              fontSize: 13,
+              cursor: 'pointer',
+              transition: 'background 150ms ease-out, color 150ms ease-out',
             }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'var(--surface-hover)'; e.currentTarget.style.color = 'var(--error)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-secondary)' }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = 'var(--color-surface-container-high)'
+              e.currentTarget.style.color = 'var(--color-error)'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = 'none'
+              e.currentTarget.style.color = 'var(--color-on-surface-variant)'
+            }}
           >
             <Icon d={icons.logout} size={15} />
             {!collapsed && <span>Sign out</span>}
@@ -219,12 +279,17 @@ export default function Sidebar() {
           {/* Firm logo placeholder */}
           {!collapsed && (
             <div style={{
-              marginTop: 16, padding: '8px 10px',
-              border: '1px dashed var(--border)',
+              marginTop: 16,
+              padding: '8px 10px',
+              background: 'var(--color-surface-container-high)',
               borderRadius: 'var(--radius-md)',
               textAlign: 'center',
-              fontSize: 10, color: 'var(--text-tertiary)',
+              fontFamily: 'var(--font-data)',
+              fontSize: 10,
+              fontWeight: 700,
+              color: 'var(--color-on-surface-variant)',
               letterSpacing: '0.05em',
+              textTransform: 'uppercase',
             }}>
               HALCYON LEGAL
             </div>
@@ -237,11 +302,19 @@ export default function Sidebar() {
             onClick={() => setCollapsed(false)}
             title="Expand sidebar"
             style={{
-              position: 'absolute', bottom: 12, left: '50%', transform: 'translateX(-50%)',
-              background: 'var(--surface-hover)', border: '1px solid var(--border)',
-              borderRadius: '50%', width: 28, height: 28,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', color: 'var(--text-secondary)',
+              position: 'absolute',
+              bottom: 12,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              background: 'var(--color-surface-container-high)',
+              borderRadius: '50%',
+              width: 28,
+              height: 28,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              color: 'var(--color-on-surface-variant)',
             }}
           >
             <Icon d={icons.expand} size={12} />
@@ -249,7 +322,7 @@ export default function Sidebar() {
         )}
       </aside>
 
-      {/* Content offset shim — siblings get margin-left via AppShell */}
+      {/* Content offset shim */}
       <div id="sidebar-width-shim" data-width={w} style={{ display: 'none' }} />
     </>
   )

@@ -3,7 +3,7 @@
  *
  * Takes an array of 1–7 float values (mandate probabilities).
  * Renders a 80×24 polyline normalized to min/max of the series.
- * Colour mirrors the score heatmap: low=light teal, high=dark teal.
+ * Color mirrors score heatmap. Digital Atelier tokens.
  */
 
 export default function Sparkline({ values = [], width = 80, height = 24, color }) {
@@ -12,7 +12,7 @@ export default function Sparkline({ values = [], width = 80, height = 24, color 
       <svg width={width} height={height} style={{ display: 'block' }}>
         <line
           x1={0} y1={height / 2} x2={width} y2={height / 2}
-          stroke="var(--border)" strokeWidth={1.5} strokeDasharray="3,3"
+          stroke="var(--color-surface-container-high)" strokeWidth={1.5} strokeDasharray="3,3"
         />
       </svg>
     )
@@ -36,7 +36,7 @@ export default function Sparkline({ values = [], width = 80, height = 24, color 
     last >= 0.7 ? 'var(--score-3)' :
     last >= 0.5 ? 'var(--score-2)' :
     last >= 0.3 ? 'var(--score-1)' :
-                  'var(--text-tertiary)'
+                  'var(--color-on-surface-variant)'
   )
 
   // Area fill (light tinted)

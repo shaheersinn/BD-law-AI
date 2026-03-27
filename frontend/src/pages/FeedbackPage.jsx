@@ -1,5 +1,5 @@
 /**
- * pages/FeedbackPage.jsx — Phase 9: Feedback Loop UI (ConstructLex Pro)
+ * pages/FeedbackPage.jsx — Phase 9: Feedback Loop UI (Digital Atelier)
  *
  * Three sections:
  *   1. Confirm a Mandate — partner form to record confirmed outcomes
@@ -35,10 +35,9 @@ const PA_LABEL = (pa) =>
 // ── Shared styles ──────────────────────────────────────────────────────────────
 
 const card = {
-  background: 'var(--surface)',
-  borderRadius: 'var(--radius-lg)',
-  border: '1px solid var(--border)',
-  boxShadow: 'var(--shadow-sm)',
+  background: 'var(--color-surface-container-lowest)',
+  borderRadius: 'var(--radius-xl)',
+  boxShadow: 'var(--shadow-ambient)',
   padding: '2rem',
   marginBottom: '2rem',
 }
@@ -46,55 +45,57 @@ const card = {
 const inputStyle = {
   width: '100%',
   padding: '10px 14px',
-  border: '1px solid var(--border)',
+  outline: '1px solid rgba(197, 198, 206, 0.15)',
   borderRadius: 'var(--radius-md)',
   fontSize: 14,
-  color: 'var(--text)',
-  background: 'var(--surface)',
-  fontFamily: 'var(--font-body)',
+  color: 'var(--color-on-surface)',
+  background: 'var(--color-surface-container-lowest)',
+  fontFamily: 'var(--font-data)',
   boxSizing: 'border-box',
   marginTop: 4,
 }
 
 const labelStyle = {
   display: 'block',
-  fontSize: 12,
-  fontWeight: 600,
-  color: 'var(--text-secondary)',
+  fontSize: '0.6875rem',
+  fontWeight: 700,
+  color: 'var(--color-on-surface-variant)',
   marginBottom: 2,
-  letterSpacing: '0.04em',
+  letterSpacing: '0.05em',
   textTransform: 'uppercase',
+  fontFamily: 'var(--font-data)',
 }
 
 const btnPrimary = {
-  background: 'var(--accent)',
-  color: '#fff',
-  border: 'none',
+  background: 'linear-gradient(to bottom, var(--color-primary), var(--color-primary-container))',
+  color: 'var(--color-on-primary)',
   borderRadius: 'var(--radius-md)',
   padding: '10px 24px',
   fontSize: 14,
   fontWeight: 600,
   cursor: 'pointer',
-  fontFamily: 'var(--font-body)',
+  fontFamily: 'var(--font-data)',
 }
 
 const th = {
   textAlign: 'left',
-  fontSize: 11,
+  fontSize: '0.6875rem',
   fontWeight: 700,
-  color: 'var(--text-tertiary)',
+  color: 'var(--color-on-surface-variant)',
   textTransform: 'uppercase',
-  letterSpacing: '0.06em',
+  letterSpacing: '0.05em',
   paddingBottom: 10,
-  borderBottom: '1px solid var(--border)',
+  fontFamily: 'var(--font-data)',
+  background: 'var(--color-surface-container-low)',
+  padding: '10px 14px',
 }
 
 const td = {
-  padding: '10px 0',
+  padding: '10px 14px',
   fontSize: 13,
-  color: 'var(--text)',
-  borderBottom: '1px solid var(--border)',
+  color: 'var(--color-on-surface)',
   verticalAlign: 'middle',
+  fontFamily: 'var(--font-data)',
 }
 
 // ── Section 1: Confirm a Mandate ──────────────────────────────────────────────
@@ -156,20 +157,20 @@ function ConfirmMandateForm() {
 
   return (
     <div style={card}>
-      <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, color: 'var(--text)', marginTop: 0, marginBottom: 4 }}>
+      <h2 style={{ fontFamily: 'var(--font-editorial)', fontSize: '1.5rem', fontWeight: 500, color: 'var(--color-primary)', marginTop: 0, marginBottom: 4, letterSpacing: '-0.01em' }}>
         Confirm a Mandate
       </h2>
-      <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: '1.5rem', marginTop: 0 }}>
+      <p style={{ color: 'var(--color-on-surface-variant)', fontSize: 13, marginBottom: '1.5rem', marginTop: 0, fontFamily: 'var(--font-data)' }}>
         Record a confirmed mandate outcome. ORACLE will compute how many days in advance it predicted this.
       </p>
 
       {result && (
-        <div style={{ background: 'var(--success-bg)', border: '1px solid var(--success)', borderRadius: 'var(--radius-md)', padding: '12px 16px', marginBottom: '1.25rem', fontSize: 13, color: '#065F5B' }}>
+        <div style={{ background: 'var(--color-success-bg)', borderRadius: 'var(--radius-md)', padding: '12px 16px', marginBottom: '1.25rem', fontSize: 13, color: 'var(--color-success)', fontFamily: 'var(--font-data)' }}>
           {result.message}
         </div>
       )}
       {error && (
-        <div style={{ background: 'var(--error-bg)', border: '1px solid var(--error)', borderRadius: 'var(--radius-md)', padding: '12px 16px', marginBottom: '1.25rem', fontSize: 13, color: 'var(--error)' }}>
+        <div style={{ background: 'var(--color-error-bg)', borderRadius: 'var(--radius-md)', padding: '12px 16px', marginBottom: '1.25rem', fontSize: 13, color: 'var(--color-error)', fontFamily: 'var(--font-data)' }}>
           {error}
         </div>
       )}
@@ -188,16 +189,16 @@ function ConfirmMandateForm() {
               style={inputStyle}
             />
             {companyResults.length > 0 && (
-              <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-md)', zIndex: 10, maxHeight: 200, overflowY: 'auto' }}>
+              <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--color-surface-container-lowest)', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-ambient)', zIndex: 10, maxHeight: 200, overflowY: 'auto' }}>
                 {companyResults.map((c) => (
                   <button
                     key={c.id}
                     type="button"
                     onClick={() => selectCompany(c)}
-                    style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 14px', background: 'none', border: 'none', fontSize: 13, color: 'var(--text)', cursor: 'pointer', fontFamily: 'var(--font-body)' }}
+                    style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 14px', background: 'none', fontSize: 13, color: 'var(--color-on-surface)', cursor: 'pointer', fontFamily: 'var(--font-data)' }}
                   >
                     {c.name}
-                    {c.sector && <span style={{ color: 'var(--text-tertiary)', marginLeft: 8, fontSize: 11 }}>{c.sector}</span>}
+                    {c.sector && <span style={{ color: 'var(--color-on-surface-variant)', marginLeft: 8, fontSize: 11 }}>{c.sector}</span>}
                   </button>
                 ))}
               </div>
@@ -294,19 +295,19 @@ function AccuracyTable() {
   }, [days])
 
   const precisionColor = (p) => {
-    if (p >= 0.7) return 'var(--success)'
-    if (p >= 0.5) return 'var(--warning)'
-    return 'var(--error)'
+    if (p >= 0.7) return 'var(--color-success)'
+    if (p >= 0.5) return 'var(--color-warning)'
+    return 'var(--color-error)'
   }
 
   return (
     <div style={card}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1.25rem' }}>
         <div>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, color: 'var(--text)', margin: 0 }}>
+          <h2 style={{ fontFamily: 'var(--font-editorial)', fontSize: '1.5rem', fontWeight: 500, color: 'var(--color-primary)', margin: 0, letterSpacing: '-0.01em' }}>
             Prediction Accuracy
           </h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginTop: 4, marginBottom: 0 }}>
+          <p style={{ color: 'var(--color-on-surface-variant)', fontSize: 13, marginTop: 4, marginBottom: 0, fontFamily: 'var(--font-data)' }}>
             How often ORACLE's predictions were correct before confirmed mandates
           </p>
         </div>
@@ -325,7 +326,7 @@ function AccuracyTable() {
       {loading ? (
         <SkeletonTable rows={6} />
       ) : !rows || rows.length === 0 ? (
-        <p style={{ color: 'var(--text-tertiary)', fontSize: 13, textAlign: 'center', padding: '2rem 0' }}>
+        <p style={{ color: 'var(--color-on-surface-variant)', fontSize: 13, textAlign: 'center', padding: '2rem 0', fontFamily: 'var(--font-data)' }}>
           No confirmed mandates in this window yet. Confirm mandates above to start tracking accuracy.
         </p>
       ) : (
@@ -341,14 +342,14 @@ function AccuracyTable() {
           </thead>
           <tbody>
             {rows.map((r, i) => (
-              <tr key={i} style={{ background: i % 2 === 0 ? 'transparent' : 'var(--surface-raised)' }}>
+              <tr key={i} style={{ background: i % 2 === 0 ? 'transparent' : 'var(--color-surface-container-low)' }}>
                 <td style={td}>
-                  <span style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 14 }}>
+                  <span style={{ fontFamily: 'var(--font-editorial)', fontWeight: 500, fontSize: 14 }}>
                     {PA_LABEL(r.practice_area)}
                   </span>
                 </td>
                 <td style={{ ...td, textAlign: 'center' }}>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, background: 'var(--accent-light)', color: 'var(--accent-dark)', borderRadius: 4, padding: '2px 6px' }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, background: 'var(--color-secondary-container)', color: 'var(--color-on-secondary-container)', borderRadius: 'var(--radius-full)', padding: '2px 8px' }}>
                     {r.horizon}d
                   </span>
                 </td>
@@ -360,7 +361,7 @@ function AccuracyTable() {
                     {(r.precision * 100).toFixed(0)}%
                   </span>
                 </td>
-                <td style={{ ...td, textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--text-secondary)' }}>
+                <td style={{ ...td, textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--color-on-surface-variant)' }}>
                   {r.avg_lead_days != null ? `${r.avg_lead_days}d` : '—'}
                 </td>
               </tr>
@@ -389,17 +390,17 @@ function DriftAlerts() {
 
   return (
     <div style={card}>
-      <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, color: 'var(--text)', marginTop: 0, marginBottom: 4 }}>
+      <h2 style={{ fontFamily: 'var(--font-editorial)', fontSize: '1.5rem', fontWeight: 500, color: 'var(--color-primary)', marginTop: 0, marginBottom: 4, letterSpacing: '-0.01em' }}>
         Model Drift Alerts
       </h2>
-      <p style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: '1.5rem', marginTop: 0 }}>
+      <p style={{ color: 'var(--color-on-surface-variant)', fontSize: 13, marginBottom: '1.5rem', marginTop: 0, fontFamily: 'var(--font-data)' }}>
         Practice areas where prediction accuracy has dropped &gt; 10 percentage points (detected by Agent 031 weekly)
       </p>
 
       {loading ? (
         <SkeletonTable rows={3} />
       ) : !alerts || alerts.length === 0 ? (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '1.25rem 1.5rem', background: 'var(--success-bg)', border: '1px solid var(--success)', borderRadius: 'var(--radius-md)', color: '#065F5B', fontSize: 13 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '1.25rem 1.5rem', background: 'var(--color-success-bg)', borderRadius: 'var(--radius-md)', color: 'var(--color-success)', fontSize: 13, fontFamily: 'var(--font-data)' }}>
           <span style={{ fontSize: 18 }}>&#10003;</span>
           No open drift alerts. All practice areas are performing within expected accuracy bounds.
         </div>
@@ -417,10 +418,10 @@ function DriftAlerts() {
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
-                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16, color: 'var(--text)', marginBottom: 4 }}>
+                  <div style={{ fontFamily: 'var(--font-editorial)', fontWeight: 500, fontSize: 16, color: 'var(--color-on-surface)', marginBottom: 4, letterSpacing: '-0.01em' }}>
                     {PA_LABEL(a.practice_area)}
                   </div>
-                  <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                  <div style={{ fontSize: 12, color: 'var(--color-on-surface-variant)', fontFamily: 'var(--font-data)' }}>
                     Detected {a.detected_at ? new Date(a.detected_at).toLocaleDateString() : '—'}
                     {a.ks_pvalue != null && ` · KS p-value: ${a.ks_pvalue.toFixed(3)}`}
                   </div>
@@ -429,25 +430,25 @@ function DriftAlerts() {
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: 18, fontWeight: 700, color: deltaColor(a.delta) }}>
                     {(a.delta * 100).toFixed(1)}pp
                   </div>
-                  <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>accuracy change</div>
+                  <div style={{ fontSize: 11, color: 'var(--color-on-surface-variant)' }}>accuracy change</div>
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '2rem', marginTop: '0.75rem' }}>
                 <div>
-                  <span style={{ fontSize: 11, color: 'var(--text-tertiary)', display: 'block' }}>Before</span>
+                  <span style={{ fontSize: 11, color: 'var(--color-on-surface-variant)', display: 'block', fontFamily: 'var(--font-data)' }}>Before</span>
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 600 }}>
                     {(a.accuracy_before * 100).toFixed(1)}%
                   </span>
                 </div>
                 <div>
-                  <span style={{ fontSize: 11, color: 'var(--text-tertiary)', display: 'block' }}>After</span>
+                  <span style={{ fontSize: 11, color: 'var(--color-on-surface-variant)', display: 'block', fontFamily: 'var(--font-data)' }}>After</span>
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 600, color: deltaColor(a.delta) }}>
                     {(a.accuracy_after * 100).toFixed(1)}%
                   </span>
                 </div>
                 <div>
-                  <span style={{ fontSize: 11, color: 'var(--text-tertiary)', display: 'block' }}>Status</span>
-                  <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  <span style={{ fontSize: 11, color: 'var(--color-on-surface-variant)', display: 'block', fontFamily: 'var(--font-data)' }}>Status</span>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-on-surface-variant)', textTransform: 'uppercase', letterSpacing: '0.05em', fontFamily: 'var(--font-data)' }}>
                     {a.status}
                   </span>
                 </div>
@@ -467,16 +468,17 @@ export default function FeedbackPage() {
     <AppShell>
       <div style={{ maxWidth: 860, margin: '0 auto', padding: '2.5rem 2rem' }}>
         <h1 style={{
-          fontFamily: 'var(--font-display)',
-          fontWeight: 700,
-          fontSize: 32,
-          color: 'var(--text)',
+          fontFamily: 'var(--font-editorial)',
+          fontWeight: 500,
+          fontSize: '1.75rem',
+          color: 'var(--color-primary)',
           marginBottom: 6,
           marginTop: 0,
+          letterSpacing: '-0.01em',
         }}>
           Mandate Feedback
         </h1>
-        <p style={{ color: 'var(--text-secondary)', fontSize: 14, marginBottom: '2.5rem', marginTop: 0 }}>
+        <p style={{ color: 'var(--color-on-surface-variant)', fontSize: 14, marginBottom: '2.5rem', marginTop: 0, fontFamily: 'var(--font-data)' }}>
           Close the intelligence loop — record outcomes, measure accuracy, track model drift.
         </p>
 
