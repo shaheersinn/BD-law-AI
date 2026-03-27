@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Signals Feed | ConstructLex Pro</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&amp;family=Manrope:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface": "#f7f9fb",
+              "primary": "#04162e",
+              "inverse-surface": "#2d3133",
+              "surface-container": "#eceef0",
+              "on-surface-variant": "#44474d",
+              "primary-fixed": "#d5e3ff",
+              "outline": "#75777e",
+              "on-surface": "#191c1e",
+              "primary-container": "#1a2b44",
+              "background": "#f7f9fb",
+              "secondary-container": "#adedd3",
+              "surface-container-high": "#e6e8ea",
+              "on-secondary-fixed": "#002117",
+              "error": "#ba1a1a",
+              "secondary": "#2b6954",
+              "on-primary-container": "#8292b0",
+              "on-error": "#ffffff",
+              "on-error-container": "#93000a",
+              "on-secondary": "#ffffff",
+              "surface-container-lowest": "#ffffff",
+              "surface-bright": "#f7f9fb",
+              "on-secondary-fixed-variant": "#0b513d",
+              "tertiary-fixed": "#89f5e7",
+              "surface-tint": "#4f5f7b",
+              "primary-fixed-dim": "#b6c7e7",
+              "inverse-on-surface": "#eff1f3",
+              "on-tertiary-fixed": "#00201d",
+              "tertiary-container": "#00312c",
+              "surface-container-highest": "#e0e3e5",
+              "tertiary": "#001a17",
+              "secondary-fixed": "#b0f0d6",
+              "on-tertiary": "#ffffff",
+              "tertiary-fixed-dim": "#6bd8cb",
+              "surface-dim": "#d8dadc",
+              "outline-variant": "#c5c6ce",
+              "inverse-primary": "#b6c7e7",
+              "error-container": "#ffdad6",
+              "on-tertiary-container": "#2ba296",
+              "on-secondary-container": "#306d58",
+              "secondary-fixed-dim": "#95d3ba",
+              "surface-variant": "#e0e3e5",
+              "on-background": "#191c1e",
+              "surface-container-low": "#f2f4f6",
+              "on-primary-fixed-variant": "#374762",
+              "on-primary-fixed": "#091c34",
+              "on-primary": "#ffffff",
+              "on-tertiary-fixed-variant": "#005049"
+            },
+            fontFamily: {
+              "headline": ["Newsreader"],
+              "body": ["Manrope"],
+              "label": ["Manrope"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      ::-webkit-scrollbar { width: 4px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: #e0e3e5; border-radius: 10px; }
+      body { font-family: 'Manrope', sans-serif; }
+      .font-serif { font-family: 'Newsreader', serif; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface">
+<!-- SideNavBar (Execution from JSON) -->
+<aside class="h-screen w-64 fixed left-0 top-0 overflow-y-auto bg-slate-50 dark:bg-slate-900 border-r border-slate-200/20 dark:border-slate-800/20 flex flex-col py-6 px-4 space-y-1 z-40">
+<div class="mb-8 px-2">
+<h1 class="font-serif text-xl text-slate-900 dark:text-white leading-tight">ConstructLex Pro</h1>
+<p class="font-sans text-[11px] font-bold uppercase tracking-widest text-slate-500">Legal Business Development</p>
+</div>
+<button class="mb-6 flex items-center justify-center gap-2 bg-primary text-white py-2.5 rounded-lg font-label text-[11px] uppercase tracking-widest hover:translate-x-1 transition-transform duration-200 shadow-sm">
+<span class="material-symbols-outlined text-sm">add</span>
+            New Initiative
+        </button>
+<nav class="flex-1 space-y-1 overflow-y-auto pr-2">
+<!-- Active State Logic: Mapping to Research/Diligence for Signals Feed -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-500 hover:bg-slate-100 transition-all font-sans text-[11px] font-bold uppercase tracking-widest" href="#">
+<span class="material-symbols-outlined text-[18px]">security</span> Conflicts
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-500 hover:bg-slate-100 transition-all font-sans text-[11px] font-bold uppercase tracking-widest" href="#">
+<span class="material-symbols-outlined text-[18px]">gavel</span> Matters
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-500 hover:bg-slate-100 transition-all font-sans text-[11px] font-bold uppercase tracking-widest" href="#">
+<span class="material-symbols-outlined text-[18px]">fact_check</span> Diligence
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-500 hover:bg-slate-100 transition-all font-sans text-[11px] font-bold uppercase tracking-widest" href="#">
+<span class="material-symbols-outlined text-[18px]">description</span> Briefs
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-white text-emerald-600 shadow-sm border-l-2 border-emerald-500 font-sans text-[11px] font-bold uppercase tracking-widest" href="#">
+<span class="material-symbols-outlined text-[18px]">library_books</span> Research
+            </a>
+<!-- Simplified list for visual clarity in mockup -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-500 hover:bg-slate-100 transition-all font-sans text-[11px] font-bold uppercase tracking-widest" href="#">
+<span class="material-symbols-outlined text-[18px]">find_in_page</span> Discovery
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-500 hover:bg-slate-100 transition-all font-sans text-[11px] font-bold uppercase tracking-widest" href="#">
+<span class="material-symbols-outlined text-[18px]">verified_user</span> Compliance
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-500 hover:bg-slate-100 transition-all font-sans text-[11px] font-bold uppercase tracking-widest" href="#">
+<span class="material-symbols-outlined text-[18px]">warning</span> Risk
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-500 hover:bg-slate-100 transition-all font-sans text-[11px] font-bold uppercase tracking-widest" href="#">
+<span class="material-symbols-outlined text-[18px]">business_center</span> M&amp;A
+            </a>
+</nav>
+<div class="mt-auto pt-6 border-t border-slate-200/50 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-400 hover:text-slate-600 font-sans text-[11px] font-bold uppercase tracking-widest" href="#">
+<span class="material-symbols-outlined text-[18px]">help</span> Support
+            </a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-400 hover:text-slate-600 font-sans text-[11px] font-bold uppercase tracking-widest" href="#">
+<span class="material-symbols-outlined text-[18px]">history</span> Archive
+            </a>
+</div>
+</aside>
+<!-- TopNavBar (Execution from JSON) -->
+<header class="fixed top-0 right-0 left-64 h-16 bg-white/80 backdrop-blur-md z-30 shadow-sm flex justify-between items-center px-8 border-b-0">
+<div class="flex items-center gap-6">
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+<input class="bg-surface-container-low border-none rounded-md pl-10 pr-4 py-1.5 text-xs focus:ring-1 focus:ring-secondary w-64 transition-all font-body" placeholder="Search signals, entities, or trends..." type="text"/>
+</div>
+<nav class="flex items-center gap-6">
+<a class="text-slate-900 border-b-2 border-emerald-500 pb-1 font-serif font-normal text-sm tracking-tight" href="#">Dashboard</a>
+<a class="text-slate-500 hover:text-slate-700 transition-colors font-serif font-normal text-sm" href="#">Analytics</a>
+<a class="text-slate-500 hover:text-slate-700 transition-colors font-serif font-normal text-sm" href="#">Strategy</a>
+<a class="text-slate-500 hover:text-slate-700 transition-colors font-serif font-normal text-sm" href="#">Reports</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-500 hover:bg-slate-50 rounded-full transition-all">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-slate-500 hover:bg-slate-50 rounded-full transition-all">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="h-8 w-8 rounded-full bg-primary-fixed overflow-hidden border border-outline-variant/20">
+<img class="object-cover h-full w-full" data-alt="close-up portrait of a professional male executive in a charcoal suit with a confident expression and soft studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCshnHopaAk1h3y13HX3vyfsw2MEj98DZUguuioz5u9sT-HfU97Pk8NdcHjkWk_oYKum2pax7lFEb-JklwxO5Mrc4Bg2HNvHNv5yFP_zt9BdoeqrH_2w11vEFKfp9KSWVt5cZ-sZPhks6Lw0qoTWMF18i0-Jqp9vITvw4N2dfRc84bIbcG35PxUWY_s_zHXKnI9FeUNfIXq22DNu6bGa3oYEhE_5xRpGW5rExVCeNp0YCD43NCp09r9S5-_5kn-pfl-SZC0f0KpNVPD"/>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-64 pt-24 pb-12 px-8 min-h-screen">
+<!-- Editorial Header Section -->
+<section class="max-w-6xl mx-auto mb-12">
+<div class="flex justify-between items-end border-b border-outline-variant/10 pb-8">
+<div>
+<span class="font-label text-[11px] font-bold uppercase tracking-[0.2em] text-secondary mb-2 block">Market Intelligence</span>
+<h2 class="font-serif text-[3.5rem] leading-[1.1] text-primary tracking-tight">Signals Feed</h2>
+</div>
+<div class="flex gap-3">
+<button class="flex items-center gap-2 px-4 py-2 bg-surface-container-low rounded-md hover:bg-surface-container-high transition-all">
+<span class="material-symbols-outlined text-sm">tune</span>
+<span class="font-label text-[11px] font-bold uppercase tracking-wider">Configure Feed</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-md hover:opacity-90 transition-all shadow-sm">
+<span class="material-symbols-outlined text-sm">download</span>
+<span class="font-label text-[11px] font-bold uppercase tracking-wider">Export Intelligence</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Filters Grid (Asymmetric Layout) -->
+<section class="max-w-6xl mx-auto mb-12 grid grid-cols-12 gap-6">
+<div class="col-span-12 md:col-span-8 flex flex-wrap gap-2">
+<!-- Multi-select Filter Pills -->
+<button class="bg-primary text-white px-4 py-2 rounded-full font-label text-[10px] font-bold uppercase tracking-widest shadow-sm">All Signals (28)</button>
+<button class="bg-surface-container-lowest text-on-surface-variant px-4 py-2 rounded-full font-label text-[10px] font-bold uppercase tracking-widest border border-outline-variant/20 hover:border-secondary transition-all flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-emerald-500"></span> Regulatory
+                </button>
+<button class="bg-surface-container-lowest text-on-surface-variant px-4 py-2 rounded-full font-label text-[10px] font-bold uppercase tracking-widest border border-outline-variant/20 hover:border-secondary transition-all flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-blue-500"></span> Financial
+                </button>
+<button class="bg-surface-container-lowest text-on-surface-variant px-4 py-2 rounded-full font-label text-[10px] font-bold uppercase tracking-widest border border-outline-variant/20 hover:border-secondary transition-all flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-amber-500"></span> Physical
+                </button>
+<button class="bg-surface-container-lowest text-on-surface-variant px-4 py-2 rounded-full font-label text-[10px] font-bold uppercase tracking-widest border border-outline-variant/20 hover:border-secondary transition-all flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-purple-500"></span> M&amp;A Activity
+                </button>
+</div>
+<div class="col-span-12 md:col-span-4 flex justify-end items-center gap-4">
+<span class="font-label text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Severity:</span>
+<div class="flex bg-surface-container rounded-md p-1">
+<button class="px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-on-surface rounded-sm bg-white shadow-sm">All</button>
+<button class="px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant hover:text-on-surface transition-colors">Critical</button>
+<button class="px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-on-surface-variant hover:text-on-surface transition-colors">Moderate</button>
+</div>
+</div>
+</section>
+<!-- Main Feed (Bento Style Cards) -->
+<section class="max-w-6xl mx-auto space-y-6">
+<!-- Feed Item 1: High Severity / Editorial Style -->
+<article class="bg-surface-container-lowest rounded-xl p-8 shadow-[0_40px_40px_-10px_rgba(25,28,30,0.06)] grid grid-cols-12 gap-8 items-start relative overflow-hidden group">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-error"></div>
+<div class="col-span-12 md:col-span-2">
+<p class="font-label text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-4">Just Now</p>
+<div class="flex flex-col items-center justify-center p-4 bg-error-container rounded-lg">
+<span class="font-serif text-3xl font-medium text-on-error-container">9.2</span>
+<span class="font-label text-[9px] font-bold uppercase tracking-widest text-on-error-container">Impact Score</span>
+</div>
+</div>
+<div class="col-span-12 md:col-span-7">
+<div class="flex items-center gap-3 mb-4">
+<span class="bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded font-label text-[10px] font-bold uppercase tracking-widest">Regulatory</span>
+<span class="text-on-surface-variant text-[11px]">•</span>
+<span class="text-primary font-bold text-[12px] font-label uppercase tracking-widest">Global Infrastructure Corp (GIC)</span>
+</div>
+<h3 class="font-serif text-2xl text-primary leading-tight mb-3 group-hover:text-secondary transition-colors cursor-pointer">Unannounced FTC Antitrust Probe into Pacific Division Divestiture</h3>
+<p class="font-body text-sm leading-relaxed text-on-surface-variant max-w-2xl">Internal memo suggests a formal investigation regarding the $4.2B asset split. This represents a significant deviation from projected closing timelines and poses substantial risk to ongoing legal diligence.</p>
+<div class="mt-6 flex items-center gap-4 text-on-surface-variant">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">source</span>
+<span class="font-label text-[11px] font-bold uppercase tracking-widest">Bloomberg Terminal</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">history_edu</span>
+<span class="font-label text-[11px] font-bold uppercase tracking-widest">Draft 8-K Reference</span>
+</div>
+</div>
+</div>
+<div class="col-span-12 md:col-span-3 flex flex-col gap-3 justify-start">
+<button class="w-full py-3 bg-primary text-white rounded-md font-label text-[10px] font-bold uppercase tracking-widest hover:opacity-90 transition-all flex items-center justify-center gap-2">
+                        Draft Response <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+</button>
+<button class="w-full py-3 bg-surface-container-low text-primary rounded-md font-label text-[10px] font-bold uppercase tracking-widest hover:bg-surface-container-high transition-all flex items-center justify-center gap-2">
+                        Pin to Brief <span class="material-symbols-outlined text-[14px]">push_pin</span>
+</button>
+</div>
+</article>
+<!-- Feed Item 2: Medium Severity -->
+<article class="bg-surface-container-lowest rounded-xl p-8 shadow-[0_40px_40px_-10px_rgba(25,28,30,0.06)] grid grid-cols-12 gap-8 items-start relative border border-outline-variant/10">
+<div class="col-span-12 md:col-span-2">
+<p class="font-label text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-4">2 Hours Ago</p>
+<div class="flex flex-col items-center justify-center p-4 bg-surface-container rounded-lg">
+<span class="font-serif text-3xl font-medium text-primary">6.4</span>
+<span class="font-label text-[9px] font-bold uppercase tracking-widest text-on-surface-variant">Impact Score</span>
+</div>
+</div>
+<div class="col-span-12 md:col-span-7">
+<div class="flex items-center gap-3 mb-4">
+<span class="bg-tertiary-fixed-dim/20 text-on-tertiary-fixed-variant px-2 py-0.5 rounded font-label text-[10px] font-bold uppercase tracking-widest">Financial</span>
+<span class="text-on-surface-variant text-[11px]">•</span>
+<span class="text-primary font-bold text-[12px] font-label uppercase tracking-widest">Meridian Holdings Ltd.</span>
+</div>
+<h3 class="font-serif text-2xl text-primary leading-tight mb-3">Unexpected 15% Increase in Q3 Capital Expenditure Allocation</h3>
+<p class="font-body text-sm leading-relaxed text-on-surface-variant max-w-2xl">Revised guidance points toward accelerated digital transformation spending. Likely leads to new technology procurement initiatives in EMEA region starting next month.</p>
+</div>
+<div class="col-span-12 md:col-span-3 flex flex-col gap-3">
+<div class="p-4 bg-surface-container-low rounded-lg border-l-2 border-secondary">
+<p class="font-label text-[9px] font-bold uppercase tracking-widest text-secondary mb-1">Analyst Note</p>
+<p class="text-[12px] italic text-on-surface-variant">"Meridian is shifting strategy toward Cloud-native infrastructure. High potential for IT consulting contracts."</p>
+</div>
+</div>
+</article>
+<!-- Feed Item 3: Low Severity / Dense Style -->
+<article class="bg-surface-container-lowest rounded-xl p-6 shadow-[0_40px_40px_-10px_rgba(25,28,30,0.06)] grid grid-cols-12 gap-6 items-center relative opacity-80 hover:opacity-100 transition-opacity">
+<div class="col-span-12 md:col-span-2">
+<p class="font-label text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">4 Hours Ago</p>
+</div>
+<div class="col-span-12 md:col-span-8 flex items-center gap-6">
+<div class="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-secondary-fixed/30 text-secondary-fixed-dim rounded-full">
+<span class="material-symbols-outlined">tsunami</span>
+</div>
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="text-primary font-bold text-[11px] font-label uppercase tracking-widest">Vertex Manufacturing</span>
+<span class="bg-surface-container-highest text-on-surface-variant px-1.5 py-0.5 rounded-[4px] font-label text-[8px] font-bold uppercase">Physical</span>
+</div>
+<h4 class="font-body font-semibold text-sm text-primary">Advisory: Supply Chain Bottleneck at Port of Singapore</h4>
+</div>
+</div>
+<div class="col-span-12 md:col-span-2 text-right">
+<span class="font-serif text-lg text-on-surface-variant">2.1</span>
+<span class="block font-label text-[8px] font-bold uppercase tracking-widest text-on-surface-variant">Negligible Impact</span>
+</div>
+</article>
+<!-- More items following same density logic -->
+<article class="bg-surface-container-lowest rounded-xl p-8 shadow-[0_40px_40px_-10px_rgba(25,28,30,0.06)] grid grid-cols-12 gap-8 items-start relative overflow-hidden group">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-amber-500"></div>
+<div class="col-span-12 md:col-span-2">
+<p class="font-label text-[11px] font-bold uppercase tracking-widest text-on-surface-variant mb-4">Yesterday</p>
+<div class="flex flex-col items-center justify-center p-4 bg-amber-50 rounded-lg">
+<span class="font-serif text-3xl font-medium text-amber-700">7.8</span>
+<span class="font-label text-[9px] font-bold uppercase tracking-widest text-amber-800">Impact Score</span>
+</div>
+</div>
+<div class="col-span-12 md:col-span-7">
+<div class="flex items-center gap-3 mb-4">
+<span class="bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded font-label text-[10px] font-bold uppercase tracking-widest">M&amp;A Strategy</span>
+<span class="text-on-surface-variant text-[11px]">•</span>
+<span class="text-primary font-bold text-[12px] font-label uppercase tracking-widest">Novus Energy Group</span>
+</div>
+<h3 class="font-serif text-2xl text-primary leading-tight mb-3">Speculative $12B Bid for SolarTech Renewables</h3>
+<p class="font-body text-sm leading-relaxed text-on-surface-variant max-w-2xl">Several key insiders have been linked to early-stage discussions. If confirmed, this would create the largest renewable energy conglomerate in North America.</p>
+<div class="mt-4 flex gap-2">
+<span class="bg-surface-container text-on-surface-variant px-3 py-1 rounded-full text-[10px] font-bold">#GreenEnergy</span>
+<span class="bg-surface-container text-on-surface-variant px-3 py-1 rounded-full text-[10px] font-bold">#MarketConsolidation</span>
+</div>
+</div>
+<div class="col-span-12 md:col-span-3">
+<div class="rounded-lg overflow-hidden h-32 border border-outline-variant/10 shadow-sm bg-surface">
+<img class="w-full h-full object-cover" data-alt="a professional architectural photograph of a modern glass office building with solar panels and a clean blue sky in the background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAQNUgNJG_IhllWBSO6-F4BMuxjCsLUr4ZGSnlFEQL_oiRRXcLSifeD2_r5cV4Epj7Ly337Xsb40cKOlaGQwyc29ezxL_h3A4J6UKhrTMKSqYY5Xr6aHjUUA3rEphRy71dov-YEQATCUvcJIoGO57RMt18xzEzU02EDm9WS9XRA7BMXDR2fn72e228Gl7gwyQYGarnjuv38N1DXlq0Ao4FN_xNEFkxo9sk8p97XXFCWJAnyTSS3Ts3Gut3diysWQylDWBEngwf_P8UE"/>
+</div>
+</div>
+</article>
+</section>
+<!-- Pagination/Load More Footer -->
+<section class="max-w-6xl mx-auto mt-16 flex flex-col items-center">
+<div class="h-[1px] w-32 bg-outline-variant/30 mb-8"></div>
+<button class="group flex flex-col items-center gap-2">
+<span class="font-label text-[11px] font-bold uppercase tracking-[0.3em] text-on-surface-variant group-hover:text-primary transition-colors">Load Older Signals</span>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:translate-y-1 transition-transform">keyboard_double_arrow_down</span>
+</button>
+</section>
+</main>
+<!-- Contextual FAB - Restricted to specific screens but here for Dashboard Utility -->
+<button class="fixed bottom-8 right-8 w-14 h-14 bg-primary text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-105 transition-all z-50">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">bolt</span>
+</button>
+</body></html>

@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>M&amp;A Dark Signals | Oracle Intelligence OS</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&amp;family=Manrope:wght@200..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+            font-size: 20px;
+        }
+        body {
+            font-family: 'Manrope', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .serif { font-family: 'Newsreader', serif; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+        }
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 1.5rem;
+        }
+        .map-gradient-overlay {
+            background: linear-gradient(180deg, rgba(247, 249, 251, 0) 0%, rgba(4, 22, 46, 0.05) 100%);
+        }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #c5c6ce; border-radius: 10px; }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface": "#f7f9fb",
+                        "primary": "#04162e",
+                        "inverse-surface": "#2d3133",
+                        "surface-container": "#eceef0",
+                        "on-surface-variant": "#44474d",
+                        "primary-fixed": "#d5e3ff",
+                        "outline": "#75777e",
+                        "on-surface": "#191c1e",
+                        "primary-container": "#1a2b44",
+                        "background": "#f7f9fb",
+                        "secondary-container": "#adedd3",
+                        "surface-container-high": "#e6e8ea",
+                        "on-secondary-fixed": "#002117",
+                        "error": "#ba1a1a",
+                        "secondary": "#2b6954",
+                        "on-primary-container": "#8292b0",
+                        "on-error": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "on-secondary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-bright": "#f7f9fb",
+                        "on-secondary-fixed-variant": "#0b513d",
+                        "tertiary-fixed": "#89f5e7",
+                        "surface-tint": "#4f5f7b",
+                        "primary-fixed-dim": "#b6c7e7",
+                        "inverse-on-surface": "#eff1f3",
+                        "on-tertiary-fixed": "#00201d",
+                        "tertiary-container": "#00312c",
+                        "surface-container-highest": "#e0e3e5",
+                        "tertiary": "#001a17",
+                        "secondary-fixed": "#b0f0d6",
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed-dim": "#6bd8cb",
+                        "surface-dim": "#d8dadc",
+                        "outline-variant": "#c5c6ce",
+                        "inverse-primary": "#b6c7e7",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-container": "#2ba296",
+                        "on-secondary-container": "#306d58",
+                        "secondary-fixed-dim": "#95d3ba",
+                        "surface-variant": "#e0e3e5",
+                        "on-background": "#191c1e",
+                        "surface-container-low": "#f2f4f6",
+                        "on-primary-fixed-variant": "#374762",
+                        "on-primary-fixed": "#091c34",
+                        "on-primary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#005049"
+                    },
+                    fontFamily: {
+                        "headline": ["Newsreader"],
+                        "body": ["Manrope"],
+                        "label": ["Manrope"]
+                    },
+                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-surface text-on-surface overflow-x-hidden">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md shadow-sm dark:shadow-none flex justify-between items-center px-8 h-16 w-full max-w-full">
+<div class="flex items-center gap-8">
+<span class="text-lg font-serif font-medium tracking-tight text-slate-900 dark:text-slate-50">Oracle Intelligence OS</span>
+<div class="hidden md:flex space-x-6">
+<a class="font-serif font-normal text-sm leading-relaxed text-slate-500 dark:text-slate-400 hover:text-slate-700 transition-colors" href="#">Dashboard</a>
+<a class="font-serif font-normal text-sm leading-relaxed text-slate-500 dark:text-slate-400 hover:text-slate-700 transition-colors" href="#">Analytics</a>
+<a class="font-serif font-normal text-sm leading-relaxed text-slate-900 dark:text-white border-b-2 border-emerald-500 pb-1" href="#">Strategy</a>
+<a class="font-serif font-normal text-sm leading-relaxed text-slate-500 dark:text-slate-400 hover:text-slate-700 transition-colors" href="#">Reports</a>
+</div>
+</div>
+<div class="flex items-center space-x-4">
+<span class="material-symbols-outlined text-on-surface-variant hover:bg-slate-50 dark:hover:bg-slate-900 p-2 rounded-full cursor-pointer transition-all">notifications</span>
+<span class="material-symbols-outlined text-on-surface-variant hover:bg-slate-50 dark:hover:bg-slate-900 p-2 rounded-full cursor-pointer transition-all">settings</span>
+<img alt="Executive Profile" class="w-8 h-8 rounded-full border border-outline-variant/30" data-alt="close-up portrait of a professional executive with a confident expression in a high-end corporate setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCOlYDNA2E2oCs1LiyaOawpfc8ri1VhmLWgpV-IH-EHrWfd9qd5Q4ueOfOF2zrSmxLFy8XMlYGPlZuOmgJrF020Hz0DsfKxfTatYF_JxfJ4nv93EsNh3KxTc_m0x_fatmupbd_UHr-aEZ_jTXW72-zvVcktxOIItQVLjCo0-2FjxhJ53v8iu5z6UZImX4onF0XiBIQ3qGKP-xpFuKklr84yruQYAWNUD5jqCzJetSBqmnjWWgKIK4F4TYOKH2D-0yzElB2WySjCpyiZ"/>
+</div>
+</nav>
+<!-- SideNavBar -->
+<aside class="h-screen w-64 fixed left-0 top-0 overflow-y-auto bg-slate-50 dark:bg-slate-900 border-r border-slate-200/20 dark:border-slate-800/20 flex flex-col h-full py-6 px-4 space-y-1 z-40 mt-16">
+<div class="mb-8 px-2">
+<h2 class="font-serif text-xl text-slate-900 dark:text-white">ConstructLex Pro</h2>
+<p class="font-sans text-[11px] font-bold uppercase tracking-widest text-slate-500">Legal Business Development</p>
+</div>
+<button class="flex items-center space-x-3 w-full bg-primary text-white px-4 py-2.5 rounded-lg mb-6 shadow-md hover:translate-x-1 transition-transform">
+<span class="material-symbols-outlined">add</span>
+<span class="font-sans text-[11px] font-bold uppercase tracking-widest">New Initiative</span>
+</button>
+<div class="space-y-1 flex-1">
+<!-- Active State Logic: M&A highlighted -->
+<a class="flex items-center space-x-3 px-3 py-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:translate-x-1 transition-transform" href="#">
+<span class="material-symbols-outlined">security</span>
+<span class="font-sans text-[11px] font-bold uppercase tracking-widest">Conflicts</span>
+</a>
+<a class="flex items-center space-x-3 px-3 py-2 rounded-lg bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-sm hover:translate-x-1 transition-transform" href="#">
+<span class="material-symbols-outlined">handshake</span>
+<span class="font-sans text-[11px] font-bold uppercase tracking-widest">M&amp;A</span>
+</a>
+<a class="flex items-center space-x-3 px-3 py-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:translate-x-1 transition-transform" href="#">
+<span class="material-symbols-outlined">description</span>
+<span class="font-sans text-[11px] font-bold uppercase tracking-widest">Briefs</span>
+</a>
+<a class="flex items-center space-x-3 px-3 py-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:translate-x-1 transition-transform" href="#">
+<span class="material-symbols-outlined">library_books</span>
+<span class="font-sans text-[11px] font-bold uppercase tracking-widest">Research</span>
+</a>
+<a class="flex items-center space-x-3 px-3 py-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:translate-x-1 transition-transform" href="#">
+<span class="material-symbols-outlined">warning</span>
+<span class="font-sans text-[11px] font-bold uppercase tracking-widest">Risk</span>
+</a>
+<a class="flex items-center space-x-3 px-3 py-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:translate-x-1 transition-transform" href="#">
+<span class="material-symbols-outlined">rocket_launch</span>
+<span class="font-sans text-[11px] font-bold uppercase tracking-widest">Ventures</span>
+</a>
+</div>
+<div class="pt-6 border-t border-slate-200/20 space-y-1">
+<a class="flex items-center space-x-3 px-3 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="font-sans text-[11px] font-bold uppercase tracking-widest">Support</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-64 pt-16 min-h-screen">
+<div class="px-10 py-12 max-w-[1600px] mx-auto">
+<!-- Header Section -->
+<header class="mb-12 flex justify-between items-end">
+<div>
+<h1 class="serif text-5xl font-light text-primary mb-2">M&amp;A Dark Signals</h1>
+<p class="text-on-surface-variant font-body max-w-xl text-lg leading-relaxed">
+                        Cross-correlating corporate jet ADS-B telemetry with multi-spectral satellite imagery to predict non-public capital shifts.
+                    </p>
+</div>
+<div class="flex gap-4">
+<div class="bg-surface-container-low px-6 py-3 rounded-lg flex flex-col items-end">
+<span class="text-[10px] uppercase tracking-widest font-bold text-secondary">Active Monitor</span>
+<span class="font-serif text-2xl text-primary">42 Entities</span>
+</div>
+<div class="bg-surface-container-low px-6 py-3 rounded-lg flex flex-col items-end">
+<span class="text-[10px] uppercase tracking-widest font-bold text-error">High Confidence</span>
+<span class="font-serif text-2xl text-primary">07 Alerts</span>
+</div>
+</div>
+</header>
+<!-- Intelligence Grid -->
+<div class="bento-grid">
+<!-- Main World Map - Asymmetric Large Area -->
+<section class="col-span-12 lg:col-span-8 h-[600px] relative rounded-xl overflow-hidden bg-primary-container group">
+<div class="absolute inset-0 map-gradient-overlay z-10 pointer-events-none"></div>
+<img alt="Global Dark Signal Map" class="w-full h-full object-cover opacity-60 grayscale hover:grayscale-0 transition-all duration-700" data-alt="highly detailed dark satellite world map with luminous digital flight path lines connecting major global financial hubs in neon blue and gold" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCVrF_M_YXl4S2VVi0le0uvwGAlHyjoku_98oP4BGIvlRh5rvH-Sc3xFlLZkD9gcZPs1oToQoQZ25HyMDo03rC54XCJ3jIoNFYM6Ih0LFms4jEDKvZnsMWaCO06nFJzuFAhgNINkD2ZxEDfbqCtTRxpnHyh49Ncuh8ezWo7_FstgAt3pa2F-AY6wdoWFXZA62Hvtmaxi-2VNmJ8d1kC5fO20579sXYZun5tNG_dOHhVM5toxMetUtRiVsz3gZu0DbSLGCQPHGEF2dAO"/>
+<!-- Overlay Controls -->
+<div class="absolute top-6 left-6 z-20 flex flex-col gap-2">
+<div class="glass-panel px-4 py-2 rounded-lg flex items-center space-x-3">
+<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+<span class="text-[11px] font-bold uppercase tracking-widest">Live ADS-B Stream</span>
+</div>
+<div class="glass-panel px-4 py-2 rounded-lg flex items-center space-x-3 opacity-80">
+<span class="material-symbols-outlined text-[16px]">satellite_alt</span>
+<span class="text-[11px] font-bold uppercase tracking-widest">SAR Imagery Active</span>
+</div>
+</div>
+<!-- Map Legend / Data Float -->
+<div class="absolute bottom-6 left-6 right-6 z-20 flex justify-between items-end">
+<div class="glass-panel p-6 rounded-xl max-w-sm">
+<h3 class="serif text-xl mb-3">Teterboro (TEB) → Basel (BSL)</h3>
+<p class="text-[13px] text-on-surface-variant leading-relaxed mb-4">
+                                Persistent Gulfstream G650 activity detected between HQ-North and Pharma-Acquisition targets. Confidence: <span class="text-secondary font-bold">89%</span>
+</p>
+<div class="flex gap-2">
+<span class="px-2 py-1 bg-secondary-container text-on-secondary-container text-[10px] font-bold rounded">PHARMA</span>
+<span class="px-2 py-1 bg-surface-container-high text-on-surface-variant text-[10px] font-bold rounded">EQUITY SHIFT</span>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="w-10 h-10 rounded-full glass-panel flex items-center justify-center hover:bg-white transition-colors">
+<span class="material-symbols-outlined">zoom_in</span>
+</button>
+<button class="w-10 h-10 rounded-full glass-panel flex items-center justify-center hover:bg-white transition-colors">
+<span class="material-symbols-outlined">layers</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Signal Feed - Editorial Right Panel -->
+<aside class="col-span-12 lg:col-span-4 flex flex-col gap-6">
+<div class="bg-surface-container-low p-8 rounded-xl flex-1 flex flex-col">
+<div class="flex justify-between items-center mb-8">
+<h2 class="font-sans text-[12px] font-extrabold uppercase tracking-widest text-primary">Dark Signal Alerts</h2>
+<span class="material-symbols-outlined text-outline-variant">more_horiz</span>
+</div>
+<div class="space-y-8 overflow-y-auto pr-2 custom-scroll">
+<!-- Alert Item -->
+<div class="group cursor-pointer">
+<div class="flex justify-between items-start mb-2">
+<span class="text-secondary font-bold text-[11px] uppercase tracking-wider">Acquisition Alert</span>
+<span class="text-on-surface-variant text-[11px]">2m ago</span>
+</div>
+<h4 class="serif text-lg text-primary group-hover:text-secondary transition-colors">Project 'Osprey' Expansion</h4>
+<p class="text-[13px] text-on-surface-variant leading-relaxed mt-1">
+                                    Synthetic Aperture Radar (SAR) detects foundation clearing at Target Site Delta in Bavaria.
+                                </p>
+<div class="mt-3 flex items-center gap-4">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="text-[11px] font-bold">0.94 SCORE</span>
+</div>
+<span class="text-[11px] text-outline font-bold">LITIGATION RISK: LOW</span>
+</div>
+</div>
+<!-- Alert Item 2 -->
+<div class="group cursor-pointer border-t border-outline-variant/20 pt-8">
+<div class="flex justify-between items-start mb-2">
+<span class="text-error font-bold text-[11px] uppercase tracking-wider">Contraction Signal</span>
+<span class="text-on-surface-variant text-[11px]">1h ago</span>
+</div>
+<h4 class="serif text-lg text-primary group-hover:text-error transition-colors">Artemis Tech Logistics</h4>
+<p class="text-[13px] text-on-surface-variant leading-relaxed mt-1">
+                                    Sustained reduction in heavy transport activity at main assembly hub. Correlates with executive flight to insolvency counsel.
+                                </p>
+<div class="mt-3 flex items-center gap-4">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="text-[11px] font-bold">0.82 SCORE</span>
+</div>
+<span class="text-[11px] text-outline font-bold">PRACTICE: RESTRUCTURING</span>
+</div>
+</div>
+<!-- Alert Item 3 -->
+<div class="group cursor-pointer border-t border-outline-variant/20 pt-8">
+<div class="flex justify-between items-start mb-2">
+<span class="text-primary font-bold text-[11px] uppercase tracking-wider">Flight Pattern Alpha</span>
+<span class="text-on-surface-variant text-[11px]">3h ago</span>
+</div>
+<h4 class="serif text-lg text-primary group-hover:text-secondary transition-colors">Summit Convergence</h4>
+<p class="text-[13px] text-on-surface-variant leading-relaxed mt-1">
+                                    Three private jets registered to competitors landed at Jackson Hole (JAC) within 4 hours.
+                                </p>
+<div class="mt-3 flex items-center gap-4">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="text-[11px] font-bold">0.71 SCORE</span>
+</div>
+<span class="text-[11px] text-outline font-bold">PRACTICE: ANTITRUST</span>
+</div>
+</div>
+</div>
+</div>
+</aside>
+<!-- Practice Area Matrix - Bento Bottom -->
+<section class="col-span-12 lg:col-span-5 bg-white rounded-xl p-8 shadow-sm">
+<h2 class="font-sans text-[11px] font-extrabold uppercase tracking-widest text-primary mb-6">Strategic Implications</h2>
+<div class="grid grid-cols-2 gap-6">
+<div class="space-y-2">
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-tighter">Tax &amp; Structuring</span>
+<div class="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[75%]"></div>
+</div>
+<p class="text-[11px] text-outline-variant">Significant cross-border implications detected.</p>
+</div>
+<div class="space-y-2">
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-tighter">Labor &amp; Employment</span>
+<div class="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[40%]"></div>
+</div>
+<p class="text-[11px] text-outline-variant">Potential workforce adjustment signals.</p>
+</div>
+<div class="space-y-2">
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-tighter">Intellectual Property</span>
+<div class="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[90%]"></div>
+</div>
+<p class="text-[11px] text-outline-variant">High R&amp;D facility expansion correlation.</p>
+</div>
+<div class="space-y-2">
+<span class="text-[10px] font-bold text-on-surface-variant uppercase tracking-tighter">Regulatory Compliance</span>
+<div class="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-error w-[15%]"></div>
+</div>
+<p class="text-[11px] text-outline-variant">Current activity within standard bounds.</p>
+</div>
+</div>
+</section>
+<!-- Detailed Satellite Insight - Bento Bottom Right -->
+<section class="col-span-12 lg:col-span-7 bg-surface-container-low rounded-xl overflow-hidden flex flex-col md:flex-row">
+<div class="w-full md:w-1/2 relative h-64 md:h-auto">
+<img alt="Satellite Insight" class="w-full h-full object-cover grayscale brightness-75 hover:grayscale-0 transition-all duration-1000" data-alt="high resolution infra-red satellite view of a large industrial complex at night showing heat signatures and construction activity in orange and dark blue tones" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDs6Z4x0LBG0xILwpYWvHHlzvL0kwF4WmW3anjMYCn_tmHtYgxYrwUfDCMeGOstdsysl_C2VxNC-JazqnAWt05Xee8gBifw7I6uFJEOsQE4sATAVGx64VTvImPhyK6KdQmM0FOFCvwshnrnbKs9pRWrTdSsRTpRk8IcImdf8ui4XN8C4IzaCoi9zxgny44kwWy4KlAkBq9PRsMdSj-CN4bZYSzlTECdCj0WVBXltTy22U4ZInqBkr7WuYrp82wYdheWbnjz1XiFEjTP"/>
+<div class="absolute inset-0 border-4 border-emerald-500/20 m-4 pointer-events-none"></div>
+<div class="absolute top-8 left-8 flex items-center gap-2">
+<span class="material-symbols-outlined text-emerald-400 bg-primary/40 p-1 rounded backdrop-blur">ads_click</span>
+<span class="text-[10px] font-bold text-white uppercase tracking-widest bg-primary/40 px-2 py-1 rounded backdrop-blur">Focus Area: Z-12</span>
+</div>
+</div>
+<div class="w-full md:w-1/2 p-8 flex flex-col justify-center">
+<span class="text-[10px] font-bold text-secondary uppercase tracking-widest mb-2">Visual Confirmation</span>
+<h3 class="serif text-2xl text-primary mb-4 leading-tight">Expansion detected at Tech-Corridor Facility</h3>
+<p class="text-[14px] text-on-surface-variant leading-relaxed mb-6">
+                            Change detection algorithms identified a 34% increase in heavy equipment presence and overnight thermal signatures consistent with 24/7 manufacturing ramp-up.
+                        </p>
+<button class="bg-primary-container text-on-primary-container hover:bg-primary hover:text-white transition-all py-3 px-6 rounded-md font-sans text-[11px] font-bold uppercase tracking-widest self-start">
+                            Export Intelligence Brief
+                        </button>
+</div>
+</section>
+</div>
+</div>
+</main>
+<!-- Contextual FAB - Only for Home/Strategy screens -->
+<button class="fixed bottom-10 right-10 bg-primary text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all z-50">
+<span class="material-symbols-outlined">analytics</span>
+</button>
+</body></html>

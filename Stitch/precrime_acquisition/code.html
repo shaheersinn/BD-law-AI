@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Oracle Intelligence OS - PreCrime Acquisition Module</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&amp;family=Manrope:wght@200..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface": "#f7f9fb",
+              "primary": "#04162e",
+              "inverse-surface": "#2d3133",
+              "surface-container": "#eceef0",
+              "on-surface-variant": "#44474d",
+              "primary-fixed": "#d5e3ff",
+              "outline": "#75777e",
+              "on-surface": "#191c1e",
+              "primary-container": "#1a2b44",
+              "background": "#f7f9fb",
+              "secondary-container": "#adedd3",
+              "surface-container-high": "#e6e8ea",
+              "on-secondary-fixed": "#002117",
+              "error": "#ba1a1a",
+              "secondary": "#2b6954",
+              "on-primary-container": "#8292b0",
+              "on-error": "#ffffff",
+              "on-error-container": "#93000a",
+              "on-secondary": "#ffffff",
+              "surface-container-lowest": "#ffffff",
+              "surface-bright": "#f7f9fb",
+              "on-secondary-fixed-variant": "#0b513d",
+              "tertiary-fixed": "#89f5e7",
+              "surface-tint": "#4f5f7b",
+              "primary-fixed-dim": "#b6c7e7",
+              "inverse-on-surface": "#eff1f3",
+              "on-tertiary-fixed": "#00201d",
+              "tertiary-container": "#00312c",
+              "surface-container-highest": "#e0e3e5",
+              "tertiary": "#001a17",
+              "secondary-fixed": "#b0f0d6",
+              "on-tertiary": "#ffffff",
+              "tertiary-fixed-dim": "#6bd8cb",
+              "surface-dim": "#d8dadc",
+              "outline-variant": "#c5c6ce",
+              "inverse-primary": "#b6c7e7",
+              "error-container": "#ffdad6",
+              "on-tertiary-container": "#2ba296",
+              "on-secondary-container": "#306d58",
+              "secondary-fixed-dim": "#95d3ba",
+              "surface-variant": "#e0e3e5",
+              "on-background": "#191c1e",
+              "surface-container-low": "#f2f4f6",
+              "on-primary-fixed-variant": "#374762",
+              "on-primary-fixed": "#091c34",
+              "on-primary": "#ffffff",
+              "on-tertiary-fixed-variant": "#005049"
+            },
+            fontFamily: {
+              "headline": ["Newsreader", "serif"],
+              "body": ["Manrope", "sans-serif"],
+              "label": ["Manrope", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        font-size: 20px;
+      }
+      body {
+        font-family: 'Manrope', sans-serif;
+        background-color: #f7f9fb;
+        color: #191c1e;
+      }
+      .editorial-shadow {
+        box-shadow: 0 40px 40px -10px rgba(25, 28, 30, 0.06);
+      }
+    </style>
+</head>
+<body class="bg-surface selection:bg-secondary-container">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md shadow-sm flex justify-between items-center px-8 h-16 w-full max-w-full">
+<div class="flex items-center gap-8">
+<span class="text-lg font-serif font-medium tracking-tight text-slate-900">Oracle Intelligence OS</span>
+<nav class="hidden md:flex gap-6 items-center">
+<a class="font-serif font-normal text-sm leading-relaxed text-slate-500 hover:text-slate-700 transition-colors" href="#">Dashboard</a>
+<a class="font-serif font-normal text-sm leading-relaxed text-slate-500 hover:text-slate-700 transition-colors" href="#">Analytics</a>
+<a class="font-serif font-normal text-sm leading-relaxed text-slate-900 border-b-2 border-emerald-500 pb-1" href="#">Strategy</a>
+<a class="font-serif font-normal text-sm leading-relaxed text-slate-500 hover:text-slate-700 transition-colors" href="#">Reports</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 hover:bg-slate-50 transition-all rounded-full"><span class="material-symbols-outlined text-slate-900">notifications</span></button>
+<button class="p-2 hover:bg-slate-50 transition-all rounded-full"><span class="material-symbols-outlined text-slate-900">settings</span></button>
+<div class="w-8 h-8 rounded-full bg-slate-200 overflow-hidden border border-outline-variant/20">
+<img alt="Executive Profile" data-alt="close-up portrait of a professional male executive with a confident expression in a high-end corporate setting with soft lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDJAxXx_OZQduNA0dNp3qOaPjKv-AG8TPMWqxIFR9I4A5_Ftdc_dDlaOlcL7tdbxiZceWZlRFnAWKAvAjhnW181Vfvzol5pTsrI-tVAoB74eRC-BWAFl1LCOuldgf2Ec-tiXFe1D0qTVsvVNKxZ_2WCmRxcCHD6mzG0af3tr9rNXdVqr3hFhEF39O_JoNQqS9Wb_dravkOwHEGAP8KSnZNb5WUDJHo-OQtYZpg_Z4kLX4TRc1M8Udo6e-OwWA9iZiYkBRiQwU50k78a"/>
+</div>
+</div>
+</header>
+<!-- SideNavBar -->
+<aside class="h-screen w-64 fixed left-0 top-0 overflow-y-auto bg-slate-50 border-r border-slate-200/20 flex flex-col py-6 px-4 space-y-1 z-40">
+<div class="mb-8 px-2">
+<h2 class="font-serif text-xl text-slate-900">ConstructLex Pro</h2>
+<p class="font-sans text-[11px] font-bold uppercase tracking-widest text-slate-400">Legal Business Development</p>
+</div>
+<div class="flex-grow space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl bg-white text-emerald-600 shadow-sm transition-all active:scale-98" href="#">
+<span class="material-symbols-outlined">handshake</span>
+<span class="font-sans text-[11px] font-bold uppercase tracking-widest">M&amp;A</span>
+</a>
+<!-- Subset of labels from JSON for visual layout -->
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-500 hover:bg-slate-100 hover:translate-x-1 transition-all" href="#">
+<span class="material-symbols-outlined">security</span>
+<span class="font-sans text-[11px] font-bold uppercase tracking-widest">Conflicts</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-500 hover:bg-slate-100 hover:translate-x-1 transition-all" href="#">
+<span class="material-symbols-outlined">gavel</span>
+<span class="font-sans text-[11px] font-bold uppercase tracking-widest">Matters</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-500 hover:bg-slate-100 hover:translate-x-1 transition-all" href="#">
+<span class="material-symbols-outlined">description</span>
+<span class="font-sans text-[11px] font-bold uppercase tracking-widest">Briefs</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-500 hover:bg-slate-100 hover:translate-x-1 transition-all" href="#">
+<span class="material-symbols-outlined">warning</span>
+<span class="font-sans text-[11px] font-bold uppercase tracking-widest">Risk</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-500 hover:bg-slate-100 hover:translate-x-1 transition-all" href="#">
+<span class="material-symbols-outlined">rocket_launch</span>
+<span class="font-sans text-[11px] font-bold uppercase tracking-widest">Ventures</span>
+</a>
+</div>
+<div class="pt-4 border-t border-slate-200/40 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-500 hover:bg-slate-100 hover:translate-x-1 transition-all" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="font-sans text-[11px] font-bold uppercase tracking-widest">Support</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-xl text-slate-500 hover:bg-slate-100 hover:translate-x-1 transition-all" href="#">
+<span class="material-symbols-outlined">history</span>
+<span class="font-sans text-[11px] font-bold uppercase tracking-widest">Archive</span>
+</a>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="pl-64 pt-16 min-h-screen">
+<div class="max-w-[1400px] mx-auto p-12 space-y-16">
+<!-- Header Section -->
+<section class="flex justify-between items-end">
+<div class="max-w-2xl">
+<span class="font-sans text-[11px] font-bold uppercase tracking-widest text-secondary mb-4 block">Intelligence Module // Alpha 01</span>
+<h1 class="font-headline text-[3.5rem] leading-[1.1] text-primary mb-6">PreCrime Acquisition Targeting</h1>
+<p class="font-body text-[14px] leading-[1.6] text-on-surface-variant max-w-lg">
+                        Predictive modeling of non-public corporate movements. Utilizing signal intelligence to identify targets 4-6 months before traditional market realization.
+                    </p>
+</div>
+<div class="flex gap-4">
+<button class="px-6 py-3 bg-gradient-to-b from-primary to-primary-container text-white rounded-md font-label text-[11px] font-bold uppercase tracking-widest shadow-lg active:scale-95 transition-all">
+                        New Initiative
+                    </button>
+<button class="px-6 py-3 bg-surface-container-high text-primary rounded-md font-label text-[11px] font-bold uppercase tracking-widest hover:bg-surface-container-highest transition-all">
+                        Export Dataset
+                    </button>
+</div>
+</section>
+<!-- Metrics Overview -->
+<section class="grid grid-cols-1 md:grid-cols-4 gap-6">
+<div class="bg-surface-container-low p-6 rounded-xl space-y-2">
+<span class="font-label text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Active Watches</span>
+<div class="text-3xl font-headline text-primary">142</div>
+</div>
+<div class="bg-surface-container-low p-6 rounded-xl space-y-2 border-l-4 border-secondary">
+<span class="font-label text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Mean Velocity</span>
+<div class="text-3xl font-headline text-primary">8.4<span class="text-sm font-sans ml-1 text-secondary">/10</span></div>
+</div>
+<div class="bg-surface-container-low p-6 rounded-xl space-y-2">
+<span class="font-label text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Patent Anomalies</span>
+<div class="text-3xl font-headline text-primary">24</div>
+</div>
+<div class="bg-surface-container-low p-6 rounded-xl space-y-2">
+<span class="font-label text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Capital Reserve</span>
+<div class="text-3xl font-headline text-primary">$4.2B</div>
+</div>
+</section>
+<!-- Main Bento Grid -->
+<section class="grid grid-cols-12 gap-6 items-start">
+<!-- Priority Target Card (Large) -->
+<div class="col-span-12 lg:col-span-8 bg-surface-container-lowest rounded-xl editorial-shadow overflow-hidden group">
+<div class="relative h-64">
+<img alt="Futuristic skyscraper architecture" class="w-full h-full object-cover grayscale opacity-80 group-hover:grayscale-0 transition-all duration-700" data-alt="architectural low angle shot of a modern glass skyscraper with sharp lines against a clear blue sky at dusk" src="https://lh3.googleusercontent.com/aida-public/AB6AXuABOKaAol7prnbgLVNd6uU92tbAmKw_FcQo2ZvxUaV2kU2dHMj6PbU5qBkwrUih_gIS0OMSj1m_2Pj3y8FXCK_s__wmH0-xS7rWN6aLAkE-4LnPqgE3tZfc1NGavkQUswog-9G3-r0p437wlf3th6pBicgqrQOj2qD8AxgGxMjtCGFMGHrSQAa1ggejegbBvLDHRnRGeyAXPqIsRJP-ajy8D7IC_gjO4Y6L_A2OEGOSqWYYuMY5VzbyFmZ94814k62iug2jSwwQ0cCf"/>
+<div class="absolute inset-0 bg-gradient-to-t from-primary via-primary/40 to-transparent"></div>
+<div class="absolute bottom-6 left-8">
+<div class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full font-label text-[11px] font-bold uppercase tracking-widest inline-block mb-3">Priority Alpha</div>
+<h3 class="text-3xl font-headline text-white">Synthetix Biologics Ltd.</h3>
+</div>
+</div>
+<div class="p-8 grid grid-cols-3 gap-8">
+<div class="space-y-4">
+<span class="font-label text-[11px] font-bold uppercase tracking-widest text-on-surface-variant block">Acquisition Velocity</span>
+<div class="flex items-center gap-2">
+<div class="h-2 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[92%]"></div>
+</div>
+<span class="text-xs font-bold text-primary">9.2</span>
+</div>
+<p class="text-[11px] text-on-surface-variant italic">Accelerating trend based on executive flight patterns to Zurich.</p>
+</div>
+<div class="space-y-4">
+<span class="font-label text-[11px] font-bold uppercase tracking-widest text-on-surface-variant block">Strategic Fit</span>
+<div class="flex items-center gap-2">
+<div class="h-2 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[85%]"></div>
+</div>
+<span class="text-xs font-bold text-primary">8.5</span>
+</div>
+<p class="text-[11px] text-on-surface-variant italic">Strong IP alignment with Portfolio Segment B.</p>
+</div>
+<div class="space-y-4">
+<span class="font-label text-[11px] font-bold uppercase tracking-widest text-on-surface-variant block">Primary Signal</span>
+<div class="flex items-center gap-2 text-secondary">
+<span class="material-symbols-outlined">local_airport</span>
+<span class="text-[11px] font-bold uppercase tracking-widest">Flight Anomalies (High)</span>
+</div>
+<p class="text-[11px] text-on-surface-variant">3 private charter flights to M&amp;A advisory HQ within 14 days.</p>
+</div>
+</div>
+</div>
+<!-- Signal Heatmap (Side) -->
+<div class="col-span-12 lg:col-span-4 bg-surface-container-lowest rounded-xl editorial-shadow p-8 h-full">
+<h4 class="font-headline text-xl text-primary mb-8">Signal Integrity Map</h4>
+<div class="space-y-8">
+<div class="relative">
+<div class="flex justify-between items-center mb-3">
+<span class="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Patent Spikes</span>
+<span class="text-[11px] font-bold text-secondary">+240%</span>
+</div>
+<div class="grid grid-cols-10 gap-1 h-8">
+<div class="bg-secondary opacity-10 rounded-sm"></div>
+<div class="bg-secondary opacity-20 rounded-sm"></div>
+<div class="bg-secondary opacity-40 rounded-sm"></div>
+<div class="bg-secondary opacity-60 rounded-sm"></div>
+<div class="bg-secondary opacity-80 rounded-sm"></div>
+<div class="bg-secondary opacity-100 rounded-sm"></div>
+<div class="bg-secondary opacity-100 rounded-sm"></div>
+<div class="bg-secondary opacity-100 rounded-sm"></div>
+<div class="bg-secondary opacity-100 rounded-sm"></div>
+<div class="bg-secondary opacity-100 rounded-sm"></div>
+</div>
+</div>
+<div class="relative">
+<div class="flex justify-between items-center mb-3">
+<span class="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Staff Attrition</span>
+<span class="text-[11px] font-bold text-error">-12%</span>
+</div>
+<div class="grid grid-cols-10 gap-1 h-8">
+<div class="bg-error opacity-10 rounded-sm"></div>
+<div class="bg-error opacity-20 rounded-sm"></div>
+<div class="bg-error opacity-30 rounded-sm"></div>
+<div class="bg-error opacity-10 rounded-sm"></div>
+<div class="bg-error opacity-0 rounded-sm"></div>
+<div class="bg-error opacity-0 rounded-sm"></div>
+<div class="bg-error opacity-0 rounded-sm"></div>
+<div class="bg-error opacity-0 rounded-sm"></div>
+<div class="bg-error opacity-0 rounded-sm"></div>
+<div class="bg-error opacity-0 rounded-sm"></div>
+</div>
+</div>
+<div class="relative">
+<div class="flex justify-between items-center mb-3">
+<span class="text-[11px] font-bold uppercase tracking-widest text-on-surface-variant">Digital Footprint</span>
+<span class="text-[11px] font-bold text-secondary">STABLE</span>
+</div>
+<div class="grid grid-cols-10 gap-1 h-8">
+<div class="bg-slate-300 rounded-sm"></div>
+<div class="bg-slate-300 rounded-sm"></div>
+<div class="bg-slate-300 rounded-sm"></div>
+<div class="bg-slate-300 rounded-sm"></div>
+<div class="bg-slate-300 rounded-sm"></div>
+<div class="bg-slate-300 rounded-sm"></div>
+<div class="bg-slate-300 rounded-sm"></div>
+<div class="bg-slate-300 rounded-sm"></div>
+<div class="bg-slate-300 rounded-sm"></div>
+<div class="bg-slate-300 rounded-sm"></div>
+</div>
+</div>
+</div>
+<div class="mt-12 p-4 bg-surface-container rounded-lg">
+<p class="text-[11px] leading-relaxed text-on-surface-variant font-medium">
+<span class="material-symbols-outlined text-[14px] align-middle mr-1 text-primary">info</span>
+                            Aggregated signal intelligence suggests 88% probability of liquidity event within H2.
+                        </p>
+</div>
+</div>
+<!-- Secondary Targets -->
+<div class="col-span-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Card 1 -->
+<div class="bg-surface-container-lowest p-8 rounded-xl editorial-shadow group hover:translate-y-[-4px] transition-all">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h5 class="font-headline text-lg text-primary">Aether Robotics</h5>
+<span class="text-[11px] text-on-surface-variant">Industrial Automation</span>
+</div>
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">trending_up</span>
+</div>
+<div class="space-y-4">
+<div class="flex justify-between text-[11px]">
+<span class="uppercase tracking-widest font-bold text-on-surface-variant">Velocity Index</span>
+<span class="font-bold text-primary">7.8</span>
+</div>
+<div class="flex justify-between text-[11px]">
+<span class="uppercase tracking-widest font-bold text-on-surface-variant">Strategic Score</span>
+<span class="font-bold text-primary">6.2</span>
+</div>
+</div>
+<button class="mt-8 w-full py-2 border border-outline-variant/30 rounded-md font-label text-[11px] font-bold uppercase tracking-widest text-primary hover:bg-primary hover:text-white transition-all">Review Dossier</button>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface-container-lowest p-8 rounded-xl editorial-shadow group hover:translate-y-[-4px] transition-all">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h5 class="font-headline text-lg text-primary">Veridian Data</h5>
+<span class="text-[11px] text-on-surface-variant">Cloud Infrastructure</span>
+</div>
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">trending_up</span>
+</div>
+<div class="space-y-4">
+<div class="flex justify-between text-[11px]">
+<span class="uppercase tracking-widest font-bold text-on-surface-variant">Velocity Index</span>
+<span class="font-bold text-primary">8.1</span>
+</div>
+<div class="flex justify-between text-[11px]">
+<span class="uppercase tracking-widest font-bold text-on-surface-variant">Strategic Score</span>
+<span class="font-bold text-primary">9.4</span>
+</div>
+</div>
+<button class="mt-8 w-full py-2 border border-outline-variant/30 rounded-md font-label text-[11px] font-bold uppercase tracking-widest text-primary hover:bg-primary hover:text-white transition-all">Review Dossier</button>
+</div>
+<!-- Card 3 -->
+<div class="bg-surface-container-lowest p-8 rounded-xl editorial-shadow group hover:translate-y-[-4px] transition-all border-l-4 border-error/20">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h5 class="font-headline text-lg text-primary">Lumina Solar</h5>
+<span class="text-[11px] text-on-surface-variant">Renewable Systems</span>
+</div>
+<span class="material-symbols-outlined text-error">warning</span>
+</div>
+<div class="space-y-4">
+<div class="flex justify-between text-[11px]">
+<span class="uppercase tracking-widest font-bold text-on-surface-variant">Velocity Index</span>
+<span class="font-bold text-primary">6.4</span>
+</div>
+<div class="flex justify-between text-[11px]">
+<span class="uppercase tracking-widest font-bold text-on-surface-variant">Strategic Score</span>
+<span class="font-bold text-primary">7.9</span>
+</div>
+</div>
+<button class="mt-8 w-full py-2 border border-outline-variant/30 rounded-md font-label text-[11px] font-bold uppercase tracking-widest text-primary hover:bg-primary hover:text-white transition-all">Review Dossier</button>
+</div>
+</div>
+</section>
+<!-- Tactical Feed (Asymmetric Layout) -->
+<section class="grid grid-cols-12 gap-12 pt-12 border-t border-outline-variant/20">
+<div class="col-span-12 lg:col-span-4">
+<h4 class="font-headline text-2xl text-primary mb-4">Signal Persistence</h4>
+<p class="font-body text-[14px] leading-relaxed text-on-surface-variant mb-8">
+                        Tracking real-time anomalies across global supply chains and regulatory filings. High-fidelity signals are verified through secondary OSINT verification.
+                    </p>
+<div class="space-y-6">
+<div class="flex gap-4 p-4 rounded-xl hover:bg-white transition-all cursor-pointer">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-on-secondary-container">fact_check</span>
+</div>
+<div>
+<span class="font-label text-[11px] font-bold uppercase tracking-widest text-secondary block mb-1">Filing Alert</span>
+<p class="text-[13px] font-bold text-primary">Form 8-K Amendment Detected</p>
+<p class="text-[11px] text-on-surface-variant">Delayed filing for 'Major Asset Sale' placeholder.</p>
+</div>
+</div>
+<div class="flex gap-4 p-4 rounded-xl hover:bg-white transition-all cursor-pointer">
+<div class="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-primary">public</span>
+</div>
+<div>
+<span class="font-label text-[11px] font-bold uppercase tracking-widest text-primary block mb-1">Geospatial</span>
+<p class="text-[13px] font-bold text-primary">Unusual Port Activity: Rotterdam</p>
+<p class="text-[11px] text-on-surface-variant">14% increase in heavy-cargo vessels linked to Veridian.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="col-span-12 lg:col-span-8 bg-primary p-12 rounded-xl text-white relative overflow-hidden">
+<div class="absolute right-0 top-0 w-1/2 h-full opacity-20 pointer-events-none">
+<img alt="Data visualization screen" class="w-full h-full object-cover" data-alt="close-up of a high-tech data interface showing glowing blue line charts and digital metrics in a dark room" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDahGCCf76eiL2ygyf84M-dLcsibc0OkvYOlEyNAd9m8AbvvZ8i-ShDmZjNFiM3vD_1MtawutQgu3J3zZQo2K6S5R51_jCI7Uvm5M3fAT6vEr6MhQeTqfBVvawy2zGgiRQzAnwvFcDVofuJIbxkBT8Wxuvu5HQpae5s4b-lmuq9F3_G_ML-TA1cnuzVCFAOg0rVj6oi0siqPy0PiWqMrvvjMJx0WuHWmb68VerXDlyCq-cR3FTRisdEFuL5sxIUKXf7Uf06EaVGX54V"/>
+</div>
+<div class="relative z-10 max-w-md">
+<span class="font-label text-[11px] font-bold uppercase tracking-widest text-on-primary-container mb-4 block">Strategic Advisory</span>
+<h4 class="font-headline text-3xl mb-6">Leverage Pre-Public Windows.</h4>
+<p class="font-body text-[14px] leading-relaxed text-on-primary-container mb-8">
+                            Your "Window of Influence" for Synthetix Biologics is currently <strong>124 days</strong>. Early outreach protocols suggest a 42% reduction in acquisition premiums.
+                        </p>
+<button class="px-8 py-3 bg-secondary-container text-on-secondary-container rounded-md font-label text-[11px] font-bold uppercase tracking-widest shadow-lg active:scale-95 transition-all">
+                            Initiate Quiet Outreach
+                        </button>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- Contextual FAB (Suppressed based on UI logic - not rendering on specific detail views, but active here as it's a dashboard view) -->
+<div class="fixed bottom-8 right-8 z-50">
+<button class="w-14 h-14 bg-primary text-white rounded-full flex items-center justify-center shadow-2xl active:scale-90 transition-all">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">add</span>
+</button>
+</div>
+</body></html>

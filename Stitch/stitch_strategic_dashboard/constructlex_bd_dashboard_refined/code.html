@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ConstructLex Pro | BD Intelligence Dashboard</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&amp;family=Newsreader:ital,wght@0,400;0,500;0,600;1,400;1,500&amp;display=swap" rel="stylesheet"/>
+<!-- Icons -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "inverse-primary": "#b6c7e7",
+              "surface-container": "#eceef0",
+              "on-tertiary": "#ffffff",
+              "on-surface-variant": "#44474d",
+              "on-secondary-fixed": "#002117",
+              "inverse-on-surface": "#eff1f3",
+              "outline-variant": "#c5c6ce",
+              "secondary": "#2b6954",
+              "secondary-container": "#adedd3",
+              "tertiary-container": "#00312c",
+              "inverse-surface": "#2d3133",
+              "tertiary-fixed": "#89f5e7",
+              "surface-container-low": "#f2f4f6",
+              "outline": "#75777e",
+              "on-background": "#191c1e",
+              "primary-fixed": "#d5e3ff",
+              "on-secondary-container": "#306d58",
+              "on-primary": "#ffffff",
+              "surface-tint": "#4f5f7b",
+              "on-surface": "#191c1e",
+              "surface-container-lowest": "#ffffff",
+              "tertiary": "#001a17",
+              "on-primary-fixed": "#091c34",
+              "on-primary-container": "#8292b0",
+              "on-primary-fixed-variant": "#374762",
+              "secondary-fixed": "#b0f0d6",
+              "tertiary-fixed-dim": "#6bd8cb",
+              "on-tertiary-fixed-variant": "#005049",
+              "surface-dim": "#d8dadc",
+              "primary": "#04162e",
+              "surface": "#f7f9fb",
+              "surface-container-highest": "#e0e3e5",
+              "on-error-container": "#93000a",
+              "primary-fixed-dim": "#b6c7e7",
+              "on-secondary": "#ffffff",
+              "error": "#ba1a1a",
+              "primary-container": "#1a2b44",
+              "secondary-fixed-dim": "#95d3ba",
+              "on-tertiary-fixed": "#00201d",
+              "surface-container-high": "#e6e8ea",
+              "on-tertiary-container": "#2ba296",
+              "surface-bright": "#f7f9fb",
+              "background": "#f7f9fb",
+              "surface-variant": "#e0e3e5",
+              "on-error": "#ffffff",
+              "error-container": "#ffdad6",
+              "on-secondary-fixed-variant": "#0b513d"
+            },
+            fontFamily: {
+              "headline": ["Newsreader"],
+              "body": ["Manrope"],
+              "label": ["Manrope"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 20;
+        font-size: 20px;
+      }
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      .text-mini { font-size: 0.6875rem; }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface antialiased">
+<!-- Sidebar Navigation (SideNavBar - Index 2) -->
+<aside class="h-screen w-20 fixed left-0 top-0 bg-[#f2f4f6] flex flex-col items-center py-8 gap-8 z-50">
+<div class="flex flex-col items-center gap-1">
+<span class="font-headline italic font-medium text-lg text-[#04162e]">CL</span>
+</div>
+<nav class="flex flex-col items-center gap-6 w-full px-2">
+<!-- Market Intelligence (Active) -->
+<button class="bg-white text-[#306d58] rounded-xl shadow-sm p-3 ease-out duration-200 group flex flex-col items-center gap-1">
+<span class="material-symbols-outlined" data-icon="insights" style="font-variation-settings: 'FILL' 1;">insights</span>
+<span class="font-label text-[8px] font-bold uppercase tracking-wider">MRKT</span>
+</button>
+<button class="text-slate-400 hover:text-[#04162e] p-3 ease-out duration-200 group flex flex-col items-center gap-1">
+<span class="material-symbols-outlined" data-icon="pipeline">plumbing</span>
+<span class="font-label text-[8px] font-bold uppercase tracking-wider">PIPE</span>
+</button>
+<button class="text-slate-400 hover:text-[#04162e] p-3 ease-out duration-200 group flex flex-col items-center gap-1">
+<span class="material-symbols-outlined" data-icon="science">science</span>
+<span class="font-label text-[8px] font-bold uppercase tracking-wider">LABS</span>
+</button>
+<button class="text-slate-400 hover:text-[#04162e] p-3 ease-out duration-200 group flex flex-col items-center gap-1">
+<span class="material-symbols-outlined" data-icon="gavel">gavel</span>
+<span class="font-label text-[8px] font-bold uppercase tracking-wider">LAW</span>
+</button>
+<button class="text-slate-400 hover:text-[#04162e] p-3 ease-out duration-200 group flex flex-col items-center gap-1">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+<span class="font-label text-[8px] font-bold uppercase tracking-wider">RESC</span>
+</button>
+<button class="text-slate-400 hover:text-[#04162e] p-3 ease-out duration-200 group flex flex-col items-center gap-1">
+<span class="material-symbols-outlined" data-icon="monitoring">monitoring</span>
+<span class="font-label text-[8px] font-bold uppercase tracking-wider">DATA</span>
+</button>
+</nav>
+<div class="mt-auto pt-6 border-t border-slate-200 w-12 flex flex-col items-center gap-6">
+<span class="material-symbols-outlined text-slate-400 cursor-pointer" data-icon="settings">settings</span>
+<div class="w-8 h-8 rounded-full bg-primary-container overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="professional headshot of a corporate legal executive with a confident expression and neutral background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBCaPWQh-1lfN48-UijEs2ZwYvcVhPAifLpw-rC9Tp23noysDwqwLP9OHsQcYIvta5jr0DLEEcGz9w9DFVnWnL0wO2MzWePwTDvxCQi2e1y-Se8h0e3uU3lsHhOHhnMY6vzj5dB1fbazY50Qm7V7lq4WuQvVU5vhbxi_f5pJg5XaapERxiw1W1DDOjYRiagfnVdh5EKwG4m9mAX67b9iEkX557SqprjPcg52Y6fJpSAqdt9wHxQMHg1S3W0b1p6if0cwuZwQfDG779f"/>
+</div>
+</div>
+</aside>
+<!-- Top Navigation (TopAppBar - Index 3) -->
+<header class="fixed top-0 left-20 w-[calc(100%-5rem)] h-14 bg-white border-b border-slate-100 flex items-center justify-between px-6 z-40">
+<div class="flex items-center gap-8">
+<h1 class="font-headline italic font-medium text-[#04162e]">ConstructLex Pro</h1>
+<nav class="hidden md:flex items-center gap-6">
+<a class="font-label text-[14px] leading-1.6 text-[#04162e] font-semibold border-b-2 border-[#04162e] py-4" href="#">Global Search</a>
+<a class="font-label text-[14px] leading-1.6 text-slate-500 hover:bg-slate-50 py-4 px-2 transition-colors" href="#">Briefings</a>
+<a class="font-label text-[14px] leading-1.6 text-slate-500 hover:bg-slate-50 py-4 px-2 transition-colors" href="#">Reports</a>
+<a class="font-label text-[14px] leading-1.6 text-slate-500 hover:bg-slate-50 py-4 px-2 transition-colors" href="#">Directories</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="bg-primary from-primary to-primary-container text-white px-4 py-1.5 rounded-md font-label text-[14px] leading-1.6 flex items-center gap-2 hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined !text-[18px]" data-icon="add_circle">add_circle</span>
+                New Research
+            </button>
+</div>
+</header>
+<!-- Main Content -->
+<main class="pl-20 pt-14 min-h-screen">
+<div class="max-w-[1600px] mx-auto p-12 space-y-16">
+<!-- Hero Header Section -->
+<section class="space-y-4">
+<div class="flex justify-between items-end">
+<div class="max-w-2xl">
+<span class="font-label text-mini text-secondary font-bold uppercase tracking-[0.05em]">Intelligence Feed • Live</span>
+<h2 class="font-headline text-[2.5rem] leading-tight text-primary mt-2">
+                            BD Intelligence - Mandate probability signals across 34 practice areas
+                        </h2>
+</div>
+<div class="flex items-center gap-3 bg-surface-container-low p-1.5 rounded-xl">
+<button class="bg-white shadow-sm px-4 py-1.5 rounded-lg text-mini font-bold uppercase tracking-wider text-primary">Overview</button>
+<button class="px-4 py-1.5 rounded-lg text-mini font-bold uppercase tracking-wider text-slate-500 hover:text-primary transition-colors">Regional</button>
+<button class="px-4 py-1.5 rounded-lg text-mini font-bold uppercase tracking-wider text-slate-500 hover:text-primary transition-colors">Practice</button>
+</div>
+</div>
+</section>
+<!-- Top Velocity Table Section -->
+<section class="grid grid-cols-1 gap-12">
+<div class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-[40px_0_40px_-10px_rgba(25,28,30,0.06)]">
+<div class="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-white">
+<h3 class="font-headline text-lg font-medium text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary" data-icon="bolt">bolt</span>
+                            Velocity Rankings
+                        </h3>
+<div class="flex gap-4">
+<span class="text-mini font-medium text-slate-400 flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-secondary"></span> 7-Day Growth
+                            </span>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low border-b border-slate-100">
+<th class="px-8 py-4 font-label text-mini font-bold uppercase tracking-[0.05em] text-slate-500">Rank</th>
+<th class="px-8 py-4 font-label text-mini font-bold uppercase tracking-[0.05em] text-slate-500">Name / Sector</th>
+<th class="px-8 py-4 font-label text-mini font-bold uppercase tracking-[0.05em] text-slate-500">Velocity Badge</th>
+<th class="px-8 py-4 font-label text-mini font-bold uppercase tracking-[0.05em] text-slate-500">Top Practice Area</th>
+<th class="px-8 py-4 font-label text-mini font-bold uppercase tracking-[0.05em] text-slate-500 text-right">30-day Score (%)</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-50">
+<!-- Row 1 -->
+<tr class="hover:bg-slate-50 transition-colors group cursor-pointer">
+<td class="px-8 py-5 font-headline text-lg text-primary/40">01</td>
+<td class="px-8 py-5">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-slate-100 flex items-center justify-center font-bold text-slate-400 text-xs">NV</div>
+<div>
+<div class="font-bold text-sm text-primary">Nvidia Global</div>
+<div class="text-xs text-slate-400">Technology / AI</div>
+</div>
+</div>
+</td>
+<td class="px-8 py-5">
+<div class="inline-flex items-center gap-1.5 px-3 py-1 bg-secondary-container text-on-secondary-container rounded-full text-[10px] font-bold uppercase tracking-wider">
+<span class="material-symbols-outlined !text-xs" data-icon="trending_up">trending_up</span>
+                                            +42.4% Intensity
+                                        </div>
+</td>
+<td class="px-8 py-5">
+<span class="text-sm font-medium text-slate-600">M&amp;A / Antitrust</span>
+</td>
+<td class="px-8 py-5 text-right font-headline text-lg text-primary">94.8%</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-slate-50 transition-colors group cursor-pointer">
+<td class="px-8 py-5 font-headline text-lg text-primary/40">02</td>
+<td class="px-8 py-5">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-slate-100 flex items-center justify-center font-bold text-slate-400 text-xs">BP</div>
+<div>
+<div class="font-bold text-sm text-primary">Blackstone Partners</div>
+<div class="text-xs text-slate-400">Private Equity</div>
+</div>
+</div>
+</td>
+<td class="px-8 py-5">
+<div class="inline-flex items-center gap-1.5 px-3 py-1 bg-secondary-container text-on-secondary-container rounded-full text-[10px] font-bold uppercase tracking-wider">
+<span class="material-symbols-outlined !text-xs" data-icon="trending_up">trending_up</span>
+                                            +38.1% Momentum
+                                        </div>
+</td>
+<td class="px-8 py-5">
+<span class="text-sm font-medium text-slate-600">Capital Markets</span>
+</td>
+<td class="px-8 py-5 text-right font-headline text-lg text-primary">91.2%</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-slate-50 transition-colors group cursor-pointer">
+<td class="px-8 py-5 font-headline text-lg text-primary/40">03</td>
+<td class="px-8 py-5">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-slate-100 flex items-center justify-center font-bold text-slate-400 text-xs">AL</div>
+<div>
+<div class="font-bold text-sm text-primary">AstraZeneca PLC</div>
+<div class="text-xs text-slate-400">Healthcare</div>
+</div>
+</div>
+</td>
+<td class="px-8 py-5">
+<div class="inline-flex items-center gap-1.5 px-3 py-1 bg-secondary-container text-on-secondary-container rounded-full text-[10px] font-bold uppercase tracking-wider">
+<span class="material-symbols-outlined !text-xs" data-icon="trending_up">trending_up</span>
+                                            +29.7% Surge
+                                        </div>
+</td>
+<td class="px-8 py-5">
+<span class="text-sm font-medium text-slate-600">IP Litigation</span>
+</td>
+<td class="px-8 py-5 text-right font-headline text-lg text-primary">88.5%</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-slate-50 transition-colors group cursor-pointer">
+<td class="px-8 py-5 font-headline text-lg text-primary/40">04</td>
+<td class="px-8 py-5">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-slate-100 flex items-center justify-center font-bold text-slate-400 text-xs">GS</div>
+<div>
+<div class="font-bold text-sm text-primary">Goldman Sachs</div>
+<div class="text-xs text-slate-400">Financial Services</div>
+</div>
+</div>
+</td>
+<td class="px-8 py-5">
+<div class="inline-flex items-center gap-1.5 px-3 py-1 bg-secondary-container text-on-secondary-container rounded-full text-[10px] font-bold uppercase tracking-wider">
+<span class="material-symbols-outlined !text-xs" data-icon="trending_up">trending_up</span>
+                                            +24.4% Growth
+                                        </div>
+</td>
+<td class="px-8 py-5">
+<span class="text-sm font-medium text-slate-600">Regulatory Risk</span>
+</td>
+<td class="px-8 py-5 text-right font-headline text-lg text-primary">87.1%</td>
+</tr>
+<!-- Row 5 -->
+<tr class="hover:bg-slate-50 transition-colors group cursor-pointer">
+<td class="px-8 py-5 font-headline text-lg text-primary/40">05</td>
+<td class="px-8 py-5">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-slate-100 flex items-center justify-center font-bold text-slate-400 text-xs">HE</div>
+<div>
+<div class="font-bold text-sm text-primary">Hermès Intl</div>
+<div class="text-xs text-slate-400">Retail / Luxury</div>
+</div>
+</div>
+</td>
+<td class="px-8 py-5">
+<div class="inline-flex items-center gap-1.5 px-3 py-1 bg-secondary-container text-on-secondary-container rounded-full text-[10px] font-bold uppercase tracking-wider">
+<span class="material-symbols-outlined !text-xs" data-icon="trending_up">trending_up</span>
+                                            +22.9% Signal
+                                        </div>
+</td>
+<td class="px-8 py-5">
+<span class="text-sm font-medium text-slate-600">Trade Compliance</span>
+</td>
+<td class="px-8 py-5 text-right font-headline text-lg text-primary">84.3%</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="bg-surface-container-low px-8 py-4 flex justify-center">
+<button class="text-mini font-bold uppercase tracking-[0.1em] text-primary hover:tracking-[0.15em] transition-all">View Full Velocity Index (Top 20)</button>
+</div>
+</div>
+</section>
+<!-- Trend Charts Section -->
+<section class="space-y-8">
+<div class="flex items-center justify-between border-b border-slate-200 pb-4">
+<h3 class="font-headline text-xl font-medium text-primary">Signal Volume by Practice Area</h3>
+<div class="flex gap-2">
+<span class="px-3 py-1 text-[10px] font-bold rounded bg-primary text-white">Daily</span>
+<span class="px-3 py-1 text-[10px] font-bold rounded bg-slate-100 text-slate-500">Weekly</span>
+<span class="px-3 py-1 text-[10px] font-bold rounded bg-slate-100 text-slate-500">Monthly</span>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<!-- Chart Card 1: M&A -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-[40px_0_40px_-10px_rgba(25,28,30,0.04)] space-y-6">
+<div class="flex justify-between items-start">
+<div>
+<h4 class="font-bold text-sm text-primary">M&amp;A &amp; Consolidation</h4>
+<p class="text-xs text-slate-400">Total Signal Volume: 1,248</p>
+</div>
+<span class="text-secondary text-xs font-bold font-mono">+12.4%</span>
+</div>
+<!-- Mini Chart Visualization (CSS based) -->
+<div class="h-32 flex items-end gap-1 px-2">
+<div class="flex-1 bg-surface-container-high h-[40%] rounded-t-sm"></div>
+<div class="flex-1 bg-surface-container-high h-[55%] rounded-t-sm"></div>
+<div class="flex-1 bg-surface-container-high h-[48%] rounded-t-sm"></div>
+<div class="flex-1 bg-surface-container-high h-[60%] rounded-t-sm"></div>
+<div class="flex-1 bg-secondary/20 h-[75%] rounded-t-sm border-t-2 border-secondary"></div>
+<div class="flex-1 bg-secondary/30 h-[85%] rounded-t-sm border-t-2 border-secondary"></div>
+<div class="flex-1 bg-secondary h-full rounded-t-sm"></div>
+</div>
+<div class="flex justify-between items-center pt-4 border-t border-slate-50">
+<span class="text-mini font-bold uppercase tracking-widest text-slate-400">L7D Trend</span>
+<span class="material-symbols-outlined text-slate-300" data-icon="open_in_full">open_in_full</span>
+</div>
+</div>
+<!-- Chart Card 2: Antitrust -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-[40px_0_40px_-10px_rgba(25,28,30,0.04)] space-y-6 border-l-4 border-secondary">
+<div class="flex justify-between items-start">
+<div>
+<h4 class="font-bold text-sm text-primary">Regulatory &amp; Antitrust</h4>
+<p class="text-xs text-slate-400">Total Signal Volume: 2,891</p>
+</div>
+<span class="text-secondary text-xs font-bold font-mono">+28.1%</span>
+</div>
+<div class="h-32 flex items-end gap-1 px-2">
+<div class="flex-1 bg-surface-container-high h-[20%] rounded-t-sm"></div>
+<div class="flex-1 bg-surface-container-high h-[25%] rounded-t-sm"></div>
+<div class="flex-1 bg-surface-container-high h-[35%] rounded-t-sm"></div>
+<div class="flex-1 bg-surface-container-high h-[30%] rounded-t-sm"></div>
+<div class="flex-1 bg-secondary/40 h-[50%] rounded-t-sm border-t-2 border-secondary"></div>
+<div class="flex-1 bg-secondary/60 h-[80%] rounded-t-sm border-t-2 border-secondary"></div>
+<div class="flex-1 bg-secondary h-[95%] rounded-t-sm"></div>
+</div>
+<div class="flex justify-between items-center pt-4 border-t border-slate-50">
+<span class="text-mini font-bold uppercase tracking-widest text-secondary">High Volatility</span>
+<span class="material-symbols-outlined text-slate-300" data-icon="open_in_full">open_in_full</span>
+</div>
+</div>
+<!-- Chart Card 3: Labor -->
+<div class="bg-surface-container-lowest p-6 rounded-xl shadow-[40px_0_40px_-10px_rgba(25,28,30,0.04)] space-y-6">
+<div class="flex justify-between items-start">
+<div>
+<h4 class="font-bold text-sm text-primary">Labor &amp; Employment</h4>
+<p class="text-xs text-slate-400">Total Signal Volume: 844</p>
+</div>
+<span class="text-error text-xs font-bold font-mono">-4.2%</span>
+</div>
+<div class="h-32 flex items-end gap-1 px-2">
+<div class="flex-1 bg-surface-container-high h-[80%] rounded-t-sm"></div>
+<div class="flex-1 bg-surface-container-high h-[75%] rounded-t-sm"></div>
+<div class="flex-1 bg-surface-container-high h-[70%] rounded-t-sm"></div>
+<div class="flex-1 bg-surface-container-high h-[65%] rounded-t-sm"></div>
+<div class="flex-1 bg-surface-container-high h-[60%] rounded-t-sm"></div>
+<div class="flex-1 bg-surface-container-high h-[58%] rounded-t-sm"></div>
+<div class="flex-1 bg-slate-200 h-[55%] rounded-t-sm"></div>
+</div>
+<div class="flex justify-between items-center pt-4 border-t border-slate-50">
+<span class="text-mini font-bold uppercase tracking-widest text-slate-400">Stabilizing</span>
+<span class="material-symbols-outlined text-slate-300" data-icon="open_in_full">open_in_full</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Intelligence Map / Geographic Context (Extra Value) -->
+<section class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<div class="bg-primary-container rounded-xl p-8 text-white relative overflow-hidden group">
+<div class="relative z-10 space-y-6">
+<div class="space-y-2">
+<span class="text-mini font-bold uppercase tracking-widest text-secondary-container">Region Insight</span>
+<h4 class="font-headline text-2xl">London &amp; SE Mandate Surge</h4>
+<p class="text-sm text-slate-300 max-w-sm">Regulatory tightening in the UK financial sector has triggered a 34% uptick in advisory requests over the last 48 hours.</p>
+</div>
+<button class="bg-secondary-container text-on-secondary-container px-6 py-2 rounded-md font-bold text-mini uppercase tracking-wider hover:opacity-90 transition-opacity">
+                            Generate Regional Brief
+                        </button>
+</div>
+<!-- Decorative Map Abstract -->
+<div class="absolute -right-10 -bottom-10 w-64 h-64 opacity-10 group-hover:opacity-20 transition-opacity">
+<img class="w-full h-full object-cover rounded-full" data-alt="abstract stylized world map with glowing dots over dark background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuArldC3owMEwairB_WKUKfdsdb67rNBCh6mSGMM--d4-GXK3BEp_qdBeVqNXnPBvPEn4kAtpx7dzwlA4HdHBGoWioJisllWSRRuG3Kx3VioVg5PCDqxnotaZC6sdU8qeCECUx0Db1K0xUb742jyvTutWmSYqOYm3fq7CWKuX_vtqxcxWL_217d5lClWe6kp2X0G0Pac6G-xjI8NBeT7BAAEpliiVF77PQOrmwf17rJp0pQkAtQXiXQ43V1YcjfPpckXJdhnovKyCPT2"/>
+</div>
+</div>
+<div class="bg-surface-container-low rounded-xl p-8 border border-slate-200/50 flex flex-col justify-between">
+<div class="flex justify-between items-start">
+<div class="space-y-1">
+<h4 class="font-bold text-sm text-primary">Pre-Formation Signals</h4>
+<p class="text-xs text-slate-500">Entities showing highest likelihood of upcoming corporate restructure.</p>
+</div>
+<span class="material-symbols-outlined text-primary" data-icon="auto_awesome">auto_awesome</span>
+</div>
+<div class="mt-6 flex items-center gap-4">
+<div class="flex -space-x-3">
+<div class="w-10 h-10 rounded-full border-2 border-white bg-slate-200 overflow-hidden"><img class="w-full h-full object-cover" data-alt="professional male profile avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCASd6fnZYj1yKqNkXWOTzMUQ2_Gcdw4ymCG7ET3OWevxTIn81UTO6p3mCWkBK7CClaWgClPKRkrJ6FwRP3n0TkSuqo5r-wKRFEiYrQ3FahdKIp3409XMVK-fsG4EIk4Rz5DTSsNVYi2gr2NjBBuZZ1PQvanLqchQ5BaBue5t5kQ05zPw0GCkBcB0AFKd7YLi3Pw8x7KRfWL5IbGHTUKP3xWlkgfArNvd7gBNwHQcONMPPa_F_yW24NBP6cOajPlJ5gxXODyFLhlIiB"/></div>
+<div class="w-10 h-10 rounded-full border-2 border-white bg-slate-200 overflow-hidden"><img class="w-full h-full object-cover" data-alt="professional female profile avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBcA5O7IpRTDRQdUByOwX49v6Fd6ceg7N_UbiLDJKna8_xMfCB2yCCj0kS6wcPZHKuXlxIU1EtbyixR8dPekRz83m8Me9jX7EdewIamtGep8DYPYrNJepvz7RBIfrkSpyJRE2UkGcTySMlPwPsfHxS6a_xB1PWc3kDua-eaFGKYv1oMdHR9_LlBo0-GyEGvtVLhn0ZtIZbepGHr18gI6V9Nt7g-8v6Qgoehmwgpj0xmt1N4zGiG55URoWWQe0OeuR9dMemAfD49LFBT"/></div>
+<div class="w-10 h-10 rounded-full border-2 border-white bg-slate-200 overflow-hidden flex items-center justify-center bg-primary text-[10px] font-bold text-white">+12</div>
+</div>
+<div class="text-xs">
+<span class="font-bold text-primary block">3 Alerts pending review</span>
+<span class="text-slate-500">Last updated 14m ago</span>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+</body></html>
