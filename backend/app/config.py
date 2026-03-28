@@ -141,6 +141,8 @@ class Settings(BaseSettings):
     hibp_api_key: str = Field(
         default="", description="HaveIBeenPwned API key (dark web monitoring)"
     )
+    reddit_client_id: str = Field(default="", description="Reddit OAuth2 client ID")
+    reddit_client_secret: str = Field(default="", description="Reddit OAuth2 client secret")
 
     # ── LLM — Training Phase Only (never production) ──────────────────────────
     groq_api_key: str = Field(
