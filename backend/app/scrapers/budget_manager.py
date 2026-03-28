@@ -34,13 +34,14 @@ log = logging.getLogger(__name__)
 # ── Budget Configurations ─────────────────────────────────────────────────────
 
 BUDGET_CONFIGS: dict[str, dict] = {
+    # ── API-Limited Sources (hard limits from providers) ─────────────────────
     "alpha_vantage": {
         "daily_limit": 25,
         "monthly_limit": None,
         "priority": "market_data",
     },
     "proxycurl": {
-        "daily_limit": None,
+        "daily_limit": 1,
         "monthly_limit": 10,
         "priority": "jobs",
     },
@@ -50,12 +51,12 @@ BUDGET_CONFIGS: dict[str, dict] = {
         "priority": "geo",
     },
     "twitter": {
-        "daily_limit": None,
-        "monthly_limit": 500000,
+        "daily_limit": 300,
+        "monthly_limit": 9000,
         "priority": "social",
     },
     "hibp": {
-        "daily_limit": None,
+        "daily_limit": 20,
         "monthly_limit": 50,
         "priority": "security",
     },
@@ -72,6 +73,159 @@ BUDGET_CONFIGS: dict[str, dict] = {
     "google_trends": {
         "daily_limit": 100,  # pytrends informal rate limit
         "monthly_limit": None,
+        "priority": "geo",
+    },
+    # ── Regulatory Scrapers (free sources — generous self-imposed limits) ────
+    "regulatory_osc": {
+        "daily_limit": 500,
+        "monthly_limit": 15000,
+        "priority": "regulatory",
+    },
+    "regulatory_osfi": {
+        "daily_limit": 200,
+        "monthly_limit": 6000,
+        "priority": "regulatory",
+    },
+    "regulatory_bcsc": {
+        "daily_limit": 200,
+        "monthly_limit": 6000,
+        "priority": "regulatory",
+    },
+    "regulatory_asc": {
+        "daily_limit": 200,
+        "monthly_limit": 6000,
+        "priority": "regulatory",
+    },
+    "regulatory_fsra": {
+        "daily_limit": 200,
+        "monthly_limit": 6000,
+        "priority": "regulatory",
+    },
+    "regulatory_crtc": {
+        "daily_limit": 100,
+        "monthly_limit": 3000,
+        "priority": "regulatory",
+    },
+    "regulatory_opc": {
+        "daily_limit": 200,
+        "monthly_limit": 6000,
+        "priority": "regulatory",
+    },
+    "regulatory_us_doj": {
+        "daily_limit": 500,
+        "monthly_limit": 15000,
+        "priority": "regulatory",
+    },
+    "regulatory_sec_aaer": {
+        "daily_limit": 300,
+        "monthly_limit": 9000,
+        "priority": "regulatory",
+    },
+    "regulatory_fintrac": {
+        "daily_limit": 200,
+        "monthly_limit": 6000,
+        "priority": "regulatory",
+    },
+    "regulatory_competition_bureau": {
+        "daily_limit": 200,
+        "monthly_limit": 6000,
+        "priority": "regulatory",
+    },
+    "regulatory_eccc": {
+        "daily_limit": 200,
+        "monthly_limit": 6000,
+        "priority": "regulatory",
+    },
+    "regulatory_health_canada": {
+        "daily_limit": 200,
+        "monthly_limit": 6000,
+        "priority": "regulatory",
+    },
+    "regulatory_amf_quebec": {
+        "daily_limit": 200,
+        "monthly_limit": 6000,
+        "priority": "regulatory",
+    },
+    # ── Social Scrapers ─────────────────────────────────────────────────────
+    "social_reddit": {
+        "daily_limit": 200,
+        "monthly_limit": 5000,
+        "priority": "social",
+    },
+    "social_linkedin": {
+        "daily_limit": 1,
+        "monthly_limit": 10,
+        "priority": "social",
+    },
+    "social_stockhouse": {
+        "daily_limit": 100,
+        "monthly_limit": 3000,
+        "priority": "social",
+    },
+    # ── Geo Scrapers ────────────────────────────────────────────────────────
+    "geo_municipal": {
+        "daily_limit": 100,
+        "monthly_limit": 3000,
+        "priority": "geo",
+    },
+    "geo_opensky": {
+        "daily_limit": 400,
+        "monthly_limit": 12000,
+        "priority": "geo",
+    },
+    "geo_lobbyist": {
+        "daily_limit": 50,
+        "monthly_limit": 1500,
+        "priority": "geo",
+    },
+    "geo_dark_web": {
+        "daily_limit": 20,
+        "monthly_limit": 500,
+        "priority": "geo",
+    },
+    "geo_wsib": {
+        "daily_limit": 100,
+        "monthly_limit": 3000,
+        "priority": "geo",
+    },
+    "geo_cbsa": {
+        "daily_limit": 100,
+        "monthly_limit": 3000,
+        "priority": "geo",
+    },
+    "geo_dbrs": {
+        "daily_limit": 50,
+        "monthly_limit": 1500,
+        "priority": "geo",
+    },
+    "geo_cra_liens": {
+        "daily_limit": 100,
+        "monthly_limit": 3000,
+        "priority": "geo",
+    },
+    "geo_labour_relations": {
+        "daily_limit": 100,
+        "monthly_limit": 3000,
+        "priority": "geo",
+    },
+    "geo_statscan": {
+        "daily_limit": 200,
+        "monthly_limit": 6000,
+        "priority": "geo",
+    },
+    "geo_cipo": {
+        "daily_limit": 100,
+        "monthly_limit": 3000,
+        "priority": "geo",
+    },
+    "geo_procurement": {
+        "daily_limit": 100,
+        "monthly_limit": 3000,
+        "priority": "geo",
+    },
+    "geo_commodity": {
+        "daily_limit": 100,
+        "monthly_limit": 3000,
         "priority": "geo",
     },
 }

@@ -36,6 +36,7 @@ celery_app = Celery(
     backend=settings.celery_result_backend,
     include=[
         "app.tasks._impl",  # Phase 0-5 task implementations
+        "app.tasks.scraper_tasks",  # Phase S1-S4 category scraper tasks
         "app.tasks.phase6_tasks",  # Phase 6 ML agents
         "app.tasks.phase9_tasks",  # Phase 9 Feedback Loop agents
     ],
@@ -92,6 +93,19 @@ celery_app.conf.task_queues = (
 # ── Task Routing ───────────────────────────────────────────────────────────────
 
 celery_app.conf.task_routes = {
+    # Phase S4: Real category scraper tasks → scrapers queue
+    "scrapers.run_corporate": {"queue": "scrapers"},
+    "scrapers.run_legal": {"queue": "scrapers"},
+    "scrapers.run_regulatory": {"queue": "scrapers"},
+    "scrapers.run_jobs": {"queue": "scrapers"},
+    "scrapers.run_market": {"queue": "scrapers"},
+    "scrapers.run_news": {"queue": "scrapers"},
+    "scrapers.run_social": {"queue": "scrapers"},
+    "scrapers.run_geo": {"queue": "scrapers"},
+    "scrapers.run_law_blogs": {"queue": "scrapers"},
+    "scrapers.health_check_all": {"queue": "default"},
+    "scrapers.run_single": {"queue": "scrapers"},
+    "scrapers.canary_check": {"queue": "default"},
     # All scraper tasks → scrapers queue
     "app.tasks._impl.scrape_*": {"queue": "scrapers"},
     # Feature engineering → features queue
@@ -135,7 +149,73 @@ celery_app.conf.task_routes = {
 # Implemented in Phase 1+ — stubs defined here for scaffold.
 
 celery_app.conf.beat_schedule = {
-    # ── Phase 1: Scrapers ──────────────────────────────────────────────────────
+    # ── Phase S4: Category Scraper Tasks (real implementations) ─────────────────
+    # Regulatory — daily 6am Toronto (11:00 UTC)
+    "run-regulatory-scrapers": {
+        "task": "scrapers.run_regulatory",
+        "schedule": crontab(hour=11, minute=0),
+        "options": {"queue": "scrapers"},
+    },
+    # Social — twice daily (morning + evening)
+    "run-social-scrapers-morning": {
+        "task": "scrapers.run_social",
+        "schedule": crontab(hour=12, minute=30),
+        "options": {"queue": "scrapers"},
+    },
+    "run-social-scrapers-evening": {
+        "task": "scrapers.run_social",
+        "schedule": crontab(hour=0, minute=30),
+        "options": {"queue": "scrapers"},
+    },
+    # Geo — daily 8am Toronto (13:00 UTC)
+    "run-geo-scrapers-daily": {
+        "task": "scrapers.run_geo",
+        "schedule": crontab(hour=13, minute=0),
+        "options": {"queue": "scrapers"},
+    },
+    # Corporate filings — daily 9am Toronto (14:00 UTC)
+    "run-corporate-scrapers-daily": {
+        "task": "scrapers.run_corporate",
+        "schedule": crontab(hour=14, minute=0),
+        "options": {"queue": "scrapers"},
+    },
+    # Legal — daily 10am Toronto (15:00 UTC)
+    "run-legal-scrapers-daily": {
+        "task": "scrapers.run_legal",
+        "schedule": crontab(hour=15, minute=0),
+        "options": {"queue": "scrapers"},
+    },
+    # Market data — every 4 hours during market hours (9:30, 13:30, 17:30 Toronto)
+    "run-market-scrapers-market-hours": {
+        "task": "scrapers.run_market",
+        "schedule": crontab(hour="14,18,22", minute=30),
+        "options": {"queue": "scrapers"},
+    },
+    # News — every 6 hours
+    "run-news-scrapers": {
+        "task": "scrapers.run_news",
+        "schedule": crontab(hour="*/6", minute=15),
+        "options": {"queue": "scrapers"},
+    },
+    # Jobs — daily 6am UTC
+    "run-jobs-scrapers-daily": {
+        "task": "scrapers.run_jobs",
+        "schedule": crontab(hour=6, minute=0),
+        "options": {"queue": "scrapers"},
+    },
+    # Law blogs — every 6 hours
+    "run-law-blog-scrapers": {
+        "task": "scrapers.run_law_blogs",
+        "schedule": crontab(hour="*/6", minute=45),
+        "options": {"queue": "scrapers"},
+    },
+    # Scraper health check — every 30 minutes
+    "scraper-health-check": {
+        "task": "scrapers.health_check_all",
+        "schedule": crontab(minute="*/30"),
+        "options": {"queue": "default"},
+    },
+    # ── Phase 1: Scrapers (legacy stubs) ─────────────────────────────────────
     # SEDAR+ — every 2 hours during business hours (Toronto time = UTC-5)
     "scrape-sedar": {
         "task": "app.tasks._impl.scrape_sedar",

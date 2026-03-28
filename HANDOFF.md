@@ -301,6 +301,63 @@ Key production values to set before Phase 11:
 
 ---
 
+---
+
+## Scraper Phases Complete — Ready for Infrastructure Provisioning
+
+### Scrapers implemented
+- Phase S1: 14 regulatory scrapers (OSC, OSFI, BCSC, ASC, FSRA, CRTC, OPC, DOJ, SEC AAER, FINTRAC, Competition Bureau, ECCC, Health Canada, AMF Quebec)
+- Phase S2: 6 social scrapers (Reddit, Twitter/X, LinkedIn, Stockhouse, SEDAR Forums, Breach Monitor/HIBP)
+- Phase S3: 18 geo scrapers (Municipal Permits, OpenSky, Lobbyist, WSIB, Labour Relations, Dark Web, CBSA, DBRS, CRA Liens, StatsCan, CIPO Patents, Procurement, Commodity Prices, Google Trends, PyTrends, Stats Canada, and more)
+- Phase S4: Celery wiring, health monitoring, budget integration
+
+### Total scrapers registered: 98
+
+### Categories
+- corporate: 10 scrapers
+- geo: 18 scrapers
+- jobs: 5 scrapers
+- lawblog: 27 scrapers
+- legal: 7 scrapers
+- market: 4 scrapers
+- news: 7 scrapers
+- regulatory: 14 scrapers
+- social: 6 scrapers
+
+### Infrastructure provisioning sequence
+1. DigitalOcean App Platform (tor1):
+   - Web service: FastAPI backend
+   - Worker: Celery worker (2x)
+   - Scheduler: Celery beat (RedBeat)
+   - Managed PostgreSQL (1GB RAM to start)
+   - Managed Redis (1GB)
+
+2. MongoDB Atlas: Free tier M0 → upgrade when signal volume warrants
+
+3. DO Spaces: Create bucket for model artifacts
+   Bucket name: oracle-models
+   Region: tor1
+
+4. Vercel: Deploy frontend (auto from main branch)
+
+5. Environment variables to set in DO App Platform:
+   DATABASE_URL, MONGODB_URL, REDIS_URL, SECRET_KEY,
+   SPACES_KEY, SPACES_SECRET,
+   REDDIT_CLIENT_ID, REDDIT_CLIENT_SECRET,
+   TWITTER_BEARER_TOKEN, PROXYCURL_API_KEY, HIBP_API_KEY,
+   ALPHA_VANTAGE_API_KEY, OPENSKY_USERNAME, OPENSKY_PASSWORD,
+   CANLII_API_KEY, SENTRY_DSN (optional)
+
+### After deploy: 7-day accumulation
+- Day 1: scrapers start running on schedule
+- Day 3: first batch of signals in PostgreSQL
+- Day 7: minimum data for Bayesian engines to produce meaningful scores
+- Day 8+: ML scoring pipeline produces mandate probability matrix
+
+### DO NOT expect ML output before day 8
+
+---
+
 *Handoff written: March 2026*
-*Phases complete: 0, 1, 1B, 1C, 2, 3, 4, 5, 6, 7, 8A, 8B*
+*Phases complete: 0, 1, 1B, 1C, 2, 3, 4, 5, 6, 7, 8A, 8B, S1, S2, S3, S4*
 *Next phase: 9 — Feedback Loop*
