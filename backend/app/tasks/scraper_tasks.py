@@ -55,6 +55,48 @@ def _run_async(coro: Any) -> Any:
         return asyncio.run(coro)
 
 
+async def _update_scraper_health(
+    db: Any,
+    source_id: str,
+    category: str,
+    success: bool,
+    count: int,
+    duration_ms: int,
+    error_msg: str | None = None,
+) -> None:
+    """Update ScraperHealth row after a scraper run."""
+    from sqlalchemy import select  # noqa: PLC0415
+
+    from app.models.scraper_health import ScraperHealth  # noqa: PLC0415
+
+    try:
+        result = await db.execute(
+            select(ScraperHealth).where(ScraperHealth.scraper_name == source_id)
+        )
+        health = result.scalar_one_or_none()
+
+        if health is None:
+            health = ScraperHealth(
+                scraper_name=source_id,
+                scraper_category=category,
+                status="healthy",
+            )
+            db.add(health)
+
+        if success:
+            health.record_success(records=count, duration_ms=duration_ms)
+        else:
+            health.record_failure(error=error_msg or "Unknown error")
+
+        await db.commit()
+    except Exception as exc:
+        log.warning("scraper_health_update_failed", source=source_id, error=str(exc))
+        try:
+            await db.rollback()
+        except Exception:
+            pass
+
+
 async def _run_category(category_prefix: str) -> dict[str, Any]:
     """
     Run all scrapers in a category and persist results.
@@ -83,6 +125,7 @@ async def _run_category(category_prefix: str) -> dict[str, Any]:
                 results = await scraper.run()
                 saved = await persist_signals(results, db, mongo_db)
                 elapsed = time.monotonic() - start
+                duration_ms = int(elapsed * 1000)
                 summary["signals"] += saved
                 summary["scraper_details"].append(
                     {
@@ -98,9 +141,13 @@ async def _run_category(category_prefix: str) -> dict[str, Any]:
                     saved=saved,
                     duration=round(elapsed, 2),
                 )
+                await _update_scraper_health(
+                    db, scraper.source_id, category_prefix, True, saved, duration_ms
+                )
 
             except Exception as exc:
                 elapsed = time.monotonic() - start
+                duration_ms = int(elapsed * 1000)
                 summary["errors"] += 1
                 summary["scraper_details"].append(
                     {
@@ -113,6 +160,9 @@ async def _run_category(category_prefix: str) -> dict[str, Any]:
                 )
                 log.error(
                     "scraper_task_error", source=scraper.source_id, error=str(exc), exc_info=True
+                )
+                await _update_scraper_health(
+                    db, scraper.source_id, category_prefix, False, 0, duration_ms, str(exc)[:2000]
                 )
 
     return summary
