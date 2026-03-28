@@ -10,11 +10,11 @@ Market: price/options signals that precede legal mandates.
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import structlog
-from sqlalchemy import select, func, and_, or_
+from sqlalchemy import and_, func, select
 
 from app.features.base import BaseFeature, FeatureValue, register_feature
 
@@ -34,7 +34,7 @@ class SignalVelocity7dFeature(BaseFeature):
 
     async def compute(self, company_id: int, horizon_days: int, db: Any, mongo_db: Any) -> FeatureValue:
         from app.models.signal import SignalRecord
-        cutoff_7d = datetime.now(tz=timezone.utc) - timedelta(days=7)
+        cutoff_7d = datetime.now(tz=UTC) - timedelta(days=7)
         cutoff_horizon = self._cutoff(horizon_days)
         # Use 7d regardless of horizon — velocity is always the last 7 days
         try:
@@ -82,7 +82,7 @@ class SignalAccelerationFeature(BaseFeature):
 
     async def compute(self, company_id: int, horizon_days: int, db: Any, mongo_db: Any) -> FeatureValue:
         from app.models.signal import SignalRecord
-        now = datetime.now(tz=timezone.utc)
+        now = datetime.now(tz=UTC)
         cutoff_recent = now - timedelta(days=7)
         cutoff_prior = now - timedelta(days=14)
 
@@ -189,8 +189,8 @@ class DaysSinceLastFilingFeature(BaseFeature):
                 return self._null_value(company_id, horizon_days)
 
             if last_filing.tzinfo is None:
-                last_filing = last_filing.replace(tzinfo=timezone.utc)
-            days = (datetime.now(tz=timezone.utc) - last_filing).days
+                last_filing = last_filing.replace(tzinfo=UTC)
+            days = (datetime.now(tz=UTC) - last_filing).days
 
             return FeatureValue(
                 company_id=company_id, feature_name=self.name,
@@ -226,8 +226,8 @@ class DaysSinceLastRegulatoryActionFeature(BaseFeature):
                 return self._null_value(company_id, horizon_days)
 
             if last_action.tzinfo is None:
-                last_action = last_action.replace(tzinfo=timezone.utc)
-            days = (datetime.now(tz=timezone.utc) - last_action).days
+                last_action = last_action.replace(tzinfo=UTC)
+            days = (datetime.now(tz=UTC) - last_action).days
 
             return FeatureValue(
                 company_id=company_id, feature_name=self.name,
@@ -247,10 +247,11 @@ class SignalDecayAdjustedScoreFeature(BaseFeature):
     description = "Exponentially decayed signal count: recent signals weight more. Range: 0–100."
 
     async def compute(self, company_id: int, horizon_days: int, db: Any, mongo_db: Any) -> FeatureValue:
-        from app.models.signal import SignalRecord
         import math
+
+        from app.models.signal import SignalRecord
         cutoff = self._cutoff(horizon_days)
-        now = datetime.now(tz=timezone.utc)
+        now = datetime.now(tz=UTC)
         half_life_days = horizon_days / 2
 
         try:
@@ -271,7 +272,7 @@ class SignalDecayAdjustedScoreFeature(BaseFeature):
                 if scraped_at is None:
                     continue
                 if scraped_at.tzinfo is None:
-                    scraped_at = scraped_at.replace(tzinfo=timezone.utc)
+                    scraped_at = scraped_at.replace(tzinfo=UTC)
                 age_days = (now - scraped_at).total_seconds() / 86400
                 decay = math.exp(-0.693 * age_days / half_life_days)  # 0.693 = ln(2)
                 decayed_score += decay * (confidence or 1.0)
@@ -303,7 +304,6 @@ class PriceMomentumFeature(BaseFeature):
 
     async def compute(self, company_id: int, horizon_days: int, db: Any, mongo_db: Any) -> FeatureValue:
         from app.models.signal import SignalRecord
-        import json
         cutoff = self._cutoff(horizon_days)
         try:
             result = await db.execute(
@@ -354,8 +354,9 @@ class VolumeAnomalyZScoreFeature(BaseFeature):
     requires_market = True
 
     async def compute(self, company_id: int, horizon_days: int, db: Any, mongo_db: Any) -> FeatureValue:
+        import statistics
+
         from app.models.signal import SignalRecord
-        import json, statistics
         cutoff = self._cutoff(horizon_days)
         try:
             result = await db.execute(
@@ -412,7 +413,6 @@ class ShortInterestPctFeature(BaseFeature):
 
     async def compute(self, company_id: int, horizon_days: int, db: Any, mongo_db: Any) -> FeatureValue:
         from app.models.signal import SignalRecord
-        import json
         cutoff = self._cutoff(horizon_days)
         try:
             result = await db.execute(

@@ -19,55 +19,11 @@ import asyncio
 import csv
 import json
 import os
-import sys
 import tempfile
 from datetime import UTC, datetime
-from types import ModuleType
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
-# ── Inject stubs BEFORE any app imports ───────────────────────────────────────
-
-
-def _inject_module_stubs() -> None:
-    """Prevent pyo3/cryptography panic by stubbing problematic modules."""
-    # Stub app.config
-    cfg_mod = ModuleType("app.config")
-    settings_stub = MagicMock()
-    settings_stub.environment = "development"
-    settings_stub.groq_api_key = "test-groq-key"
-    settings_stub.database_url = "postgresql+asyncpg://test:test@localhost/test"
-    settings_stub.mongodb_url = "mongodb://localhost:27017"
-    settings_stub.mongodb_db_name = "oracle_test"
-    settings_stub.redis_url = "redis://localhost:6379/0"
-    cfg_mod.get_settings = lambda: settings_stub  # type: ignore[attr-defined]
-    cfg_mod.Settings = MagicMock  # type: ignore[attr-defined]
-    sys.modules.setdefault("app.config", cfg_mod)
-
-    # Stub app.database with a proper DeclarativeBase subclass
-    import sqlalchemy.orm as _orm
-
-    class _Base(_orm.DeclarativeBase):
-        pass
-
-    db_mod = ModuleType("app.database")
-    db_mod.Base = _Base  # type: ignore[attr-defined]
-    db_mod.AsyncSessionLocal = MagicMock()  # type: ignore[attr-defined]
-    db_mod.get_db = MagicMock()  # type: ignore[attr-defined]
-    db_mod.get_mongo_db = MagicMock()  # type: ignore[attr-defined]
-    sys.modules.setdefault("app.database", db_mod)
-
-    # Stub app.auth.*
-    for name in ("app.auth", "app.auth.models", "app.auth.dependencies"):
-        m = ModuleType(name)
-        m.User = MagicMock()  # type: ignore[attr-defined]
-        m.require_partner = MagicMock()  # type: ignore[attr-defined]
-        m.require_admin = MagicMock()  # type: ignore[attr-defined]
-        m.require_auth = MagicMock()  # type: ignore[attr-defined]
-        sys.modules.setdefault(name, m)
-
-
-_inject_module_stubs()
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────

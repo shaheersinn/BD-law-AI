@@ -25,11 +25,11 @@ Features:
 from __future__ import annotations
 
 import re
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import structlog
-from sqlalchemy import select, func, and_, or_
+from sqlalchemy import and_, func, or_, select
 
 from app.features.base import BaseFeature, FeatureValue, register_feature
 
@@ -289,8 +289,9 @@ class BlogConsensusScoreFeature(BaseFeature):
     description = "How many Tier 1 Bay Street firms published about practice areas relevant to this company. Range: 0–15."
 
     async def compute(self, company_id: int, horizon_days: int, db: Any, mongo_db: Any) -> FeatureValue:
-        from app.models.signal import SignalRecord
         import json
+
+        from app.models.signal import SignalRecord
         cutoff = self._cutoff(horizon_days)
         try:
             result = await db.execute(
@@ -389,7 +390,7 @@ class DisclosureToneShiftFeature(BaseFeature):
 
         try:
             current_ratio = await _distress_ratio(
-                cutoff_current, datetime.now(tz=timezone.utc)
+                cutoff_current, datetime.now(tz=UTC)
             )
             prior_ratio = await _distress_ratio(cutoff_prior, cutoff_current)
             shift = current_ratio - prior_ratio  # Positive = getting worse

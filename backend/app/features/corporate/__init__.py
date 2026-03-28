@@ -17,11 +17,11 @@ Features:
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import structlog
-from sqlalchemy import select, func, and_, or_
+from sqlalchemy import and_, func, or_, select
 
 from app.features.base import BaseFeature, FeatureValue, register_feature
 
@@ -82,8 +82,9 @@ class InsiderSellRatioFeature(BaseFeature):
     description = "Insider sell transactions / (sell + buy) in window. Range: 0–1."
 
     async def compute(self, company_id: int, horizon_days: int, db: Any, mongo_db: Any) -> FeatureValue:
-        from app.models.signal import SignalRecord
         import json
+
+        from app.models.signal import SignalRecord
         cutoff = self._cutoff(horizon_days)
         try:
             result = await db.execute(
@@ -152,7 +153,7 @@ class FilingVelocityChangeFeature(BaseFeature):
                 )
                 return r.scalar() or 0
 
-            current_count = await _count(cutoff_current, datetime.now(tz=timezone.utc))
+            current_count = await _count(cutoff_current, datetime.now(tz=UTC))
             prior_count = await _count(cutoff_prior, cutoff_current)
 
             current_rate = current_count / max(horizon_days, 1)

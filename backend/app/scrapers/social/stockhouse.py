@@ -15,6 +15,7 @@ Data: MongoDB ONLY.
 Rate: 0.2 rps (no official API — respectful scraping)
 """
 from __future__ import annotations
+
 import re
 from typing import Any
 
@@ -107,7 +108,8 @@ class StockhouseScraper(BaseScraper):
                 title_el = article.select_one("h2 a, h3 a, .post-title a")
                 if title_el:
                     post["title"] = title_el.get_text(strip=True)
-                    href = title_el.get("href", "")
+                    href_val = title_el.get("href", "")
+                    href = href_val[0] if isinstance(href_val, list) else str(href_val) if href_val else ""
                     post["url"] = f"{_STOCKHOUSE_BASE}{href}" if href.startswith("/") else href
 
                     # Extract ticker from URL pattern /companies/bullboard/TICKER/...

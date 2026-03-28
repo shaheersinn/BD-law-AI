@@ -33,6 +33,8 @@ ignore = [
 # Routes and tasks can have long descriptive strings
 "app/routes/**/*.py" = ["E501"]
 "app/tasks/**/*.py" = ["E501", "S608"]
+# Feature files have long compute() signatures and descriptive docstrings
+"app/features/**/*.py" = ["E501"]
 # ML training uses internal feature_columns list (not user input) in SQL — not an injection vector
 "app/training/dataset_builder.py" = ["S608", "B023"]
 # Training script uses /tmp as default output dir — safe in Azure batch context

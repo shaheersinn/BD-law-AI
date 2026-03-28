@@ -15,7 +15,6 @@ Features:
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone, timedelta
 from typing import Any
 
 import structlog
@@ -54,8 +53,9 @@ class DirectorInterlocksScoreFeature(BaseFeature):
                 return self._null_value(company_id, horizon_days)
 
             # Count how many connected companies have active signals
+            from sqlalchemy import and_, func, select
+
             from app.models.signal import SignalRecord
-            from sqlalchemy import select, func, and_
             result = await db.execute(
                 select(func.count(SignalRecord.id.distinct())).where(
                     and_(
@@ -106,8 +106,9 @@ class BoardDistressContagionFeature(BaseFeature):
             if not connected:
                 return self._null_value(company_id, horizon_days)
 
+            from sqlalchemy import and_, func, select
+
             from app.models.signal import SignalRecord
-            from sqlalchemy import select, func, and_
 
             total_contagion = 0.0
             for rel in connected[:20]:  # Cap at 20 connections
@@ -170,8 +171,9 @@ class SubsidiarySignalCountFeature(BaseFeature):
             if not subsidiary_ids:
                 return self._null_value(company_id, horizon_days)
 
+            from sqlalchemy import and_, func, select
+
             from app.models.signal import SignalRecord
-            from sqlalchemy import select, func, and_
             result = await db.execute(
                 select(func.count(SignalRecord.id)).where(
                     and_(
@@ -223,8 +225,9 @@ class RelatedEntitySignalPropagationFeature(BaseFeature):
                 "director_interlocked": 0.2,
             }
 
+            from sqlalchemy import and_, func, select
+
             from app.models.signal import SignalRecord
-            from sqlalchemy import select, func, and_
 
             propagated = 0.0
             total_signals = 0

@@ -63,10 +63,9 @@ Feature store:
 """
 from __future__ import annotations
 
-import hashlib
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import structlog
@@ -87,7 +86,7 @@ class FeatureValue:
     is_null: bool = False       # True if insufficient data to compute
     confidence: float = 1.0     # 0–1 confidence in this value
     computed_at: datetime = field(
-        default_factory=lambda: datetime.now(tz=timezone.utc)
+        default_factory=lambda: datetime.now(tz=UTC)
     )
     signal_count: int = 0       # How many signals contributed to this value
     metadata: dict[str, Any] = field(default_factory=dict)
@@ -158,7 +157,7 @@ class BaseFeature(ABC):
         return results
 
     def _cutoff(self, horizon_days: int) -> datetime:
-        return datetime.now(tz=timezone.utc) - timedelta(days=horizon_days)
+        return datetime.now(tz=UTC) - timedelta(days=horizon_days)
 
     def _null_value(self, company_id: int, horizon_days: int) -> FeatureValue:
         return FeatureValue(

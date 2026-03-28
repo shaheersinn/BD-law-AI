@@ -19,11 +19,25 @@ from datetime import UTC
 from pathlib import Path
 from unittest.mock import MagicMock
 
+import sys
+
 import numpy as np
 import pandas as pd
 import pytest
 
-torch = pytest.importorskip("torch", reason="torch not installed — skipping transformer tests")
+# Detect whether torch is real or a mock stub
+_torch_mod = sys.modules.get("torch")
+_torch_is_mock = _torch_mod is not None and getattr(_torch_mod, "_is_mock", False)
+try:
+    import torch
+    if _torch_is_mock:
+        raise ImportError("mock torch")
+    _has_torch = True
+except ImportError:
+    _has_torch = False
+    torch = None  # type: ignore[assignment]
+
+requires_torch = pytest.mark.skipif(not _has_torch, reason="torch not installed — skipping transformer tests")
 
 # ── Fixtures ───────────────────────────────────────────────────────────────────
 
@@ -166,6 +180,7 @@ class TestBayesianEngine:
 # ── TransformerScorer unit tests ───────────────────────────────────────────────
 
 
+@requires_torch
 class TestTransformerScorer:
     def test_model_architecture(self):
         """MandateTransformer produces 3 output tensors per batch."""

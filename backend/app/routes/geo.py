@@ -18,7 +18,7 @@ Routes:
 import logging
 from datetime import UTC, datetime, timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, Query
 from fastapi.responses import JSONResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -27,9 +27,7 @@ from app.auth.dependencies import require_auth
 from app.auth.service import TokenClaims
 from app.cache.client import TTL_GEO, TTL_LONG, TTL_MEDIUM, cache
 from app.database import get_db
-from app.middleware.rate_limiter import enforce_rate_limit
 from app.models import FootTrafficEvent, JetTrack, PermitFiling, SatelliteSignal
-from app.services.audit_log import AuditEventType, extract_request_meta, log_event
 
 log = logging.getLogger(__name__)
 router = APIRouter(prefix="/geo", tags=["geospatial"])

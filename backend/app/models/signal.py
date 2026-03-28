@@ -188,7 +188,7 @@ class Signal(Base):
 
     # ── Relationships ─────────────────────────────────────────────────────────
     company: Mapped[Company | None] = relationship(  # type: ignore[name-defined]  # noqa: F821
-        "Company", back_populates="signals", lazy="noload"
+        "Company", lazy="noload"
     )
 
     # ── Feature Pipeline Aliases ───────────────────────────────────────────────

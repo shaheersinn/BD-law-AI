@@ -22,11 +22,11 @@ Features implemented here:
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import structlog
-from sqlalchemy import select, func, and_, or_
+from sqlalchemy import and_, func, select
 
 from app.features.base import BaseFeature, FeatureValue, register_feature
 
@@ -53,7 +53,7 @@ class InterestRateCyclePositionFeature(BaseFeature):
         try:
             # Check if live rate is cached from Phase 5 geo feed
             from app.models.signal import SignalRecord
-            cutoff = datetime.now(tz=timezone.utc) - timedelta(days=90)
+            cutoff = datetime.now(tz=UTC) - timedelta(days=90)
             result = await db.execute(
                 select(SignalRecord.signal_value).where(
                     and_(
@@ -265,7 +265,7 @@ class MediaMentionVelocityFeature(BaseFeature):
 
     async def compute(self, company_id: int, horizon_days: int, db: Any, mongo_db: Any) -> FeatureValue:
         from app.models.signal import SignalRecord
-        cutoff_7d = datetime.now(tz=timezone.utc) - timedelta(days=7)
+        cutoff_7d = datetime.now(tz=UTC) - timedelta(days=7)
         try:
             result = await db.execute(
                 select(func.count(SignalRecord.id)).where(

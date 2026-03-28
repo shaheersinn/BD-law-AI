@@ -21,9 +21,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.dependencies import require_auth, require_write
 from app.auth.service import TokenClaims
-from app.cache.client import TTL_AI, TTL_SHORT, cache
+from app.cache.client import TTL_SHORT, cache
 from app.database import get_db
-from app.middleware.rate_limiter import enforce_rate_limit
 from app.models import Trigger
 from app.services.audit_log import AuditEventType, extract_request_meta, log_event
 

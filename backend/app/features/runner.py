@@ -24,13 +24,13 @@ from __future__ import annotations
 
 import asyncio
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import structlog
-from sqlalchemy import select, delete, and_
+from sqlalchemy import and_, select
 
-from app.features.base import FeatureRegistry, FeatureValue, BaseFeature
+from app.features.base import BaseFeature, FeatureRegistry, FeatureValue
 
 log = structlog.get_logger(__name__)
 
@@ -87,7 +87,7 @@ class FeatureRunner:
                 return_exceptions=True,
             )
             for result in batch_results:
-                if isinstance(result, Exception):
+                if isinstance(result, BaseException):
                     errors += 1
                     log.error("feature_runner_company_error", error=str(result))
                     continue
@@ -104,7 +104,7 @@ class FeatureRunner:
             "features_null_skipped": total_null,
             "errors": errors,
             "elapsed_seconds": round(elapsed, 1),
-            "computed_at": datetime.now(tz=timezone.utc).isoformat(),
+            "computed_at": datetime.now(tz=UTC).isoformat(),
         }
         log.info("feature_runner_complete", **summary)
         return summary
@@ -138,7 +138,7 @@ class FeatureRunner:
 
         feature_values: list[FeatureValue] = []
         for result in all_results:
-            if isinstance(result, Exception):
+            if isinstance(result, BaseException):
                 log.warning("feature_compute_exception",
                             company_id=company_id, error=str(result))
                 continue
@@ -163,8 +163,9 @@ class FeatureRunner:
 
     async def _persist_feature_value(self, fv: FeatureValue) -> None:
         """Upsert a single FeatureValue into company_features."""
-        from app.models.features import CompanyFeature
         import json
+
+        from app.models.features import CompanyFeature
 
         existing = await self._db.execute(
             select(CompanyFeature).where(

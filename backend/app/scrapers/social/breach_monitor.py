@@ -18,11 +18,15 @@ Signal types:
 Rate limit: 0.1 rps
 """
 from __future__ import annotations
+
 import xml.etree.ElementTree as ET
+from datetime import UTC
+
 import structlog
+
+from app.config import get_settings
 from app.scrapers.base import BaseScraper, ScraperResult
 from app.scrapers.registry import register
-from app.config import get_settings
 
 log = structlog.get_logger(__name__)
 
@@ -59,8 +63,8 @@ class BreachMonitorScraper(BaseScraper):
                 )
                 if response.status_code == 200:
                     breaches = response.json()
-                    from datetime import datetime, timezone, timedelta
-                    cutoff = datetime.now(tz=timezone.utc) - timedelta(days=30)
+                    from datetime import datetime, timedelta
+                    cutoff = datetime.now(tz=UTC) - timedelta(days=30)
                     for breach in breaches:
                         breach_date = self._parse_date(breach.get("AddedDate"))
                         if breach_date and breach_date < cutoff:

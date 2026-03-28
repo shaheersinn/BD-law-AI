@@ -14,7 +14,6 @@ from app.auth.dependencies import require_auth, require_partner
 from app.auth.service import TokenClaims
 from app.cache.client import TTL_LONG, cache
 from app.database import get_db
-from app.middleware.rate_limiter import enforce_rate_limit
 from app.models import ChurnSignal, Client, RiskLevel
 from app.services.audit_log import AuditEventType, extract_request_meta, log_event
 

@@ -15,14 +15,14 @@ Signal types:
   social_twitter_insider         — executive/insider commentary
 """
 from __future__ import annotations
-from datetime import datetime, timezone, timedelta
-from typing import Any
+
+from datetime import UTC, datetime, timedelta
 
 import structlog
 
+from app.config import get_settings
 from app.scrapers.base import BaseScraper, ScraperResult
 from app.scrapers.registry import register
-from app.config import get_settings
 
 log = structlog.get_logger(__name__)
 
@@ -68,7 +68,7 @@ class TwitterXScraper(BaseScraper):
                     "query": query,
                     "max_results": 10,
                     "tweet.fields": "created_at,author_id,public_metrics,entities",
-                    "start_time": (datetime.now(tz=timezone.utc) - timedelta(hours=6)).isoformat(),
+                    "start_time": (datetime.now(tz=UTC) - timedelta(hours=6)).isoformat(),
                 }
                 response = await self.get(_TWITTER_SEARCH, params=params, headers=headers)
 

@@ -13,16 +13,18 @@ Signal types:
   social_reddit_regulatory     — regulatory complaint/enforcement discussion
 """
 from __future__ import annotations
-import time
+
 import base64
 import re
+import time
+from datetime import UTC
 from typing import Any
 
 import structlog
 
+from app.config import get_settings
 from app.scrapers.base import BaseScraper, ScraperResult
 from app.scrapers.registry import register
-from app.config import get_settings
 
 log = structlog.get_logger(__name__)
 
@@ -91,8 +93,8 @@ class RedditScraper(BaseScraper):
                     created_utc = post.get("created_utc")
                     pub_dt = None
                     if created_utc:
-                        from datetime import datetime, timezone
-                        pub_dt = datetime.fromtimestamp(float(created_utc), tz=timezone.utc)
+                        from datetime import datetime
+                        pub_dt = datetime.fromtimestamp(float(created_utc), tz=UTC)
 
                     results.append(ScraperResult(
                         source_id=self.source_id,

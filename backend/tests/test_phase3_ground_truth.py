@@ -16,85 +16,10 @@ mocking for any module that transitively imports app.config or app.database.
 from __future__ import annotations
 
 import asyncio
-import sys
 from datetime import UTC, datetime
-from types import ModuleType
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
-# ── Inject stubs for problematic transitively-imported modules ─────────────────
-# This prevents the pyo3/cryptography panic caused by the pymongo conflict
-# (same known env issue documented in Phase 1B commit).
-
-
-def _inject_module_stubs() -> None:
-    """
-    Inject fake modules to break the cryptography import chain.
-
-    IMPORTANT: Do NOT stub 'app' itself — it must remain the real package
-    so that subpackages (app.ground_truth, app.models, etc.) can be discovered.
-    Only stub the leaf modules that transitively pull in cryptography.
-    """
-    # Stub app.config (pulls in pydantic-settings → cryptography on this env)
-    cfg_mod = ModuleType("app.config")
-    settings_stub = MagicMock()
-    settings_stub.environment = "development"
-    settings_stub.is_development = True
-    settings_stub.is_production = False
-    settings_stub.database_url = "postgresql+asyncpg://test:test@localhost/test"
-    settings_stub.mongodb_url = "mongodb://localhost:27017"
-    settings_stub.mongodb_db_name = "oracle_test"
-    settings_stub.mongodb_max_pool_size = 10
-    settings_stub.redis_url = "redis://localhost:6379/0"
-    settings_stub.celery_broker_url = "redis://localhost:6379/0"
-    settings_stub.celery_result_backend = "redis://localhost:6379/1"
-    settings_stub.celery_task_time_limit = 3600
-    settings_stub.celery_task_soft_time_limit = 3300
-    settings_stub.celery_worker_concurrency = 4
-    settings_stub.db_pool_size = 5
-    settings_stub.db_max_overflow = 2
-    settings_stub.db_pool_timeout = 10
-    settings_stub.db_pool_recycle = 300
-    settings_stub.db_echo = False
-    settings_stub.log_level = "INFO"
-    settings_stub.allowed_origins = ["http://localhost:3000"]
-    settings_stub.sentry_dsn = None
-    settings_stub.models_dir = "/tmp/models"
-    settings_stub.data_dir = "/tmp/data"
-    cfg_mod.get_settings = lambda: settings_stub  # type: ignore[attr-defined]
-    cfg_mod.Settings = MagicMock  # type: ignore[attr-defined]
-    sys.modules.setdefault("app.config", cfg_mod)
-
-    # Stub app.database — Base MUST be a real DeclarativeBase subclass
-    # so that ORM model class bodies execute correctly.
-    import sqlalchemy.orm as _orm
-
-    class _Base(_orm.DeclarativeBase):
-        pass
-
-    db_mod = ModuleType("app.database")
-    db_mod.Base = _Base  # type: ignore[attr-defined]
-    db_mod.AsyncSessionLocal = MagicMock()  # type: ignore[attr-defined]
-    db_mod.get_db = MagicMock()  # type: ignore[attr-defined]
-    db_mod.get_mongo_db = MagicMock()  # type: ignore[attr-defined]
-    db_mod.get_mongo_db_dep = MagicMock()  # type: ignore[attr-defined]
-    db_mod.check_db_connection = AsyncMock(return_value=True)  # type: ignore[attr-defined]
-    db_mod.check_mongo_connection = AsyncMock(return_value=True)  # type: ignore[attr-defined]
-    db_mod.dispose_engine = AsyncMock()  # type: ignore[attr-defined]
-    db_mod.close_mongo_connection = AsyncMock()  # type: ignore[attr-defined]
-    sys.modules.setdefault("app.database", db_mod)
-
-    # Stub app.auth.models (User) and app.auth.dependencies
-    for name in ("app.auth", "app.auth.models", "app.auth.dependencies"):
-        m = ModuleType(name)
-        m.User = MagicMock()  # type: ignore[attr-defined]
-        m.require_partner = MagicMock()  # type: ignore[attr-defined]
-        m.require_admin = MagicMock()  # type: ignore[attr-defined]
-        m.require_auth = MagicMock()  # type: ignore[attr-defined]
-        sys.modules.setdefault(name, m)
-
-
-_inject_module_stubs()
 
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
