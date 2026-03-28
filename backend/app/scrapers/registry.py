@@ -92,6 +92,7 @@ def _load_registry() -> None:
     _safe_import("app.scrapers.social.stockhouse")
     _safe_import("app.scrapers.social.twitter")
     _safe_import("app.scrapers.social.sedar_forums")
+    _safe_import("app.scrapers.social.breach_monitor")
 
     # ── Old-style scrapers (use NAME/CATEGORY attributes, no @register) ────────
     # These are registered explicitly since they predate the @register pattern.

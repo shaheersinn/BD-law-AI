@@ -39,6 +39,7 @@ class BreachMonitorScraper(BaseScraper):
     source_id = "social_breach_monitor"
     source_name = "Data Breach Monitor (HIBP + CCCS)"
     signal_types = ["social_breach_detected", "regulatory_cccs_advisory"]
+    CATEGORY = "social"
     rate_limit_rps = 0.1
     concurrency = 1
     retry_attempts = 3

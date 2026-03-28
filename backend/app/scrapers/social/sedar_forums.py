@@ -1,7 +1,9 @@
 """
-app/scrapers/social/sedar_forums.py — SEDAR investor forums scraper stub.
-"""
+app/scrapers/social/sedar_forums.py — SEDAR forums scraper stub.
 
+SEDAR+ (sedarplus.ca) does not have a public discussion or forum component.
+This scraper exists as a stub and returns [] on every run.
+"""
 from __future__ import annotations
 
 import structlog
@@ -14,12 +16,6 @@ log = structlog.get_logger(__name__)
 
 @register
 class SedarForumsScraper(BaseScraper):
-    """
-    SEDAR investor forums scraper.
-
-    Scrapes investor forums and complaint boards associated with SEDAR-listed companies.
-    """
-
     source_id = "social_sedar_forums"
     source_name = "SEDAR Investor Forums"
     signal_types = ["social_sedar_forum_post", "social_investor_complaint"]
@@ -29,6 +25,8 @@ class SedarForumsScraper(BaseScraper):
     requires_auth = False
 
     async def scrape(self) -> list[ScraperResult]:
-        """Scrape SEDAR-related investor forum posts and complaints."""
-        # TODO: Phase 1C — implement full scraper
+        log.info(
+            "sedar_forums_not_available",
+            note="SEDAR+ has no public forum component — stub returns []",
+        )
         return []
