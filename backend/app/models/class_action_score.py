@@ -4,8 +4,6 @@ app/models/class_action_score.py — Class action risk scoring convergence outpu
 
 from __future__ import annotations
 
-from datetime import datetime
-
 from sqlalchemy import (
     Column,
     DateTime,

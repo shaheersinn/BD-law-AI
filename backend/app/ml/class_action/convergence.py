@@ -12,8 +12,7 @@ Takes all signals for a company and computes:
 from __future__ import annotations
 
 import math
-from datetime import UTC, datetime, timedelta
-from typing import Any
+from datetime import UTC, datetime
 
 from sqlalchemy import select
 
@@ -83,36 +82,36 @@ def score_company(company_id: int) -> ClassActionScore | None:
 
         now = datetime.now(tz=UTC)
         contributing_signals = []
-        
+
         # We will use Noisy-OR to combine probabilities
         combined_prob = 1.0
-        type_scores: dict[str, float] = {k: 0.0 for k in TYPE_INFERENCE}
-        
+        type_scores: dict[str, float] = dict.fromkeys(TYPE_INFERENCE, 0.0)
+
         for sig in signals:
             stype = sig.signal_type
             raw_weight = SIGNAL_WEIGHTS.get(stype, 0.0)
-            
+
             if raw_weight == 0.0:
                 continue
-                
+
             age_days = (now - min(sig.published_at or sig.scraped_at, now)).total_seconds() / 86400
-            
+
             # Signal decay: signals older than 90 days get exponentially decayed weights
             weight = raw_weight
             if age_days > 90:
                 decay_factor = math.exp(-math.log(2) * (age_days - 90) / DECAY_HALF_LIFE)
                 weight *= decay_factor
-                
+
             # Noisy-OR inversion
             combined_prob *= (1.0 - weight)
-            
+
             contributing_signals.append({
                 "signal_type": stype,
                 "weight": weight,
                 "source_id": sig.source_id,
                 "date": (sig.published_at or sig.scraped_at).isoformat()
             })
-            
+
             # Accumulate scores for predicted type
             for cat, rules in TYPE_INFERENCE.items():
                 if stype in rules:
@@ -120,7 +119,7 @@ def score_company(company_id: int) -> ClassActionScore | None:
 
         # Final probability
         prob = 1.0 - combined_prob
-        
+
         # Baseline probability if no signals match
         if prob == 0.0:
             prob = 0.01
@@ -162,7 +161,7 @@ def score_company(company_id: int) -> ClassActionScore | None:
 
         # Upsert
         existing = db.execute(select(ClassActionScore).where(ClassActionScore.company_id == company_id)).scalar_one_or_none()
-        
+
         if existing:
             existing.probability = prob
             existing.predicted_type = predicted_type
@@ -192,12 +191,12 @@ def score_all_companies() -> list[ClassActionScore]:
     scores = []
     with get_sync_db() as db:
         company_ids = db.execute(select(Company.id).where(Company.status == "active")).scalars().all()
-        
+
     for cid in company_ids:
         sc = score_company(cid)
         if sc:
             scores.append(sc)
-            
+
     return scores
 
 def get_top_risks(n: int = 20) -> list[ClassActionScore]:

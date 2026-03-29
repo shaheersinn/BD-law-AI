@@ -580,14 +580,15 @@ def score_class_action_risk_task(self: Any) -> dict[str, Any]:
     Runs nightly.
     """
     import time
+
     from app.ml.class_action.convergence import score_all_companies
-    
+
     start = time.monotonic()
-    
+
     try:
         scores = score_all_companies()
         elapsed = time.monotonic() - start
-        
+
         log.info(
             "class_action_scoring_complete",
             scored=len(scores),

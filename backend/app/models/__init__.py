@@ -1,7 +1,7 @@
 from app.models.bd_activity import BDActivity, ContentPiece, MatterSource
+from app.models.class_action_score import ClassActionScore
 from app.models.client import ChurnSignal, Client, Prospect, RiskLevel
 from app.models.company import Company
-from app.models.class_action_score import ClassActionScore
 from app.models.geo import FootTrafficEvent, JetTrack, PermitFiling, SatelliteSignal
 from app.models.ground_truth import GroundTruthLabel, LabelingRun
 from app.models.law_firm import LawFirm
