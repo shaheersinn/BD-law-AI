@@ -144,6 +144,8 @@ celery_app.conf.task_routes = {
     "agents.compute_prediction_accuracy": {"queue": "agents"},
     "agents.run_drift_detector": {"queue": "agents"},
     "agents.run_confirmation_hunter": {"queue": "agents"},
+    # Phase CA-3: Convergence Engine
+    "ml.score_class_action_risk": {"queue": "scoring"},
 }
 
 # ── Beat Schedule ──────────────────────────────────────────────────────────────
@@ -441,5 +443,11 @@ celery_app.conf.beat_schedule = {
         "task": "agents.run_confirmation_hunter",
         "schedule": crontab(hour=6, minute=30),
         "options": {"queue": "agents"},
+    },
+    # ── Phase CA-3: Class Action Signal Convergence Engine ────────────────────────
+    "score_class_action_risk": {
+        "task": "ml.score_class_action_risk",
+        "schedule": crontab(hour=3, minute=0),
+        "options": {"queue": "scoring"},
     },
 }
