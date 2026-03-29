@@ -97,4 +97,15 @@ export const feedback = {
   confirmations:  (params)  => api.get('/api/v1/feedback/confirmations', { params }).then(r => r.data),
 }
 
+// ── class actions ─────────────────────────────────────────────────────────────
+export const classActions = {
+  risks:      (limit = 20)              => api.get('/api/class-actions/risks', { params: { limit } }).then(r => r.data),
+  riskDetail: (companyId)               => api.get(`/api/class-actions/risks/${companyId}`).then(r => r.data),
+  cases:      (limit = 200)             => api.get('/api/class-actions/cases', { params: { limit } }).then(r => r.data),
+  caseDetail: (id)                      => api.get(`/api/class-actions/cases/${id}`).then(r => r.data),
+  match:      (companyId, topN = 5)     => api.get(`/api/class-actions/match/${companyId}`, { params: { top_n: topN } }).then(r => r.data),
+  customMatch:(payload)                 => api.post('/api/class-actions/match', payload).then(r => r.data),
+  dashboard:  ()                        => api.get('/api/class-actions/dashboard').then(r => r.data),
+}
+
 export default api

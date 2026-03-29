@@ -22,6 +22,7 @@ import SignalsFeedPage    from './pages/SignalsFeedPage'
 import ScrapersAdminPage  from './pages/admin/ScrapersAdminPage'
 import UsersAdminPage     from './pages/admin/UsersAdminPage'
 import FeedbackPage       from './pages/FeedbackPage'
+import ClassActionRadar   from './pages/ClassActionRadar'
 import LandingPage        from './pages/LandingPage'
 import useAuthStore       from './stores/auth'
 
@@ -53,6 +54,9 @@ function AppRoutes() {
       } />
       <Route path="/signals" element={
         <PrivateRoute><SignalsFeedPage /></PrivateRoute>
+      } />
+      <Route path="/class-action-radar" element={
+        <PrivateRoute><ClassActionRadar /></PrivateRoute>
       } />
 
       {/* Partner+ */}
