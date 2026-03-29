@@ -29,5 +29,6 @@ def pytest_configure(config: pytest.Config) -> None:
     """Register custom pytest markers."""
     config.addinivalue_line("markers", "slow: marks tests as slow (deselect with -m 'not slow')")
     config.addinivalue_line("markers", "integration: marks tests requiring live services")
+    config.addinivalue_line("markers", "live: marks tests that hit real external URLs (use -m live)")
     config.addinivalue_line("markers", "phase1: marks tests for Phase 1 scrapers")
     config.addinivalue_line("markers", "phase2: marks tests for Phase 2 features")

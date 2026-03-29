@@ -33,6 +33,6 @@ if not _real_torch_available:
     sys.modules["torch.utils.data"] = _mock_torch_utils_data
 
     # Pre-import ML modules that depend on torch
-    import app.ml.orchestrator  # noqa: F401, E402
     import app.ml.anomaly_detector  # noqa: F401, E402
+    import app.ml.orchestrator  # noqa: F401, E402
     import app.ml.velocity_scorer  # noqa: F401, E402

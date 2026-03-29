@@ -563,7 +563,10 @@ class TestOPCBreachReportsScraper:
         assert OPCBreachReportsScraper._extract_individuals_count("no count mentioned", "") is None
 
     async def test_class_action_risk_threshold(self) -> None:
-        from app.scrapers.consumer.opc_breach_reports import OPCBreachReportsScraper, _CLASS_ACTION_THRESHOLD
+        from app.scrapers.consumer.opc_breach_reports import (
+            _CLASS_ACTION_THRESHOLD,
+            OPCBreachReportsScraper,
+        )
 
         assert _CLASS_ACTION_THRESHOLD == 10_000
 
@@ -755,8 +758,8 @@ class TestCompanyNameExtraction:
 
 class TestCeleryClassActionTask:
     def test_class_action_task_registered(self) -> None:
-        from app.tasks.celery_app import celery_app
         import app.tasks.scraper_tasks  # noqa: F401 — force task registration
+        from app.tasks.celery_app import celery_app
 
         task_names = list(celery_app.tasks.keys())
         assert "scrapers.run_class_actions" in task_names
@@ -778,8 +781,8 @@ class TestCeleryClassActionTask:
 
 class TestCeleryConsumerPrecursorTask:
     def test_consumer_precursor_task_registered(self) -> None:
-        from app.tasks.celery_app import celery_app
         import app.tasks.scraper_tasks  # noqa: F401 — force task registration
+        from app.tasks.celery_app import celery_app
 
         task_names = list(celery_app.tasks.keys())
         assert "scrapers.scrape_consumer_precursors" in task_names

@@ -19,6 +19,7 @@ Rate: 0.1 rps (OpenSky anonymous limit: ~400 calls/day)
 from __future__ import annotations
 
 import time
+from datetime import UTC, datetime
 
 import structlog
 
@@ -44,8 +45,7 @@ _BIZJET_TYPES: set[str] = {
     # Gulfstream
     "GL5T", "GL6T", "GL7T", "GLEX", "G150", "G280", "G350", "G450", "G550", "G650",
     # Bombardier
-    "CL30", "CL35", "CL60", "BD70", "GL5T", "GL6T", "GL7T",
-    "C56X", "C680", "C68A", "C700", "C750",
+    "CL30", "CL35", "CL60", "BD70", "C56X", "C680", "C68A", "C700", "C750",
     # Dassault Falcon
     "F2TH", "FA7X", "FA8X", "F900",
     # Embraer
@@ -163,12 +163,10 @@ class OpenSkyScraper(BaseScraper):
         )
 
     @staticmethod
-    def _parse_timestamp(ts: int | None) -> "datetime | None":
+    def _parse_timestamp(ts: int | None) -> datetime | None:
         """Convert Unix timestamp to UTC datetime."""
         if not ts:
             return None
-        from datetime import UTC, datetime
-
         try:
             return datetime.fromtimestamp(ts, tz=UTC)
         except (OSError, ValueError):

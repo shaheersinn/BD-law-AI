@@ -24,8 +24,7 @@ Mocks all external HTTP calls — no real network traffic in tests.
 from __future__ import annotations
 
 import asyncio
-import json
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 

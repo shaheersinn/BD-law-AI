@@ -16,7 +16,6 @@ from app.models.company import Company
 from app.models.law_firm import LawFirm
 from app.scrapers.law_blogs.firm_blogs import ALL_FIRMS
 
-
 _ALL_PROVINCES = [
     "AB",
     "BC",

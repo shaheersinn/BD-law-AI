@@ -4,8 +4,6 @@ app/models/class_action_score.py — Class action risk scoring convergence outpu
 
 from __future__ import annotations
 
-from datetime import datetime
-
 from sqlalchemy import (
     Column,
     DateTime,
@@ -25,7 +23,7 @@ class ClassActionScore(Base):
     id = Column(Integer, primary_key=True)
     company_id = Column(Integer, ForeignKey("companies.id"), unique=True)
     probability = Column(Float, nullable=False)  # 0.0–1.0
-    predicted_type = Column(String(100))  # securities|product_liability|privacy|employment|environmental|competition
+    predicted_type = Column(String(100))  # securities|product_liability|privacy|employment|...
     time_horizon_days = Column(Integer)  # 30, 60, or 90
     contributing_signals = Column(JSONB)  # [{signal_type, weight, source_id, date}]
     confidence = Column(Float)  # 0.0–1.0
