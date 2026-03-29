@@ -321,6 +321,46 @@ def run_law_blog_scrapers(self: Any) -> dict[str, Any]:
     return result
 
 
+# ── Class Action Scrapers ──────────────────────────────────────────────────
+@celery_app.task(
+    name="scrapers.run_class_actions",
+    queue="scrapers",
+    max_retries=2,
+    soft_time_limit=1800,
+    time_limit=2100,
+    bind=True,
+)
+def run_class_action_scrapers(self: Any) -> dict[str, Any]:
+    """Run all 12 class action scrapers (courts, aggregators, law firms)."""
+    log.info("task_start", task="run_class_action_scrapers")
+    result: dict[str, Any] = _run_async(_run_category("class_actions"))  # type: ignore[assignment]
+    log.info("task_complete", task="run_class_action_scrapers", **result)
+    return result
+
+
+# ── Consumer Precursor Scrapers ───────────────────────────────────────────────
+@celery_app.task(
+    name="scrapers.scrape_consumer_precursors",
+    queue="scrapers",
+    max_retries=2,
+    soft_time_limit=1800,
+    time_limit=2100,
+    bind=True,
+)
+def scrape_consumer_precursors(self: Any) -> dict[str, Any]:
+    """
+    Run all 8 consumer precursor scrapers (recalls, complaints, privacy breaches).
+
+    Covers: Health Canada recalls, Transport Canada recalls, CPSC US recalls,
+    BBB complaint spikes, OBSI financial decisions, CCTS telecom complaints,
+    OPC breach reports, and provincial privacy commissioner findings.
+    """
+    log.info("task_start", task="scrape_consumer_precursors")
+    result: dict[str, Any] = _run_async(_run_category("consumer"))  # type: ignore[assignment]
+    log.info("task_complete", task="scrape_consumer_precursors", **result)
+    return result
+
+
 # ── Health Check ───────────────────────────────────────────────────────────────
 @celery_app.task(
     name="scrapers.health_check_all",

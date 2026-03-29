@@ -106,6 +106,8 @@ celery_app.conf.task_routes = {
     "scrapers.health_check_all": {"queue": "default"},
     "scrapers.run_single": {"queue": "scrapers"},
     "scrapers.canary_check": {"queue": "default"},
+    "scrapers.run_class_actions": {"queue": "scrapers"},
+    "scrapers.scrape_consumer_precursors": {"queue": "scrapers"},
     # All scraper tasks → scrapers queue
     "app.tasks._impl.scrape_*": {"queue": "scrapers"},
     # Feature engineering → features queue
@@ -405,6 +407,19 @@ celery_app.conf.beat_schedule = {
         "task": "app.tasks._impl.run_dead_signal_resurrector",
         "schedule": crontab(minute="*/30"),
         "options": {"queue": "agents"},
+    },
+    # ── Phase CA-1: Class Action Scrapers ─────────────────────────────────────
+    "scrape-class-actions": {
+        "task": "scrapers.run_class_actions",
+        "schedule": crontab(hour="*/6", minute=30),
+        "options": {"queue": "scrapers"},
+    },
+    # ── Phase CA-2: Consumer Precursor Scrapers ───────────────────────────────
+    # Recalls, complaints, and privacy breaches — 3× daily at 8:45, 14:45, 20:45 UTC
+    "scrape-consumer-precursors": {
+        "task": "scrapers.scrape_consumer_precursors",
+        "schedule": crontab(hour="8,14,20", minute=45),
+        "options": {"queue": "scrapers"},
     },
     # ── Phase 9: Prediction Accuracy Tracker (Agent 030) ──────────────────────
     # Computes was_correct + lead_days for all pending mandate confirmations

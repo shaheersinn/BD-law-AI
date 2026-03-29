@@ -63,8 +63,15 @@ def _load_registry() -> None:
     _safe_import("app.scrapers.legal.federal_court")
     _safe_import("app.scrapers.legal.tribunals_ontario")
     _safe_import("app.scrapers.legal.osb_insolvency")
-    _safe_import("app.scrapers.legal.stanford_scac")
+    _safe_import("app.scrapers.legal.scac")
     _safe_import("app.scrapers.legal.osb")
+
+    _safe_import("app.scrapers.class_actions.ontario_class_proceedings")
+    _safe_import("app.scrapers.class_actions.bc_class_proceedings")
+    _safe_import("app.scrapers.class_actions.quebec_class_proceedings")
+    _safe_import("app.scrapers.class_actions.federal_court_class_proceedings")
+    _safe_import("app.scrapers.class_actions.alberta_class_proceedings")
+    _safe_import("app.scrapers.class_actions.classaction_ca")
 
     _safe_import("app.scrapers.geo.geo_scrapers")
     _safe_import("app.scrapers.geo.google_trends")
@@ -93,6 +100,23 @@ def _load_registry() -> None:
     _safe_import("app.scrapers.social.twitter")
     _safe_import("app.scrapers.social.sedar_forums")
     _safe_import("app.scrapers.social.breach_monitor")
+
+    _safe_import("app.scrapers.class_actions.siskinds_class_actions")
+    _safe_import("app.scrapers.class_actions.branch_macmaster_class_actions")
+    _safe_import("app.scrapers.class_actions.merchant_law_class_actions")
+    _safe_import("app.scrapers.class_actions.koskie_minsky_class_actions")
+    _safe_import("app.scrapers.class_actions.cba_class_actions")
+    _safe_import("app.scrapers.class_actions.pacer_class_actions")
+
+    # ── Phase CA-2: Consumer precursor scrapers (recalls, complaints, privacy) ──
+    _safe_import("app.scrapers.consumer.health_canada_recalls")
+    _safe_import("app.scrapers.consumer.transport_canada_recalls")
+    _safe_import("app.scrapers.consumer.cpsc_recalls")
+    _safe_import("app.scrapers.consumer.bbb_complaints")
+    _safe_import("app.scrapers.consumer.obsi_decisions")
+    _safe_import("app.scrapers.consumer.ccts_complaints")
+    _safe_import("app.scrapers.consumer.opc_breach_reports")
+    _safe_import("app.scrapers.consumer.provincial_privacy_commissioners")
 
     # ── Old-style scrapers (use NAME/CATEGORY attributes, no @register) ────────
     # These are registered explicitly since they predate the @register pattern.
