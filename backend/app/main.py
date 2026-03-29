@@ -267,6 +267,11 @@ from app.routes.training import router as training_router  # noqa: E402
 
 app.include_router(training_router, prefix=PREFIX)
 
+# Phase CA-4 — Class Action Radar APIs
+from app.routes.class_actions import router as class_actions_router  # noqa: E402
+
+app.include_router(class_actions_router, prefix=PREFIX)
+
 # Phase 7 — Scoring API
 from app.routes.companies import router as companies_router  # noqa: E402
 from app.routes.scores import router as scores_router  # noqa: E402

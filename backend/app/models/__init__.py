@@ -4,6 +4,7 @@ from app.models.company import Company
 from app.models.class_action_score import ClassActionScore
 from app.models.geo import FootTrafficEvent, JetTrack, PermitFiling, SatelliteSignal
 from app.models.ground_truth import GroundTruthLabel, LabelingRun
+from app.models.law_firm import LawFirm
 from app.models.signal import SignalRecord
 from app.models.training import TrainingDataset
 from app.models.trigger import Alert, Trigger
@@ -23,6 +24,7 @@ __all__ = [
     "GroundTruthLabel",
     "JetTrack",
     "LabelingRun",
+    "LawFirm",
     "MatterSource",
     "PermitFiling",
     "Prospect",
