@@ -62,44 +62,53 @@ CI/CD:      GitHub Actions
 ## Project Structure
 
 ```
-oracle-bd/
-├── backend/
-│   ├── app/
-│   │   ├── config.py          ← Pydantic-settings v2. All env vars. get_settings() cached.
-│   │   ├── database.py        ← Async SQLAlchemy (asyncpg) + Motor MongoDB
-│   │   ├── main.py            ← FastAPI app. Lifespan. All middleware. Health endpoints.
-│   │   ├── auth/              ← JWT auth. bcrypt 12. 4 roles. Account lockout.
-│   │   ├── cache/             ← Redis client. Rate limiting. Signal-type TTLs.
-│   │   ├── middleware/        ← Error handler. Request logging. Rate limiter.
-│   │   ├── models/            ← SQLAlchemy ORM models (Phase 1+)
-│   │   ├── scrapers/          ← 90+ scrapers (Phase 1)
-│   │   ├── features/          ← Feature engineering (Phase 2)
-│   │   │   ├── nlp/           ← MD&A diff, hedging detector, intent classifier
-│   │   │   ├── geo/           ← Regional stress, court volume, Google Trends
-│   │   │   └── macro/         ← Rate cycle, commodity shock, sector insolvency
-│   │   ├── ml/                ← ML models (Phase 6)
-│   │   │   └── convergence/   ← 34 Bayesian engines + Transformer
-│   │   ├── ground_truth/      ← Label generation (Phase 3)
-│   │   ├── training/          ← Model training scripts (Phase 6)
-│   │   ├── services/          ← Scoring, evidence, entity resolution (Phase 7)
-│   │   ├── routes/            ← FastAPI routers (Phase 7)
-│   │   ├── tasks/             ← Celery tasks. celery_app.py + _impl.py
-│   │   └── agents/            ← 85 ORACLE production agents (Phase 6+)
-│   ├── alembic/               ← DB migrations
-│   ├── scripts/seed_db.py     ← DB seeder
-│   ├── tests/                 ← Test suite
-│   ├── requirements.txt       ← ALL versions pinned
-│   ├── requirements-dev.txt   ← Dev + test dependencies
-│   ├── Dockerfile             ← Multi-stage, non-root user
-│   ├── ruff.toml              ← Linting config
-│   ├── mypy.ini               ← Type checking config
-│   └── pyproject.toml         ← Pytest config
-├── frontend/                  ← React/Vite (Phase 8A/8B)
-├── notebooks/                 ← Exploratory analysis
+/
+├── backend/                   ← FastAPI backend (CANONICAL — all Python code lives here)
+│   ├── Dockerfile             ← Multi-stage, non-root user (source_dir: backend in do-app.yaml)
+│   ├── requirements.txt       ← Production deps (no torch — see requirements-training.txt)
+│   ├── requirements-training.txt ← torch/transformers for Azure batch only
+│   ├── alembic.ini            ← script_location = alembic (relative to backend/)
+│   ├── alembic/versions/      ← Migration chain: 0001→0002→...→0010
+│   ├── ruff.toml / mypy.ini / pyproject.toml
+│   └── app/
+│       ├── config.py          ← Pydantic-settings v2. All env vars. get_settings() cached.
+│       ├── database.py        ← Async SQLAlchemy (asyncpg) + Motor MongoDB
+│       ├── main.py            ← FastAPI app. Lifespan. All middleware. Health endpoints.
+│       ├── auth/              ← JWT auth. bcrypt 12. 4 roles. Account lockout.
+│       ├── cache/             ← Redis client. Rate limiting. Signal-type TTLs.
+│       ├── middleware/        ← Error handler. Request logging. Rate limiter. Security headers.
+│       ├── models/            ← SQLAlchemy ORM models (Phase 1+)
+│       ├── routes/            ← All FastAPI routers (15 route files, all registered in main.py)
+│       ├── scrapers/          ← 90+ scrapers (Phase 1)
+│       ├── features/          ← Feature engineering (Phase 2)
+│       │   ├── nlp/           ← MD&A diff, hedging detector, intent classifier
+│       │   ├── geo/           ← Regional stress, court volume, Google Trends
+│       │   └── macro/         ← Rate cycle, commodity shock, sector insolvency
+│       ├── ml/                ← ML models (Phase 6)
+│       │   └── convergence/   ← 34 Bayesian engines + Transformer
+│       ├── ground_truth/      ← Label generation (Phase 3)
+│       ├── training/          ← Model training scripts (Phase 6)
+│       ├── services/          ← Scoring, evidence, entity resolution (Phase 7)
+│       ├── tasks/             ← Celery tasks. celery_app.py + _impl.py
+│       └── agents/            ← 85 ORACLE production agents (Phase 6+)
+│   └── tests/                 ← Test suite (unit, integration, load)
+├── frontend/                  ← React/Vite (Phase 8A/8B) — CANONICAL frontend
+│   ├── package.json
+│   ├── vercel.json            ← SPA rewrites + asset cache headers
+│   ├── vite.config.js
+│   └── src/
+│       ├── api/client.js      ← Axios instance + interceptors
+│       ├── stores/            ← Zustand: auth + scores
+│       ├── components/        ← Shared UI (ScoreMatrix, SignalFeed, etc.)
+│       └── pages/             ← Route-level pages
+├── agents/                    ← Development agent definitions (not backend code)
+├── docs/                      ← Architecture docs, deployment checklist
 ├── .github/workflows/         ← CI (test+lint) + CD (deploy to DO)
-├── docker-compose.yml         ← 7 services: db, mongodb, redis, api, worker, beat, frontend
-├── do-app.yaml                ← DigitalOcean App Platform spec (tor1)
+├── docker-compose.yml         ← Local dev: 7 services
+├── do-app.yaml                ← DigitalOcean App Platform — GitHub source builds
 ├── .env.example               ← All 35+ env vars documented
+├── .python-version            ← 3.12 (prevents Vercel/CI from using 3.14)
+├── runtime.txt                ← python-3.12 (Heroku/Vercel safety net)
 └── CLAUDE.md                  ← This file
 ```
 

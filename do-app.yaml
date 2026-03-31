@@ -1,33 +1,17 @@
-# ORACLE — DigitalOcean App Platform deployment spec
-# Region: tor1 (Toronto — Canadian data residency)
-#
-# SETUP REQUIRED BEFORE FIRST DEPLOY:
-# 1. Ensure shaheersinn is your GitHub username
-# 2. Set encrypted env vars in the DO console:
-#    SECRET_KEY, DATABASE_URL, REDIS_URL, REDIS_RESULT_BACKEND,
-#    MONGODB_URL, CELERY_BROKER_URL, CELERY_RESULT_BACKEND,
-#    SPACES_KEY, SPACES_SECRET, SENTRY_DSN, SLACK_WEBHOOK_URL
-# 3. Run migrations MANUALLY before first deploy:
-#    cd backend && DATABASE_URL=<your-do-db-url> alembic upgrade head
-# 4. Set ALLOWED_ORIGINS to include both your DO app URL and Vercel frontend URL
-#
-# NEVER run alembic upgrade head in run_command — migrations are always manual.
-
 name: oracle-bd-for-law
 region: tor1
 
 services:
-  # ── FastAPI Backend ──────────────────────────────────────────────────────
   - name: api
-    image:
-      registry_type: DOCR
-      repository: oracle-backend
-      tag: latest
+    github:
+      repo: shaheersinn/BD-law-AI
+      branch: main
+      deploy_on_push: true
+    dockerfile_path: backend/Dockerfile
+    source_dir: backend
     instance_size_slug: basic-s
     instance_count: 1
-    min_instance_count: 1
     http_port: 8000
-    # CMD in Dockerfile handles startup — no run_command needed
     health_check:
       http_path: /api/health
       initial_delay_seconds: 60
@@ -44,23 +28,18 @@ services:
         value: INFO
       - key: LIVE_FEEDS_ENABLED
         value: "true"
-      # CORS — set to your actual frontend URLs (DO app + Vercel)
       - key: ALLOWED_ORIGINS
-        value: '["https://oracle-bd-for-law.ondigitalocean.app"]'
-      # Set these in DO console (encrypted) — never commit:
-      # SECRET_KEY, DATABASE_URL, REDIS_URL, REDIS_RESULT_BACKEND
-      # MONGODB_URL, CELERY_BROKER_URL, CELERY_RESULT_BACKEND
-      # SPACES_KEY, SPACES_SECRET, SENTRY_DSN, SLACK_WEBHOOK_URL
+        value: '["https://oracle-bd-for-law.ondigitalocean.app","https://oracle-legal-bd.vercel.app"]'
 
-  # ── Celery Worker ────────────────────────────────────────────────────────
   - name: worker
-    image:
-      registry_type: DOCR
-      repository: oracle-backend
-      tag: latest
+    github:
+      repo: shaheersinn/BD-law-AI
+      branch: main
+      deploy_on_push: true
+    dockerfile_path: backend/Dockerfile
+    source_dir: backend
     instance_size_slug: professional-xs
     instance_count: 1
-    min_instance_count: 1
     run_command: >
       celery -A app.tasks.celery_app:celery_app worker
       --loglevel=info
@@ -73,31 +52,30 @@ services:
       - key: LIVE_FEEDS_ENABLED
         value: "true"
 
-  # ── Celery Beat Scheduler ────────────────────────────────────────────────
   - name: beat
-    image:
-      registry_type: DOCR
-      repository: oracle-backend
-      tag: latest
+    github:
+      repo: shaheersinn/BD-law-AI
+      branch: main
+      deploy_on_push: true
+    dockerfile_path: backend/Dockerfile
+    source_dir: backend
     instance_size_slug: basic-xs
     instance_count: 1
     run_command: >
       celery -A app.tasks.celery_app:celery_app beat
       --loglevel=info
       --scheduler redbeat.RedBeatScheduler
-
     envs:
       - key: ENVIRONMENT
         value: production
 
-# ── React Frontend (Static Site) ──────────────────────────────────────────
 static_sites:
   - name: frontend
-    source_dir: frontend
     github:
       repo: shaheersinn/BD-law-AI
       branch: main
       deploy_on_push: true
+    source_dir: frontend
     build_command: npm install && npm run build
     output_dir: dist
     index_document: index.html
@@ -105,6 +83,5 @@ static_sites:
     routes:
       - path: /
     envs:
-      # This will be auto-populated with the api service's public URL
       - key: VITE_API_URL
         value: ${api.PUBLIC_URL}

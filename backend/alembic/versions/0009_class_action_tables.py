@@ -1,7 +1,7 @@
 """0009 — Class action cases table.
 
 Revision ID: 0009
-Revises: 0008
+Revises: 0008_phase9_feedback
 Create Date: 2026-03-29
 """
 
@@ -12,7 +12,7 @@ from alembic import op
 from sqlalchemy.dialects.postgresql import JSONB
 
 revision = "0009"
-down_revision = "0008"
+down_revision = "0008_phase9_feedback"
 branch_labels = None
 depends_on = None
 
