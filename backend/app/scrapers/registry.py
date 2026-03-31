@@ -63,7 +63,7 @@ def _load_registry() -> None:
     _safe_import("app.scrapers.legal.federal_court")
     _safe_import("app.scrapers.legal.tribunals_ontario")
     _safe_import("app.scrapers.legal.osb_insolvency")
-    _safe_import("app.scrapers.legal.stanford_scac")
+    _safe_import("app.scrapers.legal.scac")
     _safe_import("app.scrapers.legal.osb")
 
     _safe_import("app.scrapers.geo.geo_scrapers")
@@ -154,6 +154,8 @@ def _load_registry() -> None:
             "app.scrapers.regulatory.asc",
             "app.scrapers.regulatory.sec_aaer",
             "app.scrapers.regulatory.us_doj",
+            "app.scrapers.regulatory.amf",
+            "app.scrapers.regulatory.doj",
         ]
     )
 
