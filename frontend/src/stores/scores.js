@@ -15,6 +15,7 @@ const useScoreStore = create((set, get) => ({
   cache: new Map(),
   loading: new Set(),
   errors:  new Map(),
+  topVelocity: [],
 
   fetchScore: async (companyId) => {
     const id = Number(companyId)
@@ -68,6 +69,17 @@ const useScoreStore = create((set, get) => ({
       return results
     } catch (err) {
       return null
+    }
+  },
+
+  fetchTopVelocity: async (limit = 20) => {
+    try {
+      const data = await scoresApi.topVelocity(limit)
+      set({ topVelocity: Array.isArray(data) ? data : [] })
+      return data
+    } catch (_) {
+      set({ topVelocity: [] })
+      return []
     }
   },
 
