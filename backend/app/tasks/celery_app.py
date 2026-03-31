@@ -39,6 +39,7 @@ celery_app = Celery(
         "app.tasks.scraper_tasks",  # Phase S1-S4 category scraper tasks
         "app.tasks.phase6_tasks",  # Phase 6 ML agents
         "app.tasks.phase9_tasks",  # Phase 9 Feedback Loop agents
+        "app.tasks.class_action_tasks",  # Phase CA-1 class action scraper tasks
     ],
 )
 
@@ -142,6 +143,8 @@ celery_app.conf.task_routes = {
     "agents.compute_prediction_accuracy": {"queue": "agents"},
     "agents.run_drift_detector": {"queue": "agents"},
     "agents.run_confirmation_hunter": {"queue": "agents"},
+    # Phase CA-1: Class action scrapers → scrapers queue
+    "scrapers.run_class_actions": {"queue": "scrapers"},
 }
 
 # ── Beat Schedule ──────────────────────────────────────────────────────────────
@@ -426,5 +429,12 @@ celery_app.conf.beat_schedule = {
         "task": "agents.run_confirmation_hunter",
         "schedule": crontab(hour=6, minute=30),
         "options": {"queue": "agents"},
+    },
+    # ── Phase CA-1: Class Action Scrapers ─────────────────────────────────────
+    # Run all 12 class action scrapers every 6 hours
+    "run-class-action-scrapers": {
+        "task": "scrapers.run_class_actions",
+        "schedule": crontab(hour="*/6", minute=30),
+        "options": {"queue": "scrapers"},
     },
 }

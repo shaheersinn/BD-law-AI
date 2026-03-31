@@ -94,6 +94,20 @@ def _load_registry() -> None:
     _safe_import("app.scrapers.social.sedar_forums")
     _safe_import("app.scrapers.social.breach_monitor")
 
+    # ── Class action scrapers (Phase CA-1) ────────────────────────────────────
+    _safe_import("app.scrapers.class_actions.ontario_class_proceedings")
+    _safe_import("app.scrapers.class_actions.bc_class_proceedings")
+    _safe_import("app.scrapers.class_actions.quebec_class_proceedings")
+    _safe_import("app.scrapers.class_actions.federal_court_class_proceedings")
+    _safe_import("app.scrapers.class_actions.alberta_class_proceedings")
+    _safe_import("app.scrapers.class_actions.classaction_ca")
+    _safe_import("app.scrapers.class_actions.siskinds_class_actions")
+    _safe_import("app.scrapers.class_actions.branch_macmaster_class_actions")
+    _safe_import("app.scrapers.class_actions.merchant_law_class_actions")
+    _safe_import("app.scrapers.class_actions.koskie_minsky_class_actions")
+    _safe_import("app.scrapers.class_actions.cba_class_actions")
+    _safe_import("app.scrapers.class_actions.pacer_class_actions")
+
     # ── Old-style scrapers (use NAME/CATEGORY attributes, no @register) ────────
     # These are registered explicitly since they predate the @register pattern.
     _register_old_style(
