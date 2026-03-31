@@ -147,11 +147,7 @@ class CourtListenerClassActionsScraper(BaseScraper):
                     continue
 
                 absolute_url = item.get("absolute_url", "")
-                url = (
-                    f"https://www.courtlistener.com{absolute_url}"
-                    if absolute_url
-                    else None
-                )
+                url = f"https://www.courtlistener.com{absolute_url}" if absolute_url else None
 
                 company = _extract_company_name(case_name)
                 pa_hints = _infer_practice_areas(case_name)

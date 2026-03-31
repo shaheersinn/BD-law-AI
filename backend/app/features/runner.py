@@ -20,6 +20,7 @@ Performance targets:
   - Target: < 4 hours wall time on 4-worker Celery pool
   - Achieved by: async DB queries, batch inserts, sparse storage (skip is_null=True)
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -34,8 +35,8 @@ from app.features.base import BaseFeature, FeatureRegistry, FeatureValue
 
 log = structlog.get_logger(__name__)
 
-_BATCH_SIZE = 50         # Companies per batch
-_MAX_CONCURRENT = 10    # Concurrent feature computations per company
+_BATCH_SIZE = 50  # Companies per batch
+_MAX_CONCURRENT = 10  # Concurrent feature computations per company
 
 
 class FeatureRunner:
@@ -45,8 +46,8 @@ class FeatureRunner:
 
     def __init__(
         self,
-        db: Any,            # AsyncSession
-        mongo_db: Any,      # MongoDB handle
+        db: Any,  # AsyncSession
+        mongo_db: Any,  # MongoDB handle
         skip_null: bool = True,  # Don't persist is_null=True features
     ) -> None:
         self._db = db
@@ -64,15 +65,18 @@ class FeatureRunner:
 
         # Get all active companies
         result = await self._db.execute(
-            select(Company.id).where(Company.status == "active")
+            select(Company.id)
+            .where(Company.status == "active")
             .order_by(Company.priority_tier.asc(), Company.signal_count.desc())
             .limit(limit_companies)
         )
         company_ids = list(result.scalars().all())
 
-        log.info("feature_runner_start",
-                 total_companies=len(company_ids),
-                 total_features=FeatureRegistry.count())
+        log.info(
+            "feature_runner_start",
+            total_companies=len(company_ids),
+            total_features=FeatureRegistry.count(),
+        )
 
         total_computed = 0
         total_persisted = 0
@@ -81,7 +85,7 @@ class FeatureRunner:
 
         # Process in batches
         for batch_start in range(0, len(company_ids), _BATCH_SIZE):
-            batch = company_ids[batch_start:batch_start + _BATCH_SIZE]
+            batch = company_ids[batch_start : batch_start + _BATCH_SIZE]
             batch_results = await asyncio.gather(
                 *[self._compute_company(cid) for cid in batch],
                 return_exceptions=True,
@@ -112,8 +116,12 @@ class FeatureRunner:
     async def run_company(self, company_id: int) -> dict[str, Any]:
         """Run all features for a single company (on-demand)."""
         computed, persisted, null = await self._compute_company(company_id)
-        return {"company_id": company_id, "computed": computed,
-                "persisted": persisted, "null_skipped": null}
+        return {
+            "company_id": company_id,
+            "computed": computed,
+            "persisted": persisted,
+            "null_skipped": null,
+        }
 
     async def _compute_company(self, company_id: int) -> tuple[int, int, int]:
         """Compute all features for one company. Returns (computed, persisted, null)."""
@@ -127,9 +135,7 @@ class FeatureRunner:
 
         async def _compute_one(feature: BaseFeature) -> list[FeatureValue]:
             async with sem:
-                return await feature.compute_all_horizons(
-                    company_id, self._db, self._mongo_db
-                )
+                return await feature.compute_all_horizons(company_id, self._db, self._mongo_db)
 
         all_results = await asyncio.gather(
             *[_compute_one(f) for f in features],
@@ -139,8 +145,7 @@ class FeatureRunner:
         feature_values: list[FeatureValue] = []
         for result in all_results:
             if isinstance(result, BaseException):
-                log.warning("feature_compute_exception",
-                            company_id=company_id, error=str(result))
+                log.warning("feature_compute_exception", company_id=company_id, error=str(result))
                 continue
             feature_values.extend(result)
             computed += len(result)
@@ -154,10 +159,12 @@ class FeatureRunner:
                 await self._persist_feature_value(fv)
                 persisted += 1
             except Exception as exc:
-                log.error("feature_persist_error",
-                          company_id=company_id,
-                          feature=fv.feature_name,
-                          error=str(exc))
+                log.error(
+                    "feature_persist_error",
+                    company_id=company_id,
+                    feature=fv.feature_name,
+                    error=str(exc),
+                )
 
         return computed, persisted, null
 
@@ -187,19 +194,21 @@ class FeatureRunner:
             row.computed_at = fv.computed_at
             row.metadata = json.dumps(fv.metadata) if fv.metadata else None
         else:
-            self._db.add(CompanyFeature(
-                company_id=fv.company_id,
-                feature_name=fv.feature_name,
-                feature_version=fv.feature_version,
-                horizon_days=fv.horizon_days,
-                category=fv.metadata.get("category", ""),
-                value=fv.value,
-                is_null=fv.is_null,
-                confidence=fv.confidence,
-                signal_count=fv.signal_count,
-                computed_at=fv.computed_at,
-                metadata=json.dumps(fv.metadata) if fv.metadata else None,
-            ))
+            self._db.add(
+                CompanyFeature(
+                    company_id=fv.company_id,
+                    feature_name=fv.feature_name,
+                    feature_version=fv.feature_version,
+                    horizon_days=fv.horizon_days,
+                    category=fv.metadata.get("category", ""),
+                    value=fv.value,
+                    is_null=fv.is_null,
+                    confidence=fv.confidence,
+                    signal_count=fv.signal_count,
+                    computed_at=fv.computed_at,
+                    metadata=json.dumps(fv.metadata) if fv.metadata else None,
+                )
+            )
 
         await self._db.commit()
 

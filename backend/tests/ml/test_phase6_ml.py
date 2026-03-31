@@ -15,11 +15,10 @@ Requires: pytest, pytest-asyncio, torch, xgboost
 
 from __future__ import annotations
 
+import sys
 from datetime import UTC
 from pathlib import Path
 from unittest.mock import MagicMock
-
-import sys
 
 import numpy as np
 import pandas as pd

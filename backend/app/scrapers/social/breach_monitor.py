@@ -17,11 +17,12 @@ Signal types:
 
 Rate limit: 0.1 rps
 """
+
 from __future__ import annotations
 
-import xml.etree.ElementTree as ET
 from datetime import UTC
 
+import defusedxml.ElementTree as ET  # noqa: N817
 import structlog
 
 from app.config import get_settings
@@ -65,31 +66,34 @@ class BreachMonitorScraper(BaseScraper):
                 if response.status_code == 200:
                     breaches = response.json()
                     from datetime import datetime, timedelta
+
                     cutoff = datetime.now(tz=UTC) - timedelta(days=30)
                     for breach in breaches:
                         breach_date = self._parse_date(breach.get("AddedDate"))
                         if breach_date and breach_date < cutoff:
                             continue
                         if breach.get("DataClasses") and breach.get("IsVerified"):
-                            results.append(ScraperResult(
-                                source_id=self.source_id,
-                                signal_type="social_breach_detected",
-                                raw_company_name=breach.get("Name"),
-                                source_url=f"https://haveibeenpwned.com/PwnedWebsites#{breach.get('Name')}",
-                                signal_value={
-                                    "breach_name": breach.get("Name"),
-                                    "breach_date": breach.get("BreachDate"),
-                                    "pwn_count": breach.get("PwnCount", 0),
-                                    "data_classes": breach.get("DataClasses", []),
-                                    "is_sensitive": breach.get("IsSensitive", False),
-                                    "domain": breach.get("Domain"),
-                                },
-                                signal_text=f"Data breach: {breach.get('Name')} — {breach.get('PwnCount', 0):,} records",
-                                published_at=self._parse_date(breach.get("AddedDate")),
-                                practice_area_hints=["privacy", "technology", "class_actions"],
-                                raw_payload=breach,
-                                confidence_score=0.9,
-                            ))
+                            results.append(
+                                ScraperResult(
+                                    source_id=self.source_id,
+                                    signal_type="social_breach_detected",
+                                    raw_company_name=breach.get("Name"),
+                                    source_url=f"https://haveibeenpwned.com/PwnedWebsites#{breach.get('Name')}",
+                                    signal_value={
+                                        "breach_name": breach.get("Name"),
+                                        "breach_date": breach.get("BreachDate"),
+                                        "pwn_count": breach.get("PwnCount", 0),
+                                        "data_classes": breach.get("DataClasses", []),
+                                        "is_sensitive": breach.get("IsSensitive", False),
+                                        "domain": breach.get("Domain"),
+                                    },
+                                    signal_text=f"Data breach: {breach.get('Name')} — {breach.get('PwnCount', 0):,} records",
+                                    published_at=self._parse_date(breach.get("AddedDate")),
+                                    practice_area_hints=["privacy", "technology", "class_actions"],
+                                    raw_payload=breach,
+                                    confidence_score=0.9,
+                                )
+                            )
         except Exception as exc:
             log.error("hibp_error", error=str(exc))
 
@@ -102,16 +106,18 @@ class BreachMonitorScraper(BaseScraper):
                 root = ET.fromstring(resp.text)
                 for item in root.iter("item"):
                     title = (item.findtext("title") or "").strip()
-                    results.append(ScraperResult(
-                        source_id=self.source_id,
-                        signal_type="regulatory_cccs_advisory",
-                        source_url=(item.findtext("link") or "").strip(),
-                        signal_value={"title": title},
-                        signal_text=f"CCCS Advisory: {title}",
-                        published_at=self._parse_date((item.findtext("pubDate") or "").strip()),
-                        practice_area_hints=["privacy", "technology"],
-                        raw_payload={"title": title},
-                    ))
+                    results.append(
+                        ScraperResult(
+                            source_id=self.source_id,
+                            signal_type="regulatory_cccs_advisory",
+                            source_url=(item.findtext("link") or "").strip(),
+                            signal_value={"title": title},
+                            signal_text=f"CCCS Advisory: {title}",
+                            published_at=self._parse_date((item.findtext("pubDate") or "").strip()),
+                            practice_area_hints=["privacy", "technology"],
+                            raw_payload={"title": title},
+                        )
+                    )
         except Exception as exc:
             log.error("cccs_rss_error", error=str(exc))
 

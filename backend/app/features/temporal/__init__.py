@@ -7,6 +7,7 @@ as the count. A sudden spike in signals is more predictive than a steady level.
 
 Market: price/options signals that precede legal mandates.
 """
+
 from __future__ import annotations
 
 import json
@@ -25,6 +26,7 @@ log = structlog.get_logger(__name__)
 # TEMPORAL FEATURES
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 @register_feature
 class SignalVelocity7dFeature(BaseFeature):
     name = "signal_velocity_7d"
@@ -32,8 +34,11 @@ class SignalVelocity7dFeature(BaseFeature):
     category = "temporal"
     description = "Signals received in last 7 days / 7. Rate per day. Absolute count."
 
-    async def compute(self, company_id: int, horizon_days: int, db: Any, mongo_db: Any) -> FeatureValue:
+    async def compute(
+        self, company_id: int, horizon_days: int, db: Any, mongo_db: Any
+    ) -> FeatureValue:
         from app.models.signal import SignalRecord
+
         cutoff_7d = datetime.now(tz=UTC) - timedelta(days=7)
         cutoff_horizon = self._cutoff(horizon_days)
         # Use 7d regardless of horizon — velocity is always the last 7 days
@@ -61,9 +66,12 @@ class SignalVelocity7dFeature(BaseFeature):
             count_horizon = result2.scalar() or 0
 
             return FeatureValue(
-                company_id=company_id, feature_name=self.name,
-                feature_version=self.version, horizon_days=horizon_days,
-                value=velocity, signal_count=count_7d,
+                company_id=company_id,
+                feature_name=self.name,
+                feature_version=self.version,
+                horizon_days=horizon_days,
+                value=velocity,
+                signal_count=count_7d,
                 is_null=(count_7d == 0 and self.null_if_no_signals),
                 confidence=0.95,
                 metadata={"count_7d": count_7d, f"count_{horizon_days}d": count_horizon},
@@ -80,13 +88,17 @@ class SignalAccelerationFeature(BaseFeature):
     category = "temporal"
     description = "Rate of change in signal velocity: (last 7d rate) - (prior 7d rate). Positive = accelerating."
 
-    async def compute(self, company_id: int, horizon_days: int, db: Any, mongo_db: Any) -> FeatureValue:
+    async def compute(
+        self, company_id: int, horizon_days: int, db: Any, mongo_db: Any
+    ) -> FeatureValue:
         from app.models.signal import SignalRecord
+
         now = datetime.now(tz=UTC)
         cutoff_recent = now - timedelta(days=7)
         cutoff_prior = now - timedelta(days=14)
 
         try:
+
             async def _count(start: datetime, end: datetime) -> int:
                 r = await db.execute(
                     select(func.count(SignalRecord.id)).where(
@@ -108,10 +120,14 @@ class SignalAccelerationFeature(BaseFeature):
             acceleration = (recent - prior) / 7.0  # signals/day change
 
             return FeatureValue(
-                company_id=company_id, feature_name=self.name,
-                feature_version=self.version, horizon_days=horizon_days,
-                value=acceleration, signal_count=recent + prior,
-                is_null=False, confidence=0.85,
+                company_id=company_id,
+                feature_name=self.name,
+                feature_version=self.version,
+                horizon_days=horizon_days,
+                value=acceleration,
+                signal_count=recent + prior,
+                is_null=False,
+                confidence=0.85,
                 metadata={"recent_7d": recent, "prior_7d": prior},
             )
         except Exception as exc:
@@ -128,12 +144,22 @@ class CrossSignalConfirmationCountFeature(BaseFeature):
     null_if_no_signals = False
 
     _CATEGORIES = [
-        "corporate_", "legal_", "regulatory_", "jobs_",
-        "market_", "news_", "social_", "geo_", "lawblog_",
+        "corporate_",
+        "legal_",
+        "regulatory_",
+        "jobs_",
+        "market_",
+        "news_",
+        "social_",
+        "geo_",
+        "lawblog_",
     ]
 
-    async def compute(self, company_id: int, horizon_days: int, db: Any, mongo_db: Any) -> FeatureValue:
+    async def compute(
+        self, company_id: int, horizon_days: int, db: Any, mongo_db: Any
+    ) -> FeatureValue:
         from app.models.signal import SignalRecord
+
         cutoff = self._cutoff(horizon_days)
         try:
             result = await db.execute(
@@ -154,10 +180,14 @@ class CrossSignalConfirmationCountFeature(BaseFeature):
                         break
 
             return FeatureValue(
-                company_id=company_id, feature_name=self.name,
-                feature_version=self.version, horizon_days=horizon_days,
-                value=float(len(confirmed_cats)), signal_count=len(source_ids),
-                is_null=False, confidence=0.95,
+                company_id=company_id,
+                feature_name=self.name,
+                feature_version=self.version,
+                horizon_days=horizon_days,
+                value=float(len(confirmed_cats)),
+                signal_count=len(source_ids),
+                is_null=False,
+                confidence=0.95,
                 metadata={"categories": sorted(confirmed_cats)},
             )
         except Exception as exc:
@@ -173,8 +203,11 @@ class DaysSinceLastFilingFeature(BaseFeature):
     description = "Days since the company's most recent corporate filing. Lower = more active."
     null_if_no_signals = True
 
-    async def compute(self, company_id: int, horizon_days: int, db: Any, mongo_db: Any) -> FeatureValue:
+    async def compute(
+        self, company_id: int, horizon_days: int, db: Any, mongo_db: Any
+    ) -> FeatureValue:
         from app.models.signal import SignalRecord
+
         try:
             result = await db.execute(
                 select(func.max(SignalRecord.scraped_at)).where(
@@ -193,9 +226,13 @@ class DaysSinceLastFilingFeature(BaseFeature):
             days = (datetime.now(tz=UTC) - last_filing).days
 
             return FeatureValue(
-                company_id=company_id, feature_name=self.name,
-                feature_version=self.version, horizon_days=horizon_days,
-                value=float(days), is_null=False, confidence=0.95,
+                company_id=company_id,
+                feature_name=self.name,
+                feature_version=self.version,
+                horizon_days=horizon_days,
+                value=float(days),
+                is_null=False,
+                confidence=0.95,
             )
         except Exception as exc:
             log.error("feature_error", feature=self.name, error=str(exc))
@@ -207,11 +244,16 @@ class DaysSinceLastRegulatoryActionFeature(BaseFeature):
     name = "days_since_last_regulatory_action"
     version = "v1"
     category = "temporal"
-    description = "Days since most recent regulatory enforcement signal. Lower = recent enforcement."
+    description = (
+        "Days since most recent regulatory enforcement signal. Lower = recent enforcement."
+    )
     null_if_no_signals = True
 
-    async def compute(self, company_id: int, horizon_days: int, db: Any, mongo_db: Any) -> FeatureValue:
+    async def compute(
+        self, company_id: int, horizon_days: int, db: Any, mongo_db: Any
+    ) -> FeatureValue:
         from app.models.signal import SignalRecord
+
         try:
             result = await db.execute(
                 select(func.max(SignalRecord.scraped_at)).where(
@@ -230,9 +272,13 @@ class DaysSinceLastRegulatoryActionFeature(BaseFeature):
             days = (datetime.now(tz=UTC) - last_action).days
 
             return FeatureValue(
-                company_id=company_id, feature_name=self.name,
-                feature_version=self.version, horizon_days=horizon_days,
-                value=float(days), is_null=False, confidence=0.95,
+                company_id=company_id,
+                feature_name=self.name,
+                feature_version=self.version,
+                horizon_days=horizon_days,
+                value=float(days),
+                is_null=False,
+                confidence=0.95,
             )
         except Exception as exc:
             log.error("feature_error", feature=self.name, error=str(exc))
@@ -246,10 +292,13 @@ class SignalDecayAdjustedScoreFeature(BaseFeature):
     category = "temporal"
     description = "Exponentially decayed signal count: recent signals weight more. Range: 0–100."
 
-    async def compute(self, company_id: int, horizon_days: int, db: Any, mongo_db: Any) -> FeatureValue:
+    async def compute(
+        self, company_id: int, horizon_days: int, db: Any, mongo_db: Any
+    ) -> FeatureValue:
         import math
 
         from app.models.signal import SignalRecord
+
         cutoff = self._cutoff(horizon_days)
         now = datetime.now(tz=UTC)
         half_life_days = horizon_days / 2
@@ -280,10 +329,14 @@ class SignalDecayAdjustedScoreFeature(BaseFeature):
             normalized = min(100.0, decayed_score * 10)
 
             return FeatureValue(
-                company_id=company_id, feature_name=self.name,
-                feature_version=self.version, horizon_days=horizon_days,
-                value=normalized, signal_count=len(rows),
-                is_null=False, confidence=0.88,
+                company_id=company_id,
+                feature_name=self.name,
+                feature_version=self.version,
+                horizon_days=horizon_days,
+                value=normalized,
+                signal_count=len(rows),
+                is_null=False,
+                confidence=0.88,
             )
         except Exception as exc:
             log.error("feature_error", feature=self.name, error=str(exc))
@@ -294,6 +347,7 @@ class SignalDecayAdjustedScoreFeature(BaseFeature):
 # MARKET FEATURES
 # ══════════════════════════════════════════════════════════════════════════════
 
+
 @register_feature
 class PriceMomentumFeature(BaseFeature):
     name = "price_momentum"
@@ -302,18 +356,23 @@ class PriceMomentumFeature(BaseFeature):
     description = "Price return over window vs TSX composite. Negative = underperformance."
     requires_market = True
 
-    async def compute(self, company_id: int, horizon_days: int, db: Any, mongo_db: Any) -> FeatureValue:
+    async def compute(
+        self, company_id: int, horizon_days: int, db: Any, mongo_db: Any
+    ) -> FeatureValue:
         from app.models.signal import SignalRecord
+
         cutoff = self._cutoff(horizon_days)
         try:
             result = await db.execute(
-                select(SignalRecord.signal_value).where(
+                select(SignalRecord.signal_value)
+                .where(
                     and_(
                         SignalRecord.company_id == company_id,
                         SignalRecord.scraped_at >= cutoff,
                         SignalRecord.signal_type == "market_price_signal",
                     )
-                ).order_by(SignalRecord.scraped_at.asc())
+                )
+                .order_by(SignalRecord.scraped_at.asc())
             )
             rows = result.scalars().all()
             if len(rows) < 2:
@@ -335,10 +394,14 @@ class PriceMomentumFeature(BaseFeature):
             momentum = (prices[-1] - prices[0]) / prices[0]  # Simple return
 
             return FeatureValue(
-                company_id=company_id, feature_name=self.name,
-                feature_version=self.version, horizon_days=horizon_days,
+                company_id=company_id,
+                feature_name=self.name,
+                feature_version=self.version,
+                horizon_days=horizon_days,
                 value=max(-1.0, min(1.0, momentum)),
-                signal_count=len(prices), is_null=False, confidence=0.90,
+                signal_count=len(prices),
+                is_null=False,
+                confidence=0.90,
             )
         except Exception as exc:
             log.error("feature_error", feature=self.name, error=str(exc))
@@ -353,10 +416,13 @@ class VolumeAnomalyZScoreFeature(BaseFeature):
     description = "Z-score of recent trading volume vs window average. High = unusual activity."
     requires_market = True
 
-    async def compute(self, company_id: int, horizon_days: int, db: Any, mongo_db: Any) -> FeatureValue:
+    async def compute(
+        self, company_id: int, horizon_days: int, db: Any, mongo_db: Any
+    ) -> FeatureValue:
         import statistics
 
         from app.models.signal import SignalRecord
+
         cutoff = self._cutoff(horizon_days)
         try:
             result = await db.execute(
@@ -392,10 +458,14 @@ class VolumeAnomalyZScoreFeature(BaseFeature):
             z_clipped = max(-5.0, min(5.0, z))
 
             return FeatureValue(
-                company_id=company_id, feature_name=self.name,
-                feature_version=self.version, horizon_days=horizon_days,
-                value=z_clipped, signal_count=len(volumes),
-                is_null=False, confidence=0.85,
+                company_id=company_id,
+                feature_name=self.name,
+                feature_version=self.version,
+                horizon_days=horizon_days,
+                value=z_clipped,
+                signal_count=len(volumes),
+                is_null=False,
+                confidence=0.85,
             )
         except Exception as exc:
             log.error("feature_error", feature=self.name, error=str(exc))
@@ -411,18 +481,24 @@ class ShortInterestPctFeature(BaseFeature):
     requires_market = True
     null_if_no_signals = True
 
-    async def compute(self, company_id: int, horizon_days: int, db: Any, mongo_db: Any) -> FeatureValue:
+    async def compute(
+        self, company_id: int, horizon_days: int, db: Any, mongo_db: Any
+    ) -> FeatureValue:
         from app.models.signal import SignalRecord
+
         cutoff = self._cutoff(horizon_days)
         try:
             result = await db.execute(
-                select(SignalRecord.signal_value).where(
+                select(SignalRecord.signal_value)
+                .where(
                     and_(
                         SignalRecord.company_id == company_id,
                         SignalRecord.scraped_at >= cutoff,
                         SignalRecord.signal_type == "market_options_flow",
                     )
-                ).order_by(SignalRecord.scraped_at.desc()).limit(1)
+                )
+                .order_by(SignalRecord.scraped_at.desc())
+                .limit(1)
             )
             row = result.scalar()
             if not row:
@@ -434,9 +510,13 @@ class ShortInterestPctFeature(BaseFeature):
                 return self._null_value(company_id, horizon_days)
 
             return FeatureValue(
-                company_id=company_id, feature_name=self.name,
-                feature_version=self.version, horizon_days=horizon_days,
-                value=float(short_pct), is_null=False, confidence=0.88,
+                company_id=company_id,
+                feature_name=self.name,
+                feature_version=self.version,
+                horizon_days=horizon_days,
+                value=float(short_pct),
+                is_null=False,
+                confidence=0.88,
             )
         except Exception as exc:
             log.error("feature_error", feature=self.name, error=str(exc))

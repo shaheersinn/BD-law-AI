@@ -119,7 +119,9 @@ class KoskieMinskyClassActionsScraper(BaseScraper):
                 pa_hints = _infer_practice_areas(title)
                 signal_type = (
                     "class_action_filed"
-                    if any(w in title.lower() for w in ("filed", "commenced", "certified", "approved"))
+                    if any(
+                        w in title.lower() for w in ("filed", "commenced", "certified", "approved")
+                    )
                     else "class_action_investigation"
                 )
 

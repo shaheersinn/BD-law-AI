@@ -36,10 +36,27 @@ _PRACTICE_AREAS = ["class_actions", "banking_finance", "securities_capital_marke
 
 # Financial institutions with OBSI exposure
 _FI_KEYWORDS = [
-    "bank", "credit union", "caisse", "investment", "broker", "dealer",
-    "mutual fund", "portfolio", "advisor", "insurance",
-    "td", "rbc", "bmo", "cibc", "scotiabank", "desjardins", "national bank",
-    "manulife", "sunlife", "great-west", "canada life",
+    "bank",
+    "credit union",
+    "caisse",
+    "investment",
+    "broker",
+    "dealer",
+    "mutual fund",
+    "portfolio",
+    "advisor",
+    "insurance",
+    "td",
+    "rbc",
+    "bmo",
+    "cibc",
+    "scotiabank",
+    "desjardins",
+    "national bank",
+    "manulife",
+    "sunlife",
+    "great-west",
+    "canada life",
 ]
 
 
@@ -172,8 +189,15 @@ class OBSIDecisionsScraper(BaseScraper):
         return any(
             k in text
             for k in [
-                "non-complian", "refus", "decision", "award", "recommend", "investig",
-                "settlement", "complaint", "case",
+                "non-complian",
+                "refus",
+                "decision",
+                "award",
+                "recommend",
+                "investig",
+                "settlement",
+                "complaint",
+                "case",
             ]
         )
 

@@ -92,9 +92,7 @@ class MerchantLawClassActionsScraper(BaseScraper):
                 return results
 
             cutoff = datetime.now(tz=UTC) - timedelta(days=_STALE_DAYS)
-            articles = soup.select(
-                "article, .case-listing, .class-action-item, .entry-content a"
-            )
+            articles = soup.select("article, .case-listing, .class-action-item, .entry-content a")
             if not articles:
                 articles = soup.select("a[href*='class-action']")
 

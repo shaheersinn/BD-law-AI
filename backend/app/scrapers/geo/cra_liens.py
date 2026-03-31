@@ -36,12 +36,24 @@ log = structlog.get_logger(__name__)
 _CRA_NEWS_URL = "https://www.canada.ca/en/revenue-agency/news.html"
 
 # Keywords signalling tax enforcement actions
-_TAX_ENFORCEMENT_KEYWORDS = frozenset({
-    "tax evasion", "tax fraud", "guilty plea", "sentenced",
-    "convicted", "charged", "prosecution", "penalty",
-    "director liability", "assessment", "garnishment",
-    "lien", "seizure", "compliance action",
-})
+_TAX_ENFORCEMENT_KEYWORDS = frozenset(
+    {
+        "tax evasion",
+        "tax fraud",
+        "guilty plea",
+        "sentenced",
+        "convicted",
+        "charged",
+        "prosecution",
+        "penalty",
+        "director liability",
+        "assessment",
+        "garnishment",
+        "lien",
+        "seizure",
+        "compliance action",
+    }
+)
 
 
 @register

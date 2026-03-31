@@ -18,9 +18,7 @@ from app.scrapers.registry import register
 
 log = structlog.get_logger(__name__)
 
-_FSRA_ENFORCEMENT_URL = (
-    "https://www.fsrao.ca/enforcement/enforcement-actions"
-)
+_FSRA_ENFORCEMENT_URL = "https://www.fsrao.ca/enforcement/enforcement-actions"
 
 
 @register
@@ -72,9 +70,7 @@ class FSRAScraper(BaseScraper):
         log.info("fsra_scrape_complete", count=len(results))
         return results
 
-    def _parse_item(
-        self, item: Any, cutoff: datetime
-    ) -> ScraperResult | None:
+    def _parse_item(self, item: Any, cutoff: datetime) -> ScraperResult | None:
         cells = item.find_all("td")
         if cells and len(cells) >= 2:
             return self._parse_table_row(cells, cutoff)
@@ -90,15 +86,9 @@ class FSRAScraper(BaseScraper):
         source_url = None
         if link_el:
             href = str(link_el.get("href", ""))
-            source_url = (
-                href
-                if href.startswith("http")
-                else f"https://www.fsrao.ca{href}"
-            )
+            source_url = href if href.startswith("http") else f"https://www.fsrao.ca{href}"
 
-        date_el = item.find("time") or item.find(
-            class_=lambda c: c and "date" in str(c).lower()
-        )
+        date_el = item.find("time") or item.find(class_=lambda c: c and "date" in str(c).lower())
         published_at = None
         if date_el:
             date_str = date_el.get("datetime") or self.safe_text(date_el)
@@ -120,9 +110,7 @@ class FSRAScraper(BaseScraper):
             confidence_score=0.85,
         )
 
-    def _parse_table_row(
-        self, cells: list[Any], cutoff: datetime
-    ) -> ScraperResult | None:
+    def _parse_table_row(self, cells: list[Any], cutoff: datetime) -> ScraperResult | None:
         entity = self.safe_text(cells[0])
         if not entity or len(entity) < 3:
             return None
@@ -138,11 +126,7 @@ class FSRAScraper(BaseScraper):
         source_url = None
         if link_el:
             href = str(link_el.get("href", ""))
-            source_url = (
-                href
-                if href.startswith("http")
-                else f"https://www.fsrao.ca{href}"
-            )
+            source_url = href if href.startswith("http") else f"https://www.fsrao.ca{href}"
 
         return ScraperResult(
             source_id=self.source_id,

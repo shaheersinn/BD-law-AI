@@ -65,6 +65,7 @@ TYPE_INFERENCE = {
 
 DECAY_HALF_LIFE = 30.0  # days
 
+
 def score_company(company_id: int) -> ClassActionScore | None:
     """Computes Bayesian convergence of all signals for a company."""
     with get_sync_db() as db:
@@ -73,9 +74,11 @@ def score_company(company_id: int) -> ClassActionScore | None:
             return None
 
         # Fetch signals
-        signals = db.execute(
-            select(SignalRecord).where(SignalRecord.company_id == company_id)
-        ).scalars().all()
+        signals = (
+            db.execute(select(SignalRecord).where(SignalRecord.company_id == company_id))
+            .scalars()
+            .all()
+        )
 
         if not signals:
             return None
@@ -103,14 +106,16 @@ def score_company(company_id: int) -> ClassActionScore | None:
                 weight *= decay_factor
 
             # Noisy-OR inversion
-            combined_prob *= (1.0 - weight)
+            combined_prob *= 1.0 - weight
 
-            contributing_signals.append({
-                "signal_type": stype,
-                "weight": weight,
-                "source_id": sig.source_id,
-                "date": (sig.published_at or sig.scraped_at).isoformat()
-            })
+            contributing_signals.append(
+                {
+                    "signal_type": stype,
+                    "weight": weight,
+                    "source_id": sig.source_id,
+                    "date": (sig.published_at or sig.scraped_at).isoformat(),
+                }
+            )
 
             # Accumulate scores for predicted type
             for cat, rules in TYPE_INFERENCE.items():
@@ -128,23 +133,34 @@ def score_company(company_id: int) -> ClassActionScore | None:
         if company.sector:
             # Check if any other company in the same sector has a class action
             # We proxy this by looking at high probability in the class action scores
-            q = select(ClassActionScore).join(Company).where(
-                Company.sector == company.sector,
-                Company.id != company_id,
-                ClassActionScore.probability > 0.8
-            ).limit(1)
+            q = (
+                select(ClassActionScore)
+                .join(Company)
+                .where(
+                    Company.sector == company.sector,
+                    Company.id != company_id,
+                    ClassActionScore.probability > 0.8,
+                )
+                .limit(1)
+            )
             has_peer_action = db.execute(q).scalar_one_or_none()
             if has_peer_action:
                 prob = min(prob * 1.3, 0.99)
-                contributing_signals.append({
-                    "signal_type": "sector_amplification",
-                    "weight": prob * 0.3,
-                    "source_id": "system",
-                    "date": now.isoformat()
-                })
+                contributing_signals.append(
+                    {
+                        "signal_type": "sector_amplification",
+                        "weight": prob * 0.3,
+                        "source_id": "system",
+                        "date": now.isoformat(),
+                    }
+                )
 
         # Infer Type
-        predicted_type = max(type_scores.items(), key=lambda x: x[1])[0] if any(type_scores.values()) else "unknown"
+        predicted_type = (
+            max(type_scores.items(), key=lambda x: x[1])[0]
+            if any(type_scores.values())
+            else "unknown"
+        )
 
         # Time horizon days
         if prob > 0.8:
@@ -160,7 +176,9 @@ def score_company(company_id: int) -> ClassActionScore | None:
         contributing_signals.sort(key=lambda x: x["weight"], reverse=True)
 
         # Upsert
-        existing = db.execute(select(ClassActionScore).where(ClassActionScore.company_id == company_id)).scalar_one_or_none()
+        existing = db.execute(
+            select(ClassActionScore).where(ClassActionScore.company_id == company_id)
+        ).scalar_one_or_none()
 
         if existing:
             existing.probability = prob
@@ -178,7 +196,7 @@ def score_company(company_id: int) -> ClassActionScore | None:
                 time_horizon_days=time_horizon_days,
                 contributing_signals=contributing_signals[:10],
                 confidence=confidence,
-                scored_at=now
+                scored_at=now,
             )
             db.add(score_obj)
 
@@ -186,11 +204,14 @@ def score_company(company_id: int) -> ClassActionScore | None:
         db.refresh(score_obj)
         return score_obj
 
+
 def score_all_companies() -> list[ClassActionScore]:
     """Batch scoring, called by Celery nightly."""
     scores = []
     with get_sync_db() as db:
-        company_ids = db.execute(select(Company.id).where(Company.status == "active")).scalars().all()
+        company_ids = (
+            db.execute(select(Company.id).where(Company.status == "active")).scalars().all()
+        )
 
     for cid in company_ids:
         sc = score_company(cid)
@@ -199,14 +220,17 @@ def score_all_companies() -> list[ClassActionScore]:
 
     return scores
 
+
 def get_top_risks(n: int = 20) -> list[ClassActionScore]:
     """Highest risk companies."""
     with get_sync_db() as db:
-        items = db.execute(
-            select(ClassActionScore)
-            .order_by(ClassActionScore.probability.desc())
-            .limit(n)
-        ).scalars().all()
+        items = (
+            db.execute(
+                select(ClassActionScore).order_by(ClassActionScore.probability.desc()).limit(n)
+            )
+            .scalars()
+            .all()
+        )
         for x in items:
             db.expunge(x)
         return list(items)

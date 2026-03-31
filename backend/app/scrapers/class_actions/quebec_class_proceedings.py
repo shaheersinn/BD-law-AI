@@ -83,9 +83,7 @@ class QuebecClassProceedingsScraper(BaseScraper):
             log.error("quebec_class_error", error=str(exc))
         return results
 
-    def _parse_row(
-        self, row: Tag, cutoff: datetime
-    ) -> ScraperResult | None:
+    def _parse_row(self, row: Tag, cutoff: datetime) -> ScraperResult | None:
         text = self.safe_text(row)
         if not text or len(text) < 10:
             return None
@@ -110,7 +108,11 @@ class QuebecClassProceedingsScraper(BaseScraper):
 
         case_title = self.safe_text(cells[0]) if cells else text
         company = self._extract_company_name(case_title)
-        signal_type = "class_action_certified" if "certified" in text.lower() or "autorisé" in text.lower() else "class_action_filed"
+        signal_type = (
+            "class_action_certified"
+            if "certified" in text.lower() or "autorisé" in text.lower()
+            else "class_action_filed"
+        )
         hints = self._infer_practice_areas(text)
 
         court_file = ""

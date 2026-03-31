@@ -32,24 +32,47 @@ log = structlog.get_logger(__name__)
 _DBRS_RESEARCH_URL = "https://dbrs.morningstar.com/research"
 
 # Keywords for negative rating actions
-_DOWNGRADE_KEYWORDS = frozenset({
-    "downgrade", "downgraded", "lowered", "reduced",
-    "cut", "revision down",
-})
+_DOWNGRADE_KEYWORDS = frozenset(
+    {
+        "downgrade",
+        "downgraded",
+        "lowered",
+        "reduced",
+        "cut",
+        "revision down",
+    }
+)
 
-_NEGATIVE_OUTLOOK_KEYWORDS = frozenset({
-    "negative outlook", "negative trend", "credit watch",
-    "creditwatch negative", "under review with negative",
-    "review-negative", "placed under review",
-    "developing trend",
-})
+_NEGATIVE_OUTLOOK_KEYWORDS = frozenset(
+    {
+        "negative outlook",
+        "negative trend",
+        "credit watch",
+        "creditwatch negative",
+        "under review with negative",
+        "review-negative",
+        "placed under review",
+        "developing trend",
+    }
+)
 
 # Keywords confirming it's a rating action (not generic research)
-_RATING_ACTION_KEYWORDS = frozenset({
-    "rating", "rated", "confirms", "confirmed",
-    "trend", "outlook", "review", "action",
-    "upgrade", "downgrade", "affirm", "affirmed",
-})
+_RATING_ACTION_KEYWORDS = frozenset(
+    {
+        "rating",
+        "rated",
+        "confirms",
+        "confirmed",
+        "trend",
+        "outlook",
+        "review",
+        "action",
+        "upgrade",
+        "downgrade",
+        "affirm",
+        "affirmed",
+    }
+)
 
 
 @register
@@ -169,7 +192,7 @@ class DbrsScraper(BaseScraper):
         #   "Company X Rating Downgraded"
         for prefix in ("DBRS Morningstar ", "Morningstar DBRS "):
             if title.startswith(prefix):
-                rest = title[len(prefix):]
+                rest = title[len(prefix) :]
                 # Skip the action verb
                 parts = rest.split(" ", 1)
                 if len(parts) >= 2:
@@ -177,6 +200,6 @@ class DbrsScraper(BaseScraper):
                     # Strip trailing rating/qualifier info
                     for cut in (" to ", " at ", " Rating", " Under ", "'s "):
                         if cut in entity:
-                            entity = entity[:entity.index(cut)]
+                            entity = entity[: entity.index(cut)]
                     return entity.strip() or None
         return None

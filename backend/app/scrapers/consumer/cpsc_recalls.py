@@ -37,8 +37,18 @@ _PRACTICE_AREAS = ["product_liability", "class_actions"]
 
 # Canadian company indicators in CPSC filings
 _CANADIAN_INDICATORS = [
-    "canada", "canadian", " inc.", " ltd.", " corp.", "ontario", "british columbia",
-    "alberta", "quebec", "toronto", "montreal", "vancouver",
+    "canada",
+    "canadian",
+    " inc.",
+    " ltd.",
+    " corp.",
+    "ontario",
+    "british columbia",
+    "alberta",
+    "quebec",
+    "toronto",
+    "montreal",
+    "vancouver",
 ]
 
 
@@ -53,7 +63,7 @@ class CPSCRecallsScraper(BaseScraper):
     ttl_seconds = 3600
 
     async def scrape(self) -> list[ScraperResult]:
-        results: list[ScraperResult] = []
+        _results: list[ScraperResult] = []
         # Try RSS first — faster and simpler
         rss_results = await self._scrape_rss()
         if rss_results:

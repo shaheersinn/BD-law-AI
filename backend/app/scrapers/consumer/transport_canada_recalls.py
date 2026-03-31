@@ -34,9 +34,28 @@ _PRACTICE_AREAS = ["product_liability", "class_actions"]
 
 # Canadian auto brands frequently subject to class actions
 _AUTO_MANUFACTURERS = {
-    "honda", "toyota", "ford", "gm", "general motors", "chrysler", "stellantis",
-    "fca", "volkswagen", "vw", "bmw", "mercedes", "hyundai", "kia", "subaru",
-    "nissan", "mazda", "tesla", "jeep", "dodge", "ram", "chevrolet",
+    "honda",
+    "toyota",
+    "ford",
+    "gm",
+    "general motors",
+    "chrysler",
+    "stellantis",
+    "fca",
+    "volkswagen",
+    "vw",
+    "bmw",
+    "mercedes",
+    "hyundai",
+    "kia",
+    "subaru",
+    "nissan",
+    "mazda",
+    "tesla",
+    "jeep",
+    "dodge",
+    "ram",
+    "chevrolet",
 }
 
 

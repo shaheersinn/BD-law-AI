@@ -48,7 +48,9 @@ async def _get_score_and_company(
     )
     score = score_res.scalar_one_or_none()
     if score is None:
-        raise HTTPException(status_code=404, detail=f"No class action score for company {company_id}")
+        raise HTTPException(
+            status_code=404, detail=f"No class action score for company {company_id}"
+        )
 
     company = await db.get(Company, company_id)
     if company is None:
@@ -176,7 +178,9 @@ async def get_cases(
             "certification_date": (
                 row["certification_date"].isoformat() if row["certification_date"] else None
             ),
-            "settlement_date": row["settlement_date"].isoformat() if row["settlement_date"] else None,
+            "settlement_date": row["settlement_date"].isoformat()
+            if row["settlement_date"]
+            else None,
             "settlement_amount_cad": (
                 float(row["settlement_amount_cad"]) if row["settlement_amount_cad"] else None
             ),
@@ -219,7 +223,9 @@ async def get_case_detail(
         "case_type": row["case_type"],
         "plaintiff_firm": row["plaintiff_firm"],
         "filing_date": row["filing_date"].isoformat() if row["filing_date"] else None,
-        "certification_date": row["certification_date"].isoformat() if row["certification_date"] else None,
+        "certification_date": row["certification_date"].isoformat()
+        if row["certification_date"]
+        else None,
         "settlement_date": row["settlement_date"].isoformat() if row["settlement_date"] else None,
         "settlement_amount_cad": (
             float(row["settlement_amount_cad"]) if row["settlement_amount_cad"] else None

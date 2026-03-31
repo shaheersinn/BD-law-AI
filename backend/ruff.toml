@@ -41,6 +41,8 @@ ignore = [
 "app/training/train_all.py" = ["S108"]
 # ML models use uppercase matrix names (X) by convention; S110 is acceptable in batch score_batch
 "app/ml/**/*.py" = ["S110", "B023"]
+"app/ml/class_action/**/*.py" = ["E501"]
+"app/models/class_action_score.py" = ["E501"]
 
 [format]
 quote-style = "double"

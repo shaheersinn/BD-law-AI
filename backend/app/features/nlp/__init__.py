@@ -22,6 +22,7 @@ Features:
   breach_regulatory_cooccurrence — data breach + regulatory mention same window
   ma_rumour_score             — M&A rumour signal from social/news co-occurrence
 """
+
 from __future__ import annotations
 
 import re
@@ -37,56 +38,145 @@ log = structlog.get_logger(__name__)
 
 # ── Keyword dictionaries ───────────────────────────────────────────────────────
 _LEGAL_KEYWORDS = {
-    "litigation", "lawsuit", "plaintiff", "defendant", "injunction", "judgment",
-    "arbitration", "class action", "settlement", "damages", "liability", "breach",
-    "negligence", "indemnification", "subrogation", "discovery", "deposition",
-    "court order", "cease and desist", "regulatory action", "enforcement",
-    "investigation", "penalty", "fine", "sanction", "compliance order",
-    "receivership", "insolvency", "ccaa", "proposal", "trustee", "liquidation",
+    "litigation",
+    "lawsuit",
+    "plaintiff",
+    "defendant",
+    "injunction",
+    "judgment",
+    "arbitration",
+    "class action",
+    "settlement",
+    "damages",
+    "liability",
+    "breach",
+    "negligence",
+    "indemnification",
+    "subrogation",
+    "discovery",
+    "deposition",
+    "court order",
+    "cease and desist",
+    "regulatory action",
+    "enforcement",
+    "investigation",
+    "penalty",
+    "fine",
+    "sanction",
+    "compliance order",
+    "receivership",
+    "insolvency",
+    "ccaa",
+    "proposal",
+    "trustee",
+    "liquidation",
 }
 
 _HEDGING_PHRASES = [
-    "may", "might", "could", "should", "would", "approximately", "estimated",
-    "subject to", "if any", "no assurance", "cannot guarantee", "risk",
-    "uncertainty", "potential", "anticipated", "expected to", "believes",
-    "intends to", "plans to", "forward-looking", "forward looking",
+    "may",
+    "might",
+    "could",
+    "should",
+    "would",
+    "approximately",
+    "estimated",
+    "subject to",
+    "if any",
+    "no assurance",
+    "cannot guarantee",
+    "risk",
+    "uncertainty",
+    "potential",
+    "anticipated",
+    "expected to",
+    "believes",
+    "intends to",
+    "plans to",
+    "forward-looking",
+    "forward looking",
 ]
 
 _DISTRESS_KEYWORDS = {
-    "going concern", "substantial doubt", "material uncertainty", "liquidity",
-    "default", "covenant breach", "credit facility", "working capital deficit",
-    "net loss", "negative cash flow", "restructuring", "impairment", "write-down",
-    "receivership", "ccaa", "proposal", "creditor", "insolvency",
+    "going concern",
+    "substantial doubt",
+    "material uncertainty",
+    "liquidity",
+    "default",
+    "covenant breach",
+    "credit facility",
+    "working capital deficit",
+    "net loss",
+    "negative cash flow",
+    "restructuring",
+    "impairment",
+    "write-down",
+    "receivership",
+    "ccaa",
+    "proposal",
+    "creditor",
+    "insolvency",
 }
 
 _REGULATORY_NAMES = {
-    "osc", "bcsc", "asc", "amf", "fintrac", "osfi", "opc", "crtc",
-    "competition bureau", "securities commission", "health canada", "eccc",
-    "competition tribunal", "financial services regulatory",
-    "ontario securities", "securities act", "pipeda",
+    "osc",
+    "bcsc",
+    "asc",
+    "amf",
+    "fintrac",
+    "osfi",
+    "opc",
+    "crtc",
+    "competition bureau",
+    "securities commission",
+    "health canada",
+    "eccc",
+    "competition tribunal",
+    "financial services regulatory",
+    "ontario securities",
+    "securities act",
+    "pipeda",
 }
 
 _EXEC_DEPARTURE_KEYWORDS = {
-    "resign", "stepped down", "departure", "left the company", "no longer",
-    "effective immediately", "terminated", "dismissed", "retired",
-    "replaced as", "transition of", "leadership change",
+    "resign",
+    "stepped down",
+    "departure",
+    "left the company",
+    "no longer",
+    "effective immediately",
+    "terminated",
+    "dismissed",
+    "retired",
+    "replaced as",
+    "transition of",
+    "leadership change",
 }
 
 _NEGATIVE_GUIDANCE = {
-    "below expectations", "revenue decline", "lower than anticipated",
-    "challenging", "headwinds", "pressure", "softening", "deterioration",
-    "withdrawal of guidance", "suspended dividend", "reduced forecast",
-    "impairment charge", "restructuring charge", "write-off",
+    "below expectations",
+    "revenue decline",
+    "lower than anticipated",
+    "challenging",
+    "headwinds",
+    "pressure",
+    "softening",
+    "deterioration",
+    "withdrawal of guidance",
+    "suspended dividend",
+    "reduced forecast",
+    "impairment charge",
+    "restructuring charge",
+    "write-off",
 }
 
 
 def _tokenize(text: str) -> list[str]:
     """Simple whitespace + punctuation tokenizer. No NLTK dependency."""
-    return re.findall(r'\b[a-zA-Z][a-zA-Z\'-]*\b', text.lower())
+    return re.findall(r"\b[a-zA-Z][a-zA-Z\'-]*\b", text.lower())
 
 
 def _sentence_count(text: str) -> int:
-    return max(1, len(re.split(r'[.!?]+', text)))
+    return max(1, len(re.split(r"[.!?]+", text)))
 
 
 async def _get_signals_text(
@@ -97,6 +187,7 @@ async def _get_signals_text(
 ) -> list[str]:
     """Pull signal_text for a company in a time window."""
     from app.models.signal import SignalRecord
+
     conditions = [
         SignalRecord.company_id == company_id,
         SignalRecord.scraped_at >= cutoff,
@@ -106,9 +197,7 @@ async def _get_signals_text(
         prefix_conditions = [SignalRecord.source_id.like(f"{p}%") for p in source_prefixes]
         conditions.append(or_(*prefix_conditions))
 
-    result = await db.execute(
-        select(SignalRecord.signal_text).where(and_(*conditions))
-    )
+    result = await db.execute(select(SignalRecord.signal_text).where(and_(*conditions)))
     return [t for t in result.scalars().all() if t]
 
 
@@ -119,11 +208,14 @@ class LegalLanguageDensityFeature(BaseFeature):
     category = "nlp"
     description = "Fraction of tokens in signal text that are legal keywords. Range: 0–1."
 
-    async def compute(self, company_id: int, horizon_days: int, db: Any, mongo_db: Any) -> FeatureValue:
+    async def compute(
+        self, company_id: int, horizon_days: int, db: Any, mongo_db: Any
+    ) -> FeatureValue:
         cutoff = self._cutoff(horizon_days)
         try:
-            texts = await _get_signals_text(company_id, cutoff, db,
-                                            ["news_", "corporate_", "legal_"])
+            texts = await _get_signals_text(
+                company_id, cutoff, db, ["news_", "corporate_", "legal_"]
+            )
             if not texts:
                 return self._null_value(company_id, horizon_days)
 
@@ -134,17 +226,21 @@ class LegalLanguageDensityFeature(BaseFeature):
 
             legal_count = sum(1 for t in tokens if t in _LEGAL_KEYWORDS)
             # Also check bigrams
-            bigrams = [f"{tokens[i]} {tokens[i+1]}" for i in range(len(tokens)-1)]
+            bigrams = [f"{tokens[i]} {tokens[i + 1]}" for i in range(len(tokens) - 1)]
             legal_count += sum(1 for bg in bigrams if bg in _LEGAL_KEYWORDS)
 
             density = legal_count / max(len(tokens), 1)
             density_clipped = min(1.0, density * 5)  # Scale: 20%+ tokens = score 1.0
 
             return FeatureValue(
-                company_id=company_id, feature_name=self.name,
-                feature_version=self.version, horizon_days=horizon_days,
-                value=density_clipped, signal_count=len(texts),
-                is_null=False, confidence=0.85,
+                company_id=company_id,
+                feature_name=self.name,
+                feature_version=self.version,
+                horizon_days=horizon_days,
+                value=density_clipped,
+                signal_count=len(texts),
+                is_null=False,
+                confidence=0.85,
                 metadata={"raw_density": density, "legal_token_count": legal_count},
             )
         except Exception as exc:
@@ -157,9 +253,13 @@ class HedgingScoreFeature(BaseFeature):
     name = "hedging_score"
     version = "v1"
     category = "nlp"
-    description = "Fraction of sentences containing hedging language. High = uncertainty/risk. Range: 0–1."
+    description = (
+        "Fraction of sentences containing hedging language. High = uncertainty/risk. Range: 0–1."
+    )
 
-    async def compute(self, company_id: int, horizon_days: int, db: Any, mongo_db: Any) -> FeatureValue:
+    async def compute(
+        self, company_id: int, horizon_days: int, db: Any, mongo_db: Any
+    ) -> FeatureValue:
         cutoff = self._cutoff(horizon_days)
         try:
             texts = await _get_signals_text(company_id, cutoff, db, ["corporate_", "news_"])
@@ -167,21 +267,22 @@ class HedgingScoreFeature(BaseFeature):
                 return self._null_value(company_id, horizon_days)
 
             all_text = " ".join(texts).lower()
-            sentences = re.split(r'[.!?]+', all_text)
+            sentences = re.split(r"[.!?]+", all_text)
             if not sentences:
                 return self._null_value(company_id, horizon_days)
 
-            hedged = sum(
-                1 for s in sentences
-                if any(phrase in s for phrase in _HEDGING_PHRASES)
-            )
+            hedged = sum(1 for s in sentences if any(phrase in s for phrase in _HEDGING_PHRASES))
             ratio = hedged / max(len(sentences), 1)
 
             return FeatureValue(
-                company_id=company_id, feature_name=self.name,
-                feature_version=self.version, horizon_days=horizon_days,
-                value=min(1.0, ratio), signal_count=len(texts),
-                is_null=False, confidence=0.80,
+                company_id=company_id,
+                feature_name=self.name,
+                feature_version=self.version,
+                horizon_days=horizon_days,
+                value=min(1.0, ratio),
+                signal_count=len(texts),
+                is_null=False,
+                confidence=0.80,
                 metadata={"hedged_sentences": hedged, "total_sentences": len(sentences)},
             )
         except Exception as exc:
@@ -196,7 +297,9 @@ class RegulatoryMentionCountFeature(BaseFeature):
     category = "nlp"
     description = "Count of distinct Canadian regulator names mentioned in window"
 
-    async def compute(self, company_id: int, horizon_days: int, db: Any, mongo_db: Any) -> FeatureValue:
+    async def compute(
+        self, company_id: int, horizon_days: int, db: Any, mongo_db: Any
+    ) -> FeatureValue:
         cutoff = self._cutoff(horizon_days)
         try:
             texts = await _get_signals_text(company_id, cutoff, db)
@@ -207,9 +310,12 @@ class RegulatoryMentionCountFeature(BaseFeature):
             mentioned = sum(1 for name in _REGULATORY_NAMES if name in all_text)
 
             return FeatureValue(
-                company_id=company_id, feature_name=self.name,
-                feature_version=self.version, horizon_days=horizon_days,
-                value=float(mentioned), signal_count=len(texts),
+                company_id=company_id,
+                feature_name=self.name,
+                feature_version=self.version,
+                horizon_days=horizon_days,
+                value=float(mentioned),
+                signal_count=len(texts),
                 is_null=(mentioned == 0 and self.null_if_no_signals),
                 confidence=0.90,
             )
@@ -223,9 +329,13 @@ class FinancialDistressLanguageScoreFeature(BaseFeature):
     name = "financial_distress_language_score"
     version = "v1"
     category = "nlp"
-    description = "Composite score: count of distinct distress keywords × signal frequency. Range: 0–10."
+    description = (
+        "Composite score: count of distinct distress keywords × signal frequency. Range: 0–10."
+    )
 
-    async def compute(self, company_id: int, horizon_days: int, db: Any, mongo_db: Any) -> FeatureValue:
+    async def compute(
+        self, company_id: int, horizon_days: int, db: Any, mongo_db: Any
+    ) -> FeatureValue:
         cutoff = self._cutoff(horizon_days)
         try:
             texts = await _get_signals_text(company_id, cutoff, db)
@@ -238,9 +348,12 @@ class FinancialDistressLanguageScoreFeature(BaseFeature):
             score = min(10.0, float(len(hit_keywords)))
 
             return FeatureValue(
-                company_id=company_id, feature_name=self.name,
-                feature_version=self.version, horizon_days=horizon_days,
-                value=score, signal_count=len(texts),
+                company_id=company_id,
+                feature_name=self.name,
+                feature_version=self.version,
+                horizon_days=horizon_days,
+                value=score,
+                signal_count=len(texts),
                 is_null=(score == 0 and self.null_if_no_signals),
                 confidence=0.85,
                 metadata={"keywords_found": sorted(hit_keywords)},
@@ -257,22 +370,29 @@ class ExecutiveDepartureMentionsFeature(BaseFeature):
     category = "nlp"
     description = "Count of executive departure signals (resign, stepped down, etc.) in window"
 
-    async def compute(self, company_id: int, horizon_days: int, db: Any, mongo_db: Any) -> FeatureValue:
+    async def compute(
+        self, company_id: int, horizon_days: int, db: Any, mongo_db: Any
+    ) -> FeatureValue:
         cutoff = self._cutoff(horizon_days)
         try:
-            texts = await _get_signals_text(company_id, cutoff, db,
-                                            ["corporate_", "news_", "social_"])
+            texts = await _get_signals_text(
+                company_id, cutoff, db, ["corporate_", "news_", "social_"]
+            )
             if not texts:
                 return self._null_value(company_id, horizon_days)
 
             count = sum(
-                1 for text in texts
+                1
+                for text in texts
                 if text and any(kw in text.lower() for kw in _EXEC_DEPARTURE_KEYWORDS)
             )
             return FeatureValue(
-                company_id=company_id, feature_name=self.name,
-                feature_version=self.version, horizon_days=horizon_days,
-                value=float(count), signal_count=len(texts),
+                company_id=company_id,
+                feature_name=self.name,
+                feature_version=self.version,
+                horizon_days=horizon_days,
+                value=float(count),
+                signal_count=len(texts),
                 is_null=(count == 0 and self.null_if_no_signals),
                 confidence=0.80,
             )
@@ -288,10 +408,13 @@ class BlogConsensusScoreFeature(BaseFeature):
     category = "nlp"
     description = "How many Tier 1 Bay Street firms published about practice areas relevant to this company. Range: 0–15."
 
-    async def compute(self, company_id: int, horizon_days: int, db: Any, mongo_db: Any) -> FeatureValue:
+    async def compute(
+        self, company_id: int, horizon_days: int, db: Any, mongo_db: Any
+    ) -> FeatureValue:
         import json
 
         from app.models.signal import SignalRecord
+
         cutoff = self._cutoff(horizon_days)
         try:
             result = await db.execute(
@@ -315,9 +438,12 @@ class BlogConsensusScoreFeature(BaseFeature):
 
             score = float(len(tier1_firms))
             return FeatureValue(
-                company_id=company_id, feature_name=self.name,
-                feature_version=self.version, horizon_days=horizon_days,
-                value=score, signal_count=len(rows),
+                company_id=company_id,
+                feature_name=self.name,
+                feature_version=self.version,
+                horizon_days=horizon_days,
+                value=score,
+                signal_count=len(rows),
                 is_null=(score == 0 and self.null_if_no_signals),
                 confidence=0.90,
                 metadata={"tier1_firms": sorted(tier1_firms)},
@@ -334,11 +460,12 @@ class ForwardGuidanceNegativityFeature(BaseFeature):
     category = "nlp"
     description = "Score of negative forward guidance language in filings/news. Range: 0–1."
 
-    async def compute(self, company_id: int, horizon_days: int, db: Any, mongo_db: Any) -> FeatureValue:
+    async def compute(
+        self, company_id: int, horizon_days: int, db: Any, mongo_db: Any
+    ) -> FeatureValue:
         cutoff = self._cutoff(horizon_days)
         try:
-            texts = await _get_signals_text(company_id, cutoff, db,
-                                            ["corporate_", "news_"])
+            texts = await _get_signals_text(company_id, cutoff, db, ["corporate_", "news_"])
             if not texts:
                 return self._null_value(company_id, horizon_days)
 
@@ -347,9 +474,12 @@ class ForwardGuidanceNegativityFeature(BaseFeature):
             score = min(1.0, hit_count / 5.0)  # 5 hits = score of 1.0
 
             return FeatureValue(
-                company_id=company_id, feature_name=self.name,
-                feature_version=self.version, horizon_days=horizon_days,
-                value=score, signal_count=len(texts),
+                company_id=company_id,
+                feature_name=self.name,
+                feature_version=self.version,
+                horizon_days=horizon_days,
+                value=score,
+                signal_count=len(texts),
                 is_null=(score == 0 and self.null_if_no_signals),
                 confidence=0.78,
             )
@@ -365,12 +495,15 @@ class DisclosureToneShiftFeature(BaseFeature):
     category = "nlp"
     description = "Negative shift in disclosure tone vs prior period. Positive = getting worse. Range: -1 to 1."
 
-    async def compute(self, company_id: int, horizon_days: int, db: Any, mongo_db: Any) -> FeatureValue:
+    async def compute(
+        self, company_id: int, horizon_days: int, db: Any, mongo_db: Any
+    ) -> FeatureValue:
         cutoff_current = self._cutoff(horizon_days)
         cutoff_prior = cutoff_current - timedelta(days=horizon_days)
 
         async def _distress_ratio(start: datetime, end: datetime) -> float:
             from app.models.signal import SignalRecord
+
             result = await db.execute(
                 select(SignalRecord.signal_text).where(
                     and_(
@@ -389,9 +522,7 @@ class DisclosureToneShiftFeature(BaseFeature):
             return min(1.0, hits / 10.0)
 
         try:
-            current_ratio = await _distress_ratio(
-                cutoff_current, datetime.now(tz=UTC)
-            )
+            current_ratio = await _distress_ratio(cutoff_current, datetime.now(tz=UTC))
             prior_ratio = await _distress_ratio(cutoff_prior, cutoff_current)
             shift = current_ratio - prior_ratio  # Positive = getting worse
 
@@ -399,10 +530,13 @@ class DisclosureToneShiftFeature(BaseFeature):
                 return self._null_value(company_id, horizon_days)
 
             return FeatureValue(
-                company_id=company_id, feature_name=self.name,
-                feature_version=self.version, horizon_days=horizon_days,
+                company_id=company_id,
+                feature_name=self.name,
+                feature_version=self.version,
+                horizon_days=horizon_days,
                 value=max(-1.0, min(1.0, shift)),
-                is_null=False, confidence=0.75,
+                is_null=False,
+                confidence=0.75,
                 metadata={"current_ratio": current_ratio, "prior_ratio": prior_ratio},
             )
         except Exception as exc:
@@ -418,8 +552,11 @@ class BreachRegulatoryCooccurrenceFeature(BaseFeature):
     description = "Binary: 1 if data breach + regulatory mention co-occur in same window (strong privacy/class action signal)"
     null_if_no_signals = False
 
-    async def compute(self, company_id: int, horizon_days: int, db: Any, mongo_db: Any) -> FeatureValue:
+    async def compute(
+        self, company_id: int, horizon_days: int, db: Any, mongo_db: Any
+    ) -> FeatureValue:
         from app.models.signal import SignalRecord
+
         cutoff = self._cutoff(horizon_days)
         try:
             breach_result = await db.execute(
@@ -447,9 +584,13 @@ class BreachRegulatoryCooccurrenceFeature(BaseFeature):
             has_both = 1.0 if (breach_count > 0 and regulatory_count > 0) else 0.0
 
             return FeatureValue(
-                company_id=company_id, feature_name=self.name,
-                feature_version=self.version, horizon_days=horizon_days,
-                value=has_both, is_null=False, confidence=0.92,
+                company_id=company_id,
+                feature_name=self.name,
+                feature_version=self.version,
+                horizon_days=horizon_days,
+                value=has_both,
+                is_null=False,
+                confidence=0.92,
                 metadata={"breach_signals": breach_count, "regulatory_signals": regulatory_count},
             )
         except Exception as exc:
@@ -465,14 +606,29 @@ class LitigationKeywordCountFeature(BaseFeature):
     description = "Count of litigation-specific keywords across all signal texts in window"
 
     _LIT_KEYWORDS = {
-        "sued", "suing", "plaintiff", "defendant", "class action",
-        "lawsuit", "litigation", "trial", "verdict", "damages awarded",
-        "judgment against", "court ruled", "appeal filed", "settlement reached",
-        "injunction granted", "stay of proceedings", "statement of claim",
+        "sued",
+        "suing",
+        "plaintiff",
+        "defendant",
+        "class action",
+        "lawsuit",
+        "litigation",
+        "trial",
+        "verdict",
+        "damages awarded",
+        "judgment against",
+        "court ruled",
+        "appeal filed",
+        "settlement reached",
+        "injunction granted",
+        "stay of proceedings",
+        "statement of claim",
         "statement of defence",
     }
 
-    async def compute(self, company_id: int, horizon_days: int, db: Any, mongo_db: Any) -> FeatureValue:
+    async def compute(
+        self, company_id: int, horizon_days: int, db: Any, mongo_db: Any
+    ) -> FeatureValue:
         cutoff = self._cutoff(horizon_days)
         try:
             texts = await _get_signals_text(company_id, cutoff, db)
@@ -483,9 +639,12 @@ class LitigationKeywordCountFeature(BaseFeature):
             count = sum(1 for kw in self._LIT_KEYWORDS if kw in all_text)
 
             return FeatureValue(
-                company_id=company_id, feature_name=self.name,
-                feature_version=self.version, horizon_days=horizon_days,
-                value=float(count), signal_count=len(texts),
+                company_id=company_id,
+                feature_name=self.name,
+                feature_version=self.version,
+                horizon_days=horizon_days,
+                value=float(count),
+                signal_count=len(texts),
                 is_null=(count == 0 and self.null_if_no_signals),
                 confidence=0.88,
             )
@@ -503,14 +662,27 @@ class MARumourScoreFeature(BaseFeature):
     null_if_no_signals = False
 
     _MA_KEYWORDS = {
-        "acquisition", "merger", "takeover", "bid", "going private",
-        "strategic review", "strategic alternatives", "sale process",
-        "offer to acquire", "arrangement agreement", "letter of intent",
-        "term sheet", "due diligence", "definitive agreement",
+        "acquisition",
+        "merger",
+        "takeover",
+        "bid",
+        "going private",
+        "strategic review",
+        "strategic alternatives",
+        "sale process",
+        "offer to acquire",
+        "arrangement agreement",
+        "letter of intent",
+        "term sheet",
+        "due diligence",
+        "definitive agreement",
     }
 
-    async def compute(self, company_id: int, horizon_days: int, db: Any, mongo_db: Any) -> FeatureValue:
+    async def compute(
+        self, company_id: int, horizon_days: int, db: Any, mongo_db: Any
+    ) -> FeatureValue:
         from app.models.signal import SignalRecord
+
         cutoff = self._cutoff(horizon_days)
         try:
             score = 0.0
@@ -532,10 +704,13 @@ class MARumourScoreFeature(BaseFeature):
                         break  # Only add weight once per source category
 
             return FeatureValue(
-                company_id=company_id, feature_name=self.name,
-                feature_version=self.version, horizon_days=horizon_days,
+                company_id=company_id,
+                feature_name=self.name,
+                feature_version=self.version,
+                horizon_days=horizon_days,
                 value=min(3.0, score),
-                is_null=False, confidence=0.75,
+                is_null=False,
+                confidence=0.75,
             )
         except Exception as exc:
             log.error("feature_error", feature=self.name, error=str(exc))

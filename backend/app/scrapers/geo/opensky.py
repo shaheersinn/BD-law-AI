@@ -17,8 +17,9 @@ Rate: 0.1 rps (OpenSky anonymous limit: ~400 calls/day)
 """
 
 from __future__ import annotations
-from datetime import datetime, UTC
+
 import time
+from datetime import UTC, datetime
 
 import structlog
 
@@ -42,13 +43,35 @@ _CANADIAN_HUBS: dict[str, str] = {
 # ICAO type designators for common business jets
 _BIZJET_TYPES: set[str] = {
     # Gulfstream
-    "GL5T", "GL6T", "GL7T", "GLEX", "G150", "G280", "G350", "G450", "G550", "G650",
+    "GL5T",
+    "GL6T",
+    "GL7T",
+    "GLEX",
+    "G150",
+    "G280",
+    "G350",
+    "G450",
+    "G550",
+    "G650",
     # Bombardier
-    "CL30", "CL35", "CL60", "BD70", "C56X", "C680", "C68A", "C700", "C750",
+    "CL30",
+    "CL35",
+    "CL60",
+    "BD70",
+    "C56X",
+    "C680",
+    "C68A",
+    "C700",
+    "C750",
     # Dassault Falcon
-    "F2TH", "FA7X", "FA8X", "F900",
+    "F2TH",
+    "FA7X",
+    "FA8X",
+    "F900",
     # Embraer
-    "E35L", "E50P", "E55P",
+    "E35L",
+    "E50P",
+    "E55P",
 }
 
 # 2-hour window for arrival queries
@@ -120,9 +143,7 @@ class OpenSkyScraper(BaseScraper):
             return []
         return data
 
-    def _parse_flight(
-        self, flight: dict, dest_icao: str, dest_name: str
-    ) -> ScraperResult | None:
+    def _parse_flight(self, flight: dict, dest_icao: str, dest_name: str) -> ScraperResult | None:
         """Parse an OpenSky arrival record into a ScraperResult."""
         callsign = (flight.get("callsign") or "").strip()
         icao24 = flight.get("icao24", "")
@@ -152,8 +173,7 @@ class OpenSkyScraper(BaseScraper):
                 "is_bizjet_callsign": is_bizjet_callsign,
             },
             signal_text=(
-                f"Flight {callsign or icao24} arrived at {dest_name} "
-                f"({dest_icao}) from {origin}"
+                f"Flight {callsign or icao24} arrived at {dest_name} ({dest_icao}) from {origin}"
             ),
             published_at=self._parse_timestamp(last_seen),
             practice_area_hints=["m_and_a", "securities"],

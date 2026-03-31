@@ -50,6 +50,7 @@ httpx[http2]==0.28.1
 aiohttp==3.11.10
 aiometer==0.5.0
 beautifulsoup4==4.12.3
+defusedxml==0.7.1
 lxml==5.3.0
 feedparser==6.0.11
 playwright==1.49.1
@@ -64,10 +65,6 @@ scipy==1.14.1
 joblib==1.4.2
 
 # ── NLP Text Processing ───────────────────────────────────────────────────────
-transformers==4.47.1
-torch==2.5.1
-tokenizers==0.21.0
-sentence-transformers==3.3.1
 spacy==3.8.3
 rapidfuzz==3.10.1
 nltk==3.9.1

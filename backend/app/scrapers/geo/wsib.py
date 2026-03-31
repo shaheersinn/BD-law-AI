@@ -25,14 +25,30 @@ log = structlog.get_logger(__name__)
 _WSIB_NEWS_URL = "https://www.wsib.ca/en/about-wsib/news-and-events/news-releases"
 
 # Keywords that indicate enforcement/penalty in WSIB news releases
-_PENALTY_KEYWORDS = frozenset({
-    "penalty", "fine", "fined", "penalized", "conviction",
-    "prosecuted", "prosecution", "violation",
-})
-_COMPLIANCE_KEYWORDS = frozenset({
-    "compliance", "order", "enforcement", "inspection",
-    "non-compliance", "workplace safety", "fatality", "injury",
-})
+_PENALTY_KEYWORDS = frozenset(
+    {
+        "penalty",
+        "fine",
+        "fined",
+        "penalized",
+        "conviction",
+        "prosecuted",
+        "prosecution",
+        "violation",
+    }
+)
+_COMPLIANCE_KEYWORDS = frozenset(
+    {
+        "compliance",
+        "order",
+        "enforcement",
+        "inspection",
+        "non-compliance",
+        "workplace safety",
+        "fatality",
+        "injury",
+    }
+)
 
 
 @register

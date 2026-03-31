@@ -89,9 +89,7 @@ class ProvincialPrivacyCommissionersScraper(BaseScraper):
                 )
         return results
 
-    async def _scrape_commissioner(
-        self, config: _CommissionerConfig
-    ) -> list[ScraperResult]:
+    async def _scrape_commissioner(self, config: _CommissionerConfig) -> list[ScraperResult]:
         results: list[ScraperResult] = []
         try:
             soup = await self.get_soup(config.decisions_url)
@@ -174,9 +172,20 @@ class ProvincialPrivacyCommissionersScraper(BaseScraper):
         return any(
             k in text
             for k in [
-                "privacy", "personal information", "pipeda", "phipa", "foippa",
-                "breach", "disclosure", "collection", "consent", "access",
-                "order", "investigation", "finding", "decision",
+                "privacy",
+                "personal information",
+                "pipeda",
+                "phipa",
+                "foippa",
+                "breach",
+                "disclosure",
+                "collection",
+                "consent",
+                "access",
+                "order",
+                "investigation",
+                "finding",
+                "decision",
             ]
         )
 

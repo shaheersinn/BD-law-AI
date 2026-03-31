@@ -14,6 +14,7 @@ Signal types:
 Data: MongoDB ONLY.
 Rate: 0.1 rps (no official API — respectful scraping)
 """
+
 from __future__ import annotations
 
 import re
@@ -31,21 +32,50 @@ _STOCKHOUSE_BASE = "https://stockhouse.com"
 _STOCKHOUSE_SEARCH = f"{_STOCKHOUSE_BASE}/search?q={{ticker}}&type=bullboard"
 
 _BEAR_KEYWORDS = [
-    "lawsuit", "class action", "fraud", "investigation",
-    "cease trade", "receivership", "insolvency", "regulatory",
-    "SEC", "OSC", "BCSC", "going concern",
+    "lawsuit",
+    "class action",
+    "fraud",
+    "investigation",
+    "cease trade",
+    "receivership",
+    "insolvency",
+    "regulatory",
+    "SEC",
+    "OSC",
+    "BCSC",
+    "going concern",
 ]
 
 _DISTRESS_KEYWORDS = [
-    "ccaa", "receivership", "insolvency", "bankrupt",
-    "going concern", "delisted",
+    "ccaa",
+    "receivership",
+    "insolvency",
+    "bankrupt",
+    "going concern",
+    "delisted",
 ]
 
 _TOP_TSX_TICKERS = [
-    "RY", "TD", "BNS", "BMO", "CM",
-    "ENB", "CNR", "CP", "SU", "CNQ",
-    "BCE", "TRP", "MFC", "SLF", "ABX",
-    "NTR", "FTS", "AEM", "WCN", "CSU",
+    "RY",
+    "TD",
+    "BNS",
+    "BMO",
+    "CM",
+    "ENB",
+    "CNR",
+    "CP",
+    "SU",
+    "CNQ",
+    "BCE",
+    "TRP",
+    "MFC",
+    "SLF",
+    "ABX",
+    "NTR",
+    "FTS",
+    "AEM",
+    "WCN",
+    "CSU",
 ]
 
 
@@ -84,30 +114,34 @@ class StockhouseScraper(BaseScraper):
                         continue
 
                     is_distress = any(kw in text for kw in _DISTRESS_KEYWORDS)
-                    signal_type = "social_stockhouse_bear" if is_distress else "social_stockhouse_legal"
+                    signal_type = (
+                        "social_stockhouse_bear" if is_distress else "social_stockhouse_legal"
+                    )
                     hints = ["insolvency"] if is_distress else ["litigation", "securities"]
 
-                    results.append(ScraperResult(
-                        source_id=self.source_id,
-                        signal_type=signal_type,
-                        raw_company_name=post.get("company"),
-                        source_url=post.get("url"),
-                        signal_value={
-                            "ticker": ticker,
-                            "company": post.get("company"),
-                            "views": post.get("views", 0),
-                            "replies": post.get("replies", 0),
-                        },
-                        signal_text=post.get("title", "")[:500],
-                        published_at=self._parse_date(post.get("date")),
-                        practice_area_hints=hints,
-                        raw_payload={
-                            "ticker": ticker,
-                            "title": post.get("title", ""),
-                            "body": post.get("body", "")[:2000],
-                        },
-                        confidence_score=0.55,
-                    ))
+                    results.append(
+                        ScraperResult(
+                            source_id=self.source_id,
+                            signal_type=signal_type,
+                            raw_company_name=post.get("company"),
+                            source_url=post.get("url"),
+                            signal_value={
+                                "ticker": ticker,
+                                "company": post.get("company"),
+                                "views": post.get("views", 0),
+                                "replies": post.get("replies", 0),
+                            },
+                            signal_text=post.get("title", "")[:500],
+                            published_at=self._parse_date(post.get("date")),
+                            practice_area_hints=hints,
+                            raw_payload={
+                                "ticker": ticker,
+                                "title": post.get("title", ""),
+                                "body": post.get("body", "")[:2000],
+                            },
+                            confidence_score=0.55,
+                        )
+                    )
 
                 await self._rate_limit_sleep()
             except Exception as exc:
@@ -131,25 +165,19 @@ class StockhouseScraper(BaseScraper):
                     href = (
                         href_val[0]
                         if isinstance(href_val, list)
-                        else str(href_val) if href_val else ""
+                        else str(href_val)
+                        if href_val
+                        else ""
                     )
-                    post["url"] = (
-                        f"{_STOCKHOUSE_BASE}{href}"
-                        if href.startswith("/")
-                        else href
-                    )
+                    post["url"] = f"{_STOCKHOUSE_BASE}{href}" if href.startswith("/") else href
 
-                    company_match = re.search(
-                        r"/bullboard/([A-Z]+\.?[A-Z]*)/", href
-                    )
+                    company_match = re.search(r"/bullboard/([A-Z]+\.?[A-Z]*)/", href)
                     if company_match:
                         post["company"] = company_match.group(1)
 
                 date_el = article.select_one("time, .post-date, .date")
                 if date_el:
-                    post["date"] = (
-                        date_el.get("datetime") or date_el.get_text(strip=True)
-                    )
+                    post["date"] = date_el.get("datetime") or date_el.get_text(strip=True)
 
                 body_el = article.select_one(".post-content, .post-body, p")
                 if body_el:

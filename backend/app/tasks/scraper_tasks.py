@@ -93,7 +93,7 @@ async def _update_scraper_health(
         log.warning("scraper_health_update_failed", source=source_id, error=str(exc))
         try:
             await db.rollback()
-        except Exception:
+        except Exception:  # noqa: S110
             pass
 
 

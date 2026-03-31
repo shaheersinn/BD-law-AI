@@ -28,25 +28,43 @@ from app.scrapers.registry import register
 
 log = structlog.get_logger(__name__)
 
-_CBSA_NEWS_URL = (
-    "https://www.cbsa-asfc.gc.ca/media/release-communique/menu-eng.html"
-)
+_CBSA_NEWS_URL = "https://www.cbsa-asfc.gc.ca/media/release-communique/menu-eng.html"
 _CBSA_SIMA_URL = "https://www.cbsa-asfc.gc.ca/sima-lmsi/menu-eng.html"
 
 # Keywords for trade remedy actions
-_TRADE_REMEDY_KEYWORDS = frozenset({
-    "anti-dumping", "dumping", "countervailing", "subsidy",
-    "safeguard", "sima", "special import measures",
-    "normal value", "preliminary determination", "final determination",
-    "expiry review", "re-investigation",
-})
+_TRADE_REMEDY_KEYWORDS = frozenset(
+    {
+        "anti-dumping",
+        "dumping",
+        "countervailing",
+        "subsidy",
+        "safeguard",
+        "sima",
+        "special import measures",
+        "normal value",
+        "preliminary determination",
+        "final determination",
+        "expiry review",
+        "re-investigation",
+    }
+)
 
 # Keywords for general CBSA enforcement
-_ENFORCEMENT_KEYWORDS = frozenset({
-    "seizure", "smuggling", "contraband", "penalty",
-    "non-compliance", "customs", "tariff", "duty",
-    "embargo", "prohibition", "detention",
-})
+_ENFORCEMENT_KEYWORDS = frozenset(
+    {
+        "seizure",
+        "smuggling",
+        "contraband",
+        "penalty",
+        "non-compliance",
+        "customs",
+        "tariff",
+        "duty",
+        "embargo",
+        "prohibition",
+        "detention",
+    }
+)
 
 
 @register
@@ -115,16 +133,18 @@ class CbsaTradeScraper(BaseScraper):
                     if any(kw in title_lower for kw in _TRADE_REMEDY_KEYWORDS)
                     else "geo_cbsa_enforcement"
                 )
-                results.append(ScraperResult(
-                    source_id=self.source_id,
-                    signal_type=signal_type,
-                    source_url=href or _CBSA_NEWS_URL,
-                    signal_value={"title": title, "source_page": "news"},
-                    signal_text=f"CBSA: {title}",
-                    practice_area_hints=["international_trade", "customs"],
-                    raw_payload={"title": title, "url": href},
-                    confidence_score=0.6,
-                ))
+                results.append(
+                    ScraperResult(
+                        source_id=self.source_id,
+                        signal_type=signal_type,
+                        source_url=href or _CBSA_NEWS_URL,
+                        signal_value={"title": title, "source_page": "news"},
+                        signal_text=f"CBSA: {title}",
+                        practice_area_hints=["international_trade", "customs"],
+                        raw_payload={"title": title, "url": href},
+                        confidence_score=0.6,
+                    )
+                )
 
         return results
 
@@ -154,21 +174,25 @@ class CbsaTradeScraper(BaseScraper):
             if any(kw in title_lower for kw in _TRADE_REMEDY_KEYWORDS) or (
                 "investigation" in title_lower
             ):
-                results.append(ScraperResult(
-                    source_id=self.source_id,
-                    signal_type="geo_trade_remedy",
-                    source_url=href or _CBSA_SIMA_URL,
-                    signal_value={
-                        "title": title,
-                        "source_page": "sima",
-                        "investigation_type": "sima",
-                    },
-                    signal_text=f"CBSA SIMA: {title}",
-                    practice_area_hints=[
-                        "international_trade", "customs", "competition_antitrust",
-                    ],
-                    raw_payload={"title": title, "url": href},
-                    confidence_score=0.7,
-                ))
+                results.append(
+                    ScraperResult(
+                        source_id=self.source_id,
+                        signal_type="geo_trade_remedy",
+                        source_url=href or _CBSA_SIMA_URL,
+                        signal_value={
+                            "title": title,
+                            "source_page": "sima",
+                            "investigation_type": "sima",
+                        },
+                        signal_text=f"CBSA SIMA: {title}",
+                        practice_area_hints=[
+                            "international_trade",
+                            "customs",
+                            "competition_antitrust",
+                        ],
+                        raw_payload={"title": title, "url": href},
+                        confidence_score=0.7,
+                    )
+                )
 
         return results

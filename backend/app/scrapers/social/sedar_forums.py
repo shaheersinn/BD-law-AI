@@ -4,6 +4,7 @@ app/scrapers/social/sedar_forums.py — SEDAR forums scraper stub.
 SEDAR+ (sedarplus.ca) does not have a public discussion or forum component.
 This scraper exists as a stub and returns [] on every run.
 """
+
 from __future__ import annotations
 
 import structlog

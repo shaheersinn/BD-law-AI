@@ -26,9 +26,7 @@ from app.scrapers.registry import register
 log = structlog.get_logger(__name__)
 
 # Toronto Open Data CKAN API
-_TORONTO_CKAN_API = (
-    "https://ckan0.cf.opendata.inter.prod-toronto.ca/api/3/action/datastore_search"
-)
+_TORONTO_CKAN_API = "https://ckan0.cf.opendata.inter.prod-toronto.ca/api/3/action/datastore_search"
 _TORONTO_RESOURCE_ID = "7ac3e86d-1b9b-43aa-8c2e-4e72f4d2ca8c"
 
 # Vancouver Open Data (OData / records endpoint)
@@ -109,9 +107,7 @@ class MunicipalPermitsScraper(BaseScraper):
         log.info("toronto_permits_parsed", count=len(results), total=len(records))
         return results
 
-    def _parse_toronto_permit(
-        self, rec: dict, cutoff: str
-    ) -> ScraperResult | None:
+    def _parse_toronto_permit(self, rec: dict, cutoff: str) -> ScraperResult | None:
         """Parse a single Toronto building permit record."""
         issued_date = rec.get("ISSUED_DATE", "")
         if issued_date and issued_date < cutoff:

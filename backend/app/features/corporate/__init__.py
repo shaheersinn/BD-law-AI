@@ -15,6 +15,7 @@ Features:
   regulatory_filing_lag_days   — days between fiscal year end and AIF filing
   related_party_transaction_count — count of RPT signals in window
 """
+
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
@@ -31,6 +32,7 @@ log = structlog.get_logger(__name__)
 def _corporate_signal_query(company_id: int, cutoff: datetime):
     """Base query filter for corporate signals."""
     from app.models.signal import SignalRecord
+
     return and_(
         SignalRecord.company_id == company_id,
         SignalRecord.scraped_at >= cutoff,
@@ -45,8 +47,11 @@ class MaterialChangeCountFeature(BaseFeature):
     category = "corporate"
     description = "Number of material change reports / 8-K equivalents filed in window"
 
-    async def compute(self, company_id: int, horizon_days: int, db: Any, mongo_db: Any) -> FeatureValue:
+    async def compute(
+        self, company_id: int, horizon_days: int, db: Any, mongo_db: Any
+    ) -> FeatureValue:
         from app.models.signal import SignalRecord
+
         cutoff = self._cutoff(horizon_days)
         try:
             result = await db.execute(
@@ -54,18 +59,24 @@ class MaterialChangeCountFeature(BaseFeature):
                     and_(
                         SignalRecord.company_id == company_id,
                         SignalRecord.scraped_at >= cutoff,
-                        SignalRecord.signal_type.in_([
-                            "filing_material_change", "filing_8k_equivalent",
-                            "filing_press_release_material",
-                        ]),
+                        SignalRecord.signal_type.in_(
+                            [
+                                "filing_material_change",
+                                "filing_8k_equivalent",
+                                "filing_press_release_material",
+                            ]
+                        ),
                     )
                 )
             )
             count = result.scalar() or 0
             return FeatureValue(
-                company_id=company_id, feature_name=self.name,
-                feature_version=self.version, horizon_days=horizon_days,
-                value=float(count), signal_count=count,
+                company_id=company_id,
+                feature_name=self.name,
+                feature_version=self.version,
+                horizon_days=horizon_days,
+                value=float(count),
+                signal_count=count,
                 is_null=(count == 0 and self.null_if_no_signals),
                 confidence=0.95,
             )
@@ -81,10 +92,13 @@ class InsiderSellRatioFeature(BaseFeature):
     category = "corporate"
     description = "Insider sell transactions / (sell + buy) in window. Range: 0–1."
 
-    async def compute(self, company_id: int, horizon_days: int, db: Any, mongo_db: Any) -> FeatureValue:
+    async def compute(
+        self, company_id: int, horizon_days: int, db: Any, mongo_db: Any
+    ) -> FeatureValue:
         import json
 
         from app.models.signal import SignalRecord
+
         cutoff = self._cutoff(horizon_days)
         try:
             result = await db.execute(
@@ -116,9 +130,12 @@ class InsiderSellRatioFeature(BaseFeature):
             total = sells + buys
             ratio = sells / total if total > 0 else 0.0
             return FeatureValue(
-                company_id=company_id, feature_name=self.name,
-                feature_version=self.version, horizon_days=horizon_days,
-                value=ratio, signal_count=total,
+                company_id=company_id,
+                feature_name=self.name,
+                feature_version=self.version,
+                horizon_days=horizon_days,
+                value=ratio,
+                signal_count=total,
                 is_null=(total == 0),
                 confidence=min(1.0, total / 5),  # More transactions → higher confidence
             )
@@ -134,12 +151,16 @@ class FilingVelocityChangeFeature(BaseFeature):
     category = "corporate"
     description = "Z-score: current filings/day vs prior period filings/day"
 
-    async def compute(self, company_id: int, horizon_days: int, db: Any, mongo_db: Any) -> FeatureValue:
+    async def compute(
+        self, company_id: int, horizon_days: int, db: Any, mongo_db: Any
+    ) -> FeatureValue:
         from app.models.signal import SignalRecord
+
         cutoff_current = self._cutoff(horizon_days)
         cutoff_prior = cutoff_current - timedelta(days=horizon_days)
 
         try:
+
             async def _count(start: datetime, end: datetime) -> int:
                 r = await db.execute(
                     select(func.count(SignalRecord.id)).where(
@@ -168,9 +189,12 @@ class FilingVelocityChangeFeature(BaseFeature):
             z_clipped = max(-5.0, min(5.0, z))
 
             return FeatureValue(
-                company_id=company_id, feature_name=self.name,
-                feature_version=self.version, horizon_days=horizon_days,
-                value=z_clipped, signal_count=current_count,
+                company_id=company_id,
+                feature_name=self.name,
+                feature_version=self.version,
+                horizon_days=horizon_days,
+                value=z_clipped,
+                signal_count=current_count,
                 is_null=False,
                 confidence=0.85,
                 metadata={"current_rate": current_rate, "prior_rate": prior_rate},
@@ -189,12 +213,19 @@ class GoingConcernFlagFeature(BaseFeature):
     null_if_no_signals = False  # Always returns a value (0 = no going concern = informative)
 
     _KEYWORDS = [
-        "going concern", "substantial doubt", "ability to continue",
-        "material uncertainty", "viability", "ceasing operations",
+        "going concern",
+        "substantial doubt",
+        "ability to continue",
+        "material uncertainty",
+        "viability",
+        "ceasing operations",
     ]
 
-    async def compute(self, company_id: int, horizon_days: int, db: Any, mongo_db: Any) -> FeatureValue:
+    async def compute(
+        self, company_id: int, horizon_days: int, db: Any, mongo_db: Any
+    ) -> FeatureValue:
         from app.models.signal import SignalRecord
+
         cutoff = self._cutoff(horizon_days)
         try:
             result = await db.execute(
@@ -216,15 +247,23 @@ class GoingConcernFlagFeature(BaseFeature):
                 text_lower = text.lower()
                 if any(kw in text_lower for kw in self._KEYWORDS):
                     return FeatureValue(
-                        company_id=company_id, feature_name=self.name,
-                        feature_version=self.version, horizon_days=horizon_days,
-                        value=1.0, is_null=False, signal_count=len(texts),
+                        company_id=company_id,
+                        feature_name=self.name,
+                        feature_version=self.version,
+                        horizon_days=horizon_days,
+                        value=1.0,
+                        is_null=False,
+                        signal_count=len(texts),
                         confidence=0.90,
                     )
             return FeatureValue(
-                company_id=company_id, feature_name=self.name,
-                feature_version=self.version, horizon_days=horizon_days,
-                value=0.0, is_null=False, signal_count=len(texts),
+                company_id=company_id,
+                feature_name=self.name,
+                feature_version=self.version,
+                horizon_days=horizon_days,
+                value=0.0,
+                is_null=False,
+                signal_count=len(texts),
                 confidence=0.85,
             )
         except Exception as exc:
@@ -241,14 +280,25 @@ class AuditorChangeFlagFeature(BaseFeature):
     null_if_no_signals = False
 
     _KEYWORDS = [
-        "change of auditor", "resign", "appointed as auditor",
-        "new auditor", "auditor resignation", "change auditor",
-        "appointed deloitte", "appointed pwc", "appointed kpmg",
-        "appointed ey", "appointed bdo", "appointment of auditor",
+        "change of auditor",
+        "resign",
+        "appointed as auditor",
+        "new auditor",
+        "auditor resignation",
+        "change auditor",
+        "appointed deloitte",
+        "appointed pwc",
+        "appointed kpmg",
+        "appointed ey",
+        "appointed bdo",
+        "appointment of auditor",
     ]
 
-    async def compute(self, company_id: int, horizon_days: int, db: Any, mongo_db: Any) -> FeatureValue:
+    async def compute(
+        self, company_id: int, horizon_days: int, db: Any, mongo_db: Any
+    ) -> FeatureValue:
         from app.models.signal import SignalRecord
+
         cutoff = self._cutoff(horizon_days)
         try:
             result = await db.execute(
@@ -266,15 +316,23 @@ class AuditorChangeFlagFeature(BaseFeature):
                     continue
                 if any(kw in text.lower() for kw in self._KEYWORDS):
                     return FeatureValue(
-                        company_id=company_id, feature_name=self.name,
-                        feature_version=self.version, horizon_days=horizon_days,
-                        value=1.0, is_null=False, signal_count=len(texts),
+                        company_id=company_id,
+                        feature_name=self.name,
+                        feature_version=self.version,
+                        horizon_days=horizon_days,
+                        value=1.0,
+                        is_null=False,
+                        signal_count=len(texts),
                         confidence=0.88,
                     )
             return FeatureValue(
-                company_id=company_id, feature_name=self.name,
-                feature_version=self.version, horizon_days=horizon_days,
-                value=0.0, is_null=False, signal_count=len(texts),
+                company_id=company_id,
+                feature_name=self.name,
+                feature_version=self.version,
+                horizon_days=horizon_days,
+                value=0.0,
+                is_null=False,
+                signal_count=len(texts),
                 confidence=0.80,
             )
         except Exception as exc:
@@ -291,12 +349,20 @@ class RestatementFlagFeature(BaseFeature):
     null_if_no_signals = False
 
     _KEYWORDS = [
-        "restatement", "restate", "restated financial", "material misstatement",
-        "accounting error", "prior period adjustment", "revision of financial",
+        "restatement",
+        "restate",
+        "restated financial",
+        "material misstatement",
+        "accounting error",
+        "prior period adjustment",
+        "revision of financial",
     ]
 
-    async def compute(self, company_id: int, horizon_days: int, db: Any, mongo_db: Any) -> FeatureValue:
+    async def compute(
+        self, company_id: int, horizon_days: int, db: Any, mongo_db: Any
+    ) -> FeatureValue:
         from app.models.signal import SignalRecord
+
         cutoff = self._cutoff(horizon_days)
         try:
             result = await db.execute(
@@ -311,14 +377,22 @@ class RestatementFlagFeature(BaseFeature):
             for text in texts:
                 if text and any(kw in text.lower() for kw in self._KEYWORDS):
                     return FeatureValue(
-                        company_id=company_id, feature_name=self.name,
-                        feature_version=self.version, horizon_days=horizon_days,
-                        value=1.0, is_null=False, confidence=0.90,
+                        company_id=company_id,
+                        feature_name=self.name,
+                        feature_version=self.version,
+                        horizon_days=horizon_days,
+                        value=1.0,
+                        is_null=False,
+                        confidence=0.90,
                     )
             return FeatureValue(
-                company_id=company_id, feature_name=self.name,
-                feature_version=self.version, horizon_days=horizon_days,
-                value=0.0, is_null=False, confidence=0.80,
+                company_id=company_id,
+                feature_name=self.name,
+                feature_version=self.version,
+                horizon_days=horizon_days,
+                value=0.0,
+                is_null=False,
+                confidence=0.80,
             )
         except Exception as exc:
             log.error("feature_error", feature=self.name, error=str(exc))
@@ -333,12 +407,19 @@ class RelatedPartyTransactionCountFeature(BaseFeature):
     description = "Count of related party transaction signals in window"
 
     _KEYWORDS = [
-        "related party", "related-party", "non-arm's length",
-        "non arm's length", "interested party", "rpte",
+        "related party",
+        "related-party",
+        "non-arm's length",
+        "non arm's length",
+        "interested party",
+        "rpte",
     ]
 
-    async def compute(self, company_id: int, horizon_days: int, db: Any, mongo_db: Any) -> FeatureValue:
+    async def compute(
+        self, company_id: int, horizon_days: int, db: Any, mongo_db: Any
+    ) -> FeatureValue:
         from app.models.signal import SignalRecord
+
         cutoff = self._cutoff(horizon_days)
         try:
             result = await db.execute(
@@ -351,14 +432,14 @@ class RelatedPartyTransactionCountFeature(BaseFeature):
                 )
             )
             texts = result.scalars().all()
-            count = sum(
-                1 for t in texts
-                if t and any(kw in t.lower() for kw in self._KEYWORDS)
-            )
+            count = sum(1 for t in texts if t and any(kw in t.lower() for kw in self._KEYWORDS))
             return FeatureValue(
-                company_id=company_id, feature_name=self.name,
-                feature_version=self.version, horizon_days=horizon_days,
-                value=float(count), signal_count=count,
+                company_id=company_id,
+                feature_name=self.name,
+                feature_version=self.version,
+                horizon_days=horizon_days,
+                value=float(count),
+                signal_count=count,
                 is_null=(count == 0 and self.null_if_no_signals),
                 confidence=0.85,
             )

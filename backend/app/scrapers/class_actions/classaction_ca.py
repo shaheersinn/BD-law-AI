@@ -126,9 +126,7 @@ class ClassActionAggregatorScraper(BaseScraper):
             log.error("classactionlawsuit_error", error=str(exc))
         return results
 
-    def _parse_article(
-        self, article: Tag, cutoff: datetime, base_url: str
-    ) -> ScraperResult | None:
+    def _parse_article(self, article: Tag, cutoff: datetime, base_url: str) -> ScraperResult | None:
         title_tag = article.find(["h2", "h3", "h4", "a"])
         title = self.safe_text(title_tag) if title_tag else self.safe_text(article)
         if not title or len(title) < 10:
@@ -144,8 +142,12 @@ class ClassActionAggregatorScraper(BaseScraper):
             source_url = href if href.startswith("http") else f"{base_url}{href}"
 
         time_tag = article.find("time")
-        date_str = time_tag.get("datetime") if time_tag and time_tag.get("datetime") else self.safe_text(time_tag)
-        published = self._parse_date(date_str)
+        date_str = (
+            time_tag.get("datetime")
+            if time_tag and time_tag.get("datetime")
+            else self.safe_text(time_tag)
+        )
+        published = self._parse_date(date_str)  # type: ignore[arg-type]
         if published and published < cutoff:
             return None
 

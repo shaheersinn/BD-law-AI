@@ -19,6 +19,7 @@ Features implemented here:
   media_mention_velocity_7d        — News mentions per day (last 7 days)
   reddit_legal_mention_count_7d    — Legal mentions on r/legaladvicecanada + r/canada last 7d
 """
+
 from __future__ import annotations
 
 import json
@@ -49,19 +50,25 @@ class InterestRateCyclePositionFeature(BaseFeature):
     _CURRENT_RATE_APPROX = 2.75  # Updated quarterly via Phase 5 live feed
     _NEUTRAL_RATE_APPROX = 2.50  # BoC long-run neutral estimate
 
-    async def compute(self, company_id: int, horizon_days: int, db: Any, mongo_db: Any) -> FeatureValue:
+    async def compute(
+        self, company_id: int, horizon_days: int, db: Any, mongo_db: Any
+    ) -> FeatureValue:
         try:
             # Check if live rate is cached from Phase 5 geo feed
             from app.models.signal import SignalRecord
+
             cutoff = datetime.now(tz=UTC) - timedelta(days=90)
             result = await db.execute(
-                select(SignalRecord.signal_value).where(
+                select(SignalRecord.signal_value)
+                .where(
                     and_(
                         SignalRecord.signal_type == "market_macro_signal",
                         SignalRecord.source_id.in_(["geo_bank_of_canada_rates", "geo_statscan"]),
                         SignalRecord.scraped_at >= cutoff,
                     )
-                ).order_by(SignalRecord.scraped_at.desc()).limit(1)
+                )
+                .order_by(SignalRecord.scraped_at.desc())
+                .limit(1)
             )
             row = result.scalar()
             if row:
@@ -75,9 +82,13 @@ class InterestRateCyclePositionFeature(BaseFeature):
             position_clipped = max(-1.0, min(1.0, position))
 
             return FeatureValue(
-                company_id=company_id, feature_name=self.name,
-                feature_version=self.version, horizon_days=horizon_days,
-                value=position_clipped, is_null=False, confidence=0.80,
+                company_id=company_id,
+                feature_name=self.name,
+                feature_version=self.version,
+                horizon_days=horizon_days,
+                value=position_clipped,
+                is_null=False,
+                confidence=0.80,
                 metadata={"current_rate": current_rate, "neutral": self._NEUTRAL_RATE_APPROX},
             )
         except Exception as exc:
@@ -90,10 +101,15 @@ class GoogleTrendsLegalSpikeScoreFeature(BaseFeature):
     name = "google_trends_legal_spike_score"
     version = "v1"
     category = "geo"
-    description = "Max Google Trends spike ratio for legal keywords in company's sector/province. Range: 0–5."
+    description = (
+        "Max Google Trends spike ratio for legal keywords in company's sector/province. Range: 0–5."
+    )
 
-    async def compute(self, company_id: int, horizon_days: int, db: Any, mongo_db: Any) -> FeatureValue:
+    async def compute(
+        self, company_id: int, horizon_days: int, db: Any, mongo_db: Any
+    ) -> FeatureValue:
         from app.models.signal import SignalRecord
+
         cutoff = self._cutoff(horizon_days)
         try:
             result = await db.execute(
@@ -120,9 +136,12 @@ class GoogleTrendsLegalSpikeScoreFeature(BaseFeature):
             score = min(5.0, max(0.0, max_spike - 1.0))  # Excess above baseline
 
             return FeatureValue(
-                company_id=company_id, feature_name=self.name,
-                feature_version=self.version, horizon_days=horizon_days,
-                value=score, signal_count=len(rows),
+                company_id=company_id,
+                feature_name=self.name,
+                feature_version=self.version,
+                horizon_days=horizon_days,
+                value=score,
+                signal_count=len(rows),
                 is_null=(score == 0 and self.null_if_no_signals),
                 confidence=0.70,
             )
@@ -136,23 +155,28 @@ class SectorInsolvencyLeadingFeature(BaseFeature):
     name = "sector_insolvency_leading"
     version = "v1"
     category = "geo"
-    description = "Sector-specific insolvency leading indicator. Construction leads manufacturing by 2-4Q."
+    description = (
+        "Sector-specific insolvency leading indicator. Construction leads manufacturing by 2-4Q."
+    )
 
     # Sector lag patterns from Canadian litigation intelligence
     # See: ORACLE architecture notes — Canadian litigation intelligence baked into model
     _SECTOR_WEIGHTS = {
-        "construction": 1.5,    # Construction is the leading insolvency indicator
+        "construction": 1.5,  # Construction is the leading insolvency indicator
         "manufacturing": 1.2,
         "retail": 1.1,
         "energy": 1.0,
         "technology": 0.8,
-        "financial": 0.6,       # Financial sector has regulatory buffers
+        "financial": 0.6,  # Financial sector has regulatory buffers
         "healthcare": 0.5,
     }
 
-    async def compute(self, company_id: int, horizon_days: int, db: Any, mongo_db: Any) -> FeatureValue:
+    async def compute(
+        self, company_id: int, horizon_days: int, db: Any, mongo_db: Any
+    ) -> FeatureValue:
         from app.models.company import Company
         from app.models.signal import SignalRecord
+
         try:
             # Get company sector
             company_result = await db.execute(
@@ -191,10 +215,14 @@ class SectorInsolvencyLeadingFeature(BaseFeature):
             score = min(10.0, total_insolvencies * sector_weight / 10.0)
 
             return FeatureValue(
-                company_id=company_id, feature_name=self.name,
-                feature_version=self.version, horizon_days=horizon_days,
-                value=score, signal_count=total_insolvencies,
-                is_null=False, confidence=0.75,
+                company_id=company_id,
+                feature_name=self.name,
+                feature_version=self.version,
+                horizon_days=horizon_days,
+                value=score,
+                signal_count=total_insolvencies,
+                is_null=False,
+                confidence=0.75,
                 metadata={"sector": sector, "province": province, "sector_weight": sector_weight},
             )
         except Exception as exc:
@@ -209,27 +237,32 @@ class SocialSentimentCompositeFeature(BaseFeature):
     category = "geo"
     description = "Weighted composite of all social signal types. High = negative social sentiment. Range: 0–10."
 
-    async def compute(self, company_id: int, horizon_days: int, db: Any, mongo_db: Any) -> FeatureValue:
+    async def compute(
+        self, company_id: int, horizon_days: int, db: Any, mongo_db: Any
+    ) -> FeatureValue:
         from app.models.signal import SignalRecord
+
         cutoff = self._cutoff(horizon_days)
 
         _SOURCE_WEIGHTS = {
             "social_reddit": 0.8,
             "social_twitter_x": 1.0,
-            "social_stockhouse": 1.2,   # Stockhouse is more targeted
+            "social_stockhouse": 1.2,  # Stockhouse is more targeted
             "social_breach_monitor": 2.0,  # Breach is high severity
-            "social_linkedin": 1.5,     # Executive LinkedIn signals high quality
+            "social_linkedin": 1.5,  # Executive LinkedIn signals high quality
         }
 
         try:
             result = await db.execute(
-                select(SignalRecord.source_id, func.count(SignalRecord.id)).where(
+                select(SignalRecord.source_id, func.count(SignalRecord.id))
+                .where(
                     and_(
                         SignalRecord.company_id == company_id,
                         SignalRecord.scraped_at >= cutoff,
                         SignalRecord.source_id.like("social_%"),
                     )
-                ).group_by(SignalRecord.source_id)
+                )
+                .group_by(SignalRecord.source_id)
             )
             rows = result.all()
 
@@ -246,10 +279,14 @@ class SocialSentimentCompositeFeature(BaseFeature):
             normalized = min(10.0, composite / 5.0)
 
             return FeatureValue(
-                company_id=company_id, feature_name=self.name,
-                feature_version=self.version, horizon_days=horizon_days,
-                value=normalized, signal_count=total_signals,
-                is_null=False, confidence=0.75,
+                company_id=company_id,
+                feature_name=self.name,
+                feature_version=self.version,
+                horizon_days=horizon_days,
+                value=normalized,
+                signal_count=total_signals,
+                is_null=False,
+                confidence=0.75,
             )
         except Exception as exc:
             log.error("feature_error", feature=self.name, error=str(exc))
@@ -261,10 +298,15 @@ class MediaMentionVelocityFeature(BaseFeature):
     name = "media_mention_velocity_7d"
     version = "v1"
     category = "geo"
-    description = "News mentions per day averaged over last 7 days. Velocity spike = coverage acceleration."
+    description = (
+        "News mentions per day averaged over last 7 days. Velocity spike = coverage acceleration."
+    )
 
-    async def compute(self, company_id: int, horizon_days: int, db: Any, mongo_db: Any) -> FeatureValue:
+    async def compute(
+        self, company_id: int, horizon_days: int, db: Any, mongo_db: Any
+    ) -> FeatureValue:
         from app.models.signal import SignalRecord
+
         cutoff_7d = datetime.now(tz=UTC) - timedelta(days=7)
         try:
             result = await db.execute(
@@ -280,9 +322,12 @@ class MediaMentionVelocityFeature(BaseFeature):
             velocity = count / 7.0
 
             return FeatureValue(
-                company_id=company_id, feature_name=self.name,
-                feature_version=self.version, horizon_days=horizon_days,
-                value=velocity, signal_count=count,
+                company_id=company_id,
+                feature_name=self.name,
+                feature_version=self.version,
+                horizon_days=horizon_days,
+                value=velocity,
+                signal_count=count,
                 is_null=(count == 0 and self.null_if_no_signals),
                 confidence=0.90,
             )
@@ -300,13 +345,23 @@ class CommodityPriceShockFlagFeature(BaseFeature):
     null_if_no_signals = False
 
     _SHOCK_KEYWORDS = {
-        "oil price crash", "commodity shock", "price collapse", "energy crisis",
-        "metals downturn", "commodity cycle", "oil price drop", "lumber price",
-        "gold price decline", "copper price",
+        "oil price crash",
+        "commodity shock",
+        "price collapse",
+        "energy crisis",
+        "metals downturn",
+        "commodity cycle",
+        "oil price drop",
+        "lumber price",
+        "gold price decline",
+        "copper price",
     }
 
-    async def compute(self, company_id: int, horizon_days: int, db: Any, mongo_db: Any) -> FeatureValue:
+    async def compute(
+        self, company_id: int, horizon_days: int, db: Any, mongo_db: Any
+    ) -> FeatureValue:
         from app.models.signal import SignalRecord
+
         cutoff = self._cutoff(horizon_days)
         try:
             result = await db.execute(
@@ -318,17 +373,17 @@ class CommodityPriceShockFlagFeature(BaseFeature):
                 )
             )
             texts = [t for t in result.scalars().all() if t]
-            has_shock = any(
-                kw in text.lower()
-                for text in texts
-                for kw in self._SHOCK_KEYWORDS
-            )
+            has_shock = any(kw in text.lower() for text in texts for kw in self._SHOCK_KEYWORDS)
 
             return FeatureValue(
-                company_id=company_id, feature_name=self.name,
-                feature_version=self.version, horizon_days=horizon_days,
+                company_id=company_id,
+                feature_name=self.name,
+                feature_version=self.version,
+                horizon_days=horizon_days,
                 value=1.0 if has_shock else 0.0,
-                is_null=False, signal_count=len(texts), confidence=0.72,
+                is_null=False,
+                signal_count=len(texts),
+                confidence=0.72,
             )
         except Exception as exc:
             log.error("feature_error", feature=self.name, error=str(exc))

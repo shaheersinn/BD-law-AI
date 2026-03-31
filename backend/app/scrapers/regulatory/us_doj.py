@@ -77,9 +77,7 @@ class USDOJScraper(BaseScraper):
         log.info("doj_scrape_complete", count=len(results))
         return results
 
-    def _parse_entry(
-        self, entry: dict[str, Any], cutoff: datetime
-    ) -> ScraperResult | None:
+    def _parse_entry(self, entry: dict[str, Any], cutoff: datetime) -> ScraperResult | None:
         title = entry.get("title", "")
         if not title or len(title) < 5:
             return None

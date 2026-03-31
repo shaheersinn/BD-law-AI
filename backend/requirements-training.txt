@@ -1,0 +1,7 @@
+# Training-only dependencies — NOT installed in production Docker image.
+# Used by Azure batch jobs only. Install alongside requirements.txt:
+#   pip install -r requirements.txt -r requirements-training.txt
+torch==2.5.1
+transformers==4.47.1
+tokenizers==0.21.0
+sentence-transformers==3.3.1

@@ -136,9 +136,7 @@ async def get_top_velocity_companies(
         top_score_30d = 0.0
         if scores_json:
             scores_data = (
-                scores_json
-                if isinstance(scores_json, dict)
-                else json_mod.loads(scores_json)
+                scores_json if isinstance(scores_json, dict) else json_mod.loads(scores_json)
             )
             for pa, horizons in scores_data.items():
                 s30 = horizons.get("30d", 0.0) or 0.0
