@@ -176,7 +176,7 @@ export default function LoginPage() {
           )}
 
           <form onSubmit={handleSubmit}>
-            {/* Email */}
+          {/* Username / Email */}
             <div style={{ marginBottom: '1rem' }}>
               <label style={{
                 display: 'block',
@@ -188,13 +188,13 @@ export default function LoginPage() {
                 textTransform: 'uppercase',
                 marginBottom: 6,
               }}>
-                Email
+                Username or Email
               </label>
               <input
-                type="email"
+                type="text"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                placeholder="partner@firm.com"
+                placeholder="admin"
                 autoFocus
                 required
                 style={{
