@@ -19,6 +19,13 @@ const api = axios.create({
   timeout: 15_000,
 })
 
+// Token helpers used by auth store and interceptors.
+export const auth = {
+  getToken: () => sessionStorage.getItem('bdforlaw_token'),
+  setToken: (token) => sessionStorage.setItem('bdforlaw_token', token),
+  clearToken: () => sessionStorage.removeItem('bdforlaw_token'),
+}
+
 // Request interceptor — attach JWT
 api.interceptors.request.use((config) => {
   const token = useAuthStore.getState().token
@@ -106,6 +113,15 @@ export const classActions = {
   match:      (companyId, topN = 5)     => api.get(`/api/class-actions/match/${companyId}`, { params: { top_n: topN } }).then(r => r.data),
   customMatch:(payload)                 => api.post('/api/class-actions/match', payload).then(r => r.data),
   dashboard:  ()                        => api.get('/api/class-actions/dashboard').then(r => r.data),
+}
+
+// ── auth ───────────────────────────────────────────────────────────────────────
+export const authApi = {
+  login: (email, password) => api.post('/api/auth/login', { email, password }).then(r => r.data),
+  logout: () => api.post('/api/auth/logout').then(r => r.data),
+  me: () => api.get('/api/auth/me').then(r => r.data),
+  refresh: (refreshToken) =>
+    api.post('/api/auth/refresh', { refresh_token: refreshToken }).then(r => r.data),
 }
 
 export default api

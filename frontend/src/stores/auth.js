@@ -34,10 +34,7 @@ const useAuthStore = create((set, get) => ({
 
   logout: async () => {
     try {
-      const refreshToken = sessionStorage.getItem('bdforlaw_refresh')
-      if (refreshToken) {
-        await authApi.logout(refreshToken).catch(() => {})
-      }
+      await authApi.logout().catch(() => {})
     } finally {
       tokenStorage.clearToken()
       sessionStorage.removeItem('bdforlaw_refresh')

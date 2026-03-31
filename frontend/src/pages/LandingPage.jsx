@@ -396,7 +396,6 @@ export default function LandingPage() {
               { label: 'ML Engines', value: '34' },
             ].map((s, i) => (
               <div key={s.label} style={{
-                padding: '1rem 0',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
