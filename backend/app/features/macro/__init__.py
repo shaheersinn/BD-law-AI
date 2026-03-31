@@ -13,6 +13,7 @@ Features:
   subsidiary_signal_count       — signals from known subsidiaries/related entities
   related_entity_signal_propagation — weighted signal from parent/child/sibling entities
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -29,11 +30,15 @@ class DirectorInterlocksScoreFeature(BaseFeature):
     name = "director_interlocks_score"
     version = "v1"
     category = "graph"
-    description = "Count of shared directors with other companies that have active signals in window."
+    description = (
+        "Count of shared directors with other companies that have active signals in window."
+    )
     requires_mongo = True
     null_if_no_signals = True
 
-    async def compute(self, company_id: int, horizon_days: int, db: Any, mongo_db: Any) -> FeatureValue:
+    async def compute(
+        self, company_id: int, horizon_days: int, db: Any, mongo_db: Any
+    ) -> FeatureValue:
         if not mongo_db:
             return self._null_value(company_id, horizon_days)
         try:
@@ -56,6 +61,7 @@ class DirectorInterlocksScoreFeature(BaseFeature):
             from sqlalchemy import and_, func, select
 
             from app.models.signal import SignalRecord
+
             result = await db.execute(
                 select(func.count(SignalRecord.id.distinct())).where(
                     and_(
@@ -67,13 +73,18 @@ class DirectorInterlocksScoreFeature(BaseFeature):
             active_count = result.scalar() or 0
 
             return FeatureValue(
-                company_id=company_id, feature_name=self.name,
-                feature_version=self.version, horizon_days=horizon_days,
+                company_id=company_id,
+                feature_name=self.name,
+                feature_version=self.version,
+                horizon_days=horizon_days,
                 value=float(min(active_count, 20)),
-                signal_count=active_count, is_null=False,
+                signal_count=active_count,
+                is_null=False,
                 confidence=0.80,
-                metadata={"connected_companies": len(connected_ids),
-                          "active_connected": active_count},
+                metadata={
+                    "connected_companies": len(connected_ids),
+                    "active_connected": active_count,
+                },
             )
         except Exception as exc:
             log.error("feature_error", feature=self.name, error=str(exc))
@@ -89,7 +100,9 @@ class BoardDistressContagionFeature(BaseFeature):
     requires_mongo = True
     null_if_no_signals = True
 
-    async def compute(self, company_id: int, horizon_days: int, db: Any, mongo_db: Any) -> FeatureValue:
+    async def compute(
+        self, company_id: int, horizon_days: int, db: Any, mongo_db: Any
+    ) -> FeatureValue:
         if not mongo_db:
             return self._null_value(company_id, horizon_days)
         try:
@@ -100,7 +113,8 @@ class BoardDistressContagionFeature(BaseFeature):
                 return self._null_value(company_id, horizon_days)
 
             connected = [
-                rel for rel in doc.get("relationships", [])
+                rel
+                for rel in doc.get("relationships", [])
                 if rel.get("relationship_type") in ("director_interlocked", "parent", "subsidiary")
             ]
             if not connected:
@@ -123,10 +137,14 @@ class BoardDistressContagionFeature(BaseFeature):
                         and_(
                             SignalRecord.company_id == target_id,
                             SignalRecord.scraped_at >= cutoff,
-                            SignalRecord.signal_type.in_([
-                                "insolvency_filing", "regulatory_osc_enforcement",
-                                "filing_material_change", "social_breach_detected",
-                            ]),
+                            SignalRecord.signal_type.in_(
+                                [
+                                    "insolvency_filing",
+                                    "regulatory_osc_enforcement",
+                                    "filing_material_change",
+                                    "social_breach_detected",
+                                ]
+                            ),
                         )
                     )
                 )
@@ -134,10 +152,13 @@ class BoardDistressContagionFeature(BaseFeature):
                 total_contagion += count * weight
 
             return FeatureValue(
-                company_id=company_id, feature_name=self.name,
-                feature_version=self.version, horizon_days=horizon_days,
+                company_id=company_id,
+                feature_name=self.name,
+                feature_version=self.version,
+                horizon_days=horizon_days,
                 value=min(10.0, total_contagion),
-                is_null=False, confidence=0.70,
+                is_null=False,
+                confidence=0.70,
             )
         except Exception as exc:
             log.error("feature_error", feature=self.name, error=str(exc))
@@ -153,7 +174,9 @@ class SubsidiarySignalCountFeature(BaseFeature):
     requires_mongo = True
     null_if_no_signals = True
 
-    async def compute(self, company_id: int, horizon_days: int, db: Any, mongo_db: Any) -> FeatureValue:
+    async def compute(
+        self, company_id: int, horizon_days: int, db: Any, mongo_db: Any
+    ) -> FeatureValue:
         if not mongo_db:
             return self._null_value(company_id, horizon_days)
         try:
@@ -174,6 +197,7 @@ class SubsidiarySignalCountFeature(BaseFeature):
             from sqlalchemy import and_, func, select
 
             from app.models.signal import SignalRecord
+
             result = await db.execute(
                 select(func.count(SignalRecord.id)).where(
                     and_(
@@ -185,9 +209,12 @@ class SubsidiarySignalCountFeature(BaseFeature):
             count = result.scalar() or 0
 
             return FeatureValue(
-                company_id=company_id, feature_name=self.name,
-                feature_version=self.version, horizon_days=horizon_days,
-                value=float(count), signal_count=count,
+                company_id=company_id,
+                feature_name=self.name,
+                feature_version=self.version,
+                horizon_days=horizon_days,
+                value=float(count),
+                signal_count=count,
                 is_null=(count == 0),
                 confidence=0.80,
                 metadata={"subsidiaries_checked": len(subsidiary_ids)},
@@ -206,7 +233,9 @@ class RelatedEntitySignalPropagationFeature(BaseFeature):
     requires_mongo = True
     null_if_no_signals = True
 
-    async def compute(self, company_id: int, horizon_days: int, db: Any, mongo_db: Any) -> FeatureValue:
+    async def compute(
+        self, company_id: int, horizon_days: int, db: Any, mongo_db: Any
+    ) -> FeatureValue:
         if not mongo_db:
             return self._null_value(company_id, horizon_days)
         try:
@@ -252,8 +281,10 @@ class RelatedEntitySignalPropagationFeature(BaseFeature):
                 total_signals += count
 
             return FeatureValue(
-                company_id=company_id, feature_name=self.name,
-                feature_version=self.version, horizon_days=horizon_days,
+                company_id=company_id,
+                feature_name=self.name,
+                feature_version=self.version,
+                horizon_days=horizon_days,
                 value=min(20.0, propagated),
                 signal_count=total_signals,
                 is_null=(propagated == 0),

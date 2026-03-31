@@ -18,9 +18,7 @@ from app.scrapers.registry import register
 
 log = structlog.get_logger(__name__)
 
-_OSFI_ENFORCEMENT_URL = (
-    "https://www.osfi-bsif.gc.ca/en/supervision/enforcement"
-)
+_OSFI_ENFORCEMENT_URL = "https://www.osfi-bsif.gc.ca/en/supervision/enforcement"
 
 
 @register
@@ -73,17 +71,13 @@ class OSFIEnforcementScraper(BaseScraper):
         log.info("osfi_scrape_complete", count=len(results))
         return results
 
-    def _parse_item(
-        self, item: Any, cutoff: datetime
-    ) -> ScraperResult | None:
+    def _parse_item(self, item: Any, cutoff: datetime) -> ScraperResult | None:
         cells = item.find_all("td")
         if cells and len(cells) >= 2:
             return self._parse_table_row(cells, cutoff)
         return self._parse_article_item(item, cutoff)
 
-    def _parse_table_row(
-        self, cells: list[Any], cutoff: datetime
-    ) -> ScraperResult | None:
+    def _parse_table_row(self, cells: list[Any], cutoff: datetime) -> ScraperResult | None:
         institution = self.safe_text(cells[0])
         if not institution or len(institution) < 3:
             return None
@@ -99,11 +93,7 @@ class OSFIEnforcementScraper(BaseScraper):
         source_url = None
         if link_el:
             href = str(link_el.get("href", ""))
-            source_url = (
-                href
-                if href.startswith("http")
-                else f"https://www.osfi-bsif.gc.ca{href}"
-            )
+            source_url = href if href.startswith("http") else f"https://www.osfi-bsif.gc.ca{href}"
 
         return ScraperResult(
             source_id=self.source_id,
@@ -126,9 +116,7 @@ class OSFIEnforcementScraper(BaseScraper):
             confidence_score=0.90,
         )
 
-    def _parse_article_item(
-        self, item: Any, cutoff: datetime
-    ) -> ScraperResult | None:
+    def _parse_article_item(self, item: Any, cutoff: datetime) -> ScraperResult | None:
         title_el = item.find(["h2", "h3", "h4", "a"])
         if not title_el:
             return None
@@ -140,15 +128,9 @@ class OSFIEnforcementScraper(BaseScraper):
         source_url = None
         if link_el:
             href = str(link_el.get("href", ""))
-            source_url = (
-                href
-                if href.startswith("http")
-                else f"https://www.osfi-bsif.gc.ca{href}"
-            )
+            source_url = href if href.startswith("http") else f"https://www.osfi-bsif.gc.ca{href}"
 
-        date_el = item.find("time") or item.find(
-            class_=lambda c: c and "date" in str(c).lower()
-        )
+        date_el = item.find("time") or item.find(class_=lambda c: c and "date" in str(c).lower())
         date_str = ""
         if date_el:
             date_str = date_el.get("datetime") or self.safe_text(date_el)

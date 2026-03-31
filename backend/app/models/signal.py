@@ -199,7 +199,6 @@ class Signal(Base):
     confidence_score = synonym("signal_strength")
     signal_value = synonym("signal_metadata")
 
-
     # ── Indexes ───────────────────────────────────────────────────────────────
     __table_args__ = (
         Index("ix_signals_company_type_date", "company_id", "signal_type", "published_at"),

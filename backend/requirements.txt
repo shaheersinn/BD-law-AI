@@ -2,6 +2,9 @@
 # ORACLE — BD for Law
 # requirements.txt — ALL versions pinned for reproducibility
 # Python 3.12 required
+#
+# Production requirements only. For Azure training jobs, also install
+# requirements-training.txt. See azure/training/azure_job.py.
 # ==============================================================================
 
 # ── Web Framework ──────────────────────────────────────────────────────────────
@@ -52,6 +55,7 @@ aiometer==0.5.0
 beautifulsoup4==4.12.3
 lxml==5.3.0
 feedparser==6.0.11
+defusedxml==0.7.1
 playwright==1.49.1
 
 # ── NLP / ML Core ─────────────────────────────────────────────────────────────
@@ -64,10 +68,6 @@ scipy==1.14.1
 joblib==1.4.2
 
 # ── NLP Text Processing ───────────────────────────────────────────────────────
-transformers==4.47.1
-torch==2.5.1
-tokenizers==0.21.0
-sentence-transformers==3.3.1
 spacy==3.8.3
 rapidfuzz==3.10.1
 nltk==3.9.1

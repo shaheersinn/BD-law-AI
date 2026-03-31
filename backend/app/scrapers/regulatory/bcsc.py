@@ -18,9 +18,7 @@ from app.scrapers.registry import register
 
 log = structlog.get_logger(__name__)
 
-_BCSC_ENFORCEMENT_URL = (
-    "https://www.bcsc.bc.ca/enforcement/enforcement-actions"
-)
+_BCSC_ENFORCEMENT_URL = "https://www.bcsc.bc.ca/enforcement/enforcement-actions"
 
 
 @register
@@ -72,9 +70,7 @@ class BCSCScraper(BaseScraper):
         log.info("bcsc_scrape_complete", count=len(results))
         return results
 
-    def _parse_item(
-        self, item: Any, cutoff: datetime
-    ) -> ScraperResult | None:
+    def _parse_item(self, item: Any, cutoff: datetime) -> ScraperResult | None:
         cells = item.find_all("td")
         if cells and len(cells) >= 2:
             return self._parse_table_row(cells, cutoff)
@@ -90,15 +86,9 @@ class BCSCScraper(BaseScraper):
         source_url = None
         if link_el:
             href = str(link_el.get("href", ""))
-            source_url = (
-                href
-                if href.startswith("http")
-                else f"https://www.bcsc.bc.ca{href}"
-            )
+            source_url = href if href.startswith("http") else f"https://www.bcsc.bc.ca{href}"
 
-        date_el = item.find("time") or item.find(
-            class_=lambda c: c and "date" in str(c).lower()
-        )
+        date_el = item.find("time") or item.find(class_=lambda c: c and "date" in str(c).lower())
         published_at = None
         if date_el:
             date_str = date_el.get("datetime") or self.safe_text(date_el)
@@ -122,9 +112,7 @@ class BCSCScraper(BaseScraper):
             confidence_score=0.85,
         )
 
-    def _parse_table_row(
-        self, cells: list[Any], cutoff: datetime
-    ) -> ScraperResult | None:
+    def _parse_table_row(self, cells: list[Any], cutoff: datetime) -> ScraperResult | None:
         respondent = self.safe_text(cells[0])
         if not respondent or len(respondent) < 3:
             return None
@@ -140,11 +128,7 @@ class BCSCScraper(BaseScraper):
         source_url = None
         if link_el:
             href = str(link_el.get("href", ""))
-            source_url = (
-                href
-                if href.startswith("http")
-                else f"https://www.bcsc.bc.ca{href}"
-            )
+            source_url = href if href.startswith("http") else f"https://www.bcsc.bc.ca{href}"
 
         return ScraperResult(
             source_id=self.source_id,

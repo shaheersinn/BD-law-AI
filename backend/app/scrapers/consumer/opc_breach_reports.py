@@ -37,7 +37,11 @@ _OPC_PIPEDA_URL = "https://www.priv.gc.ca/en/opc-actions-and-decisions/pipeda-fi
 _OPC_BREACHES_URL = "https://www.priv.gc.ca/en/opc-actions-and-decisions/breach-reports/"
 
 _PRACTICE_AREAS_BREACH = ["privacy_cybersecurity", "data_privacy_technology", "class_actions"]
-_PRACTICE_AREAS_PIPEDA = ["privacy_cybersecurity", "data_privacy_technology", "regulatory_compliance"]
+_PRACTICE_AREAS_PIPEDA = [
+    "privacy_cybersecurity",
+    "data_privacy_technology",
+    "regulatory_compliance",
+]
 
 # Threshold at which breach → class action risk is high
 _CLASS_ACTION_THRESHOLD = 10_000  # individuals affected

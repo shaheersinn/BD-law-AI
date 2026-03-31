@@ -82,7 +82,10 @@ def submit_training_job(dry_run: bool = False) -> str:
 
     job = command(
         code="./",   # entire repo — .amlignore excludes frontend
-        command=f"python -m app.training.train_all {dry_run_flag}",
+        command=(
+            "pip install -r backend/requirements.txt -r backend/requirements-training.txt && "
+            f"python -m app.training.train_all {dry_run_flag}"
+        ),
         environment=env,
         compute=compute_name,
         experiment_name="oracle-ml-training",

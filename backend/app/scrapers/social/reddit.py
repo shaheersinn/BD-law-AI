@@ -11,6 +11,7 @@ Signal types:
   social_reddit_legal       — legal context mention (litigation, employment, class actions)
   social_reddit_regulatory  — regulatory complaint/enforcement discussion
 """
+
 from __future__ import annotations
 
 import base64
@@ -33,12 +34,42 @@ _REDDIT_UA = "ORACLE-BD-Intelligence/1.0 (legal-intelligence-platform; research)
 
 # (subreddit, query, signal_type, practice_area_hints)
 _SUBREDDITS_QUERIES = [
-    ("legaladvicecanada", "lawsuit OR litigation OR fired OR wrongful", "social_reddit_legal", ["litigation", "employment"]),
-    ("legaladvicecanada", "CCAA OR receivership OR bankruptcy OR insolvency", "social_reddit_legal", ["insolvency"]),
-    ("PersonalFinanceCanada", "lawsuit OR class action OR settlement", "social_reddit_legal", ["litigation"]),
-    ("canada", "regulatory fine OR enforcement OR securities fraud", "social_reddit_regulatory", ["regulatory", "securities"]),
-    ("investing", "SEC OR OSC OR enforcement OR fraud TSX", "social_reddit_regulatory", ["securities"]),
-    ("CanadianInvestor", "lawsuit OR investigation OR class action TSX", "social_reddit_legal", ["litigation", "securities"]),
+    (
+        "legaladvicecanada",
+        "lawsuit OR litigation OR fired OR wrongful",
+        "social_reddit_legal",
+        ["litigation", "employment"],
+    ),
+    (
+        "legaladvicecanada",
+        "CCAA OR receivership OR bankruptcy OR insolvency",
+        "social_reddit_legal",
+        ["insolvency"],
+    ),
+    (
+        "PersonalFinanceCanada",
+        "lawsuit OR class action OR settlement",
+        "social_reddit_legal",
+        ["litigation"],
+    ),
+    (
+        "canada",
+        "regulatory fine OR enforcement OR securities fraud",
+        "social_reddit_regulatory",
+        ["regulatory", "securities"],
+    ),
+    (
+        "investing",
+        "SEC OR OSC OR enforcement OR fraud TSX",
+        "social_reddit_regulatory",
+        ["securities"],
+    ),
+    (
+        "CanadianInvestor",
+        "lawsuit OR investigation OR class action TSX",
+        "social_reddit_legal",
+        ["litigation", "securities"],
+    ),
 ]
 
 _STOPWORDS = {"I", "My", "The", "This", "That", "What", "How", "Why", "Can", "Am", "Is"}

@@ -61,6 +61,7 @@ Feature store:
   One row per (company_id, feature_name, feature_version, computed_at, horizon).
   horizon: 30 | 60 | 90 (days) — same feature computed for each time window.
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -78,17 +79,16 @@ VALID_HORIZONS = (30, 60, 90)
 @dataclass
 class FeatureValue:
     """Single computed feature value for one company × horizon."""
+
     company_id: int
     feature_name: str
-    feature_version: str        # e.g. "v1"
-    horizon_days: int           # 30 | 60 | 90
-    value: float                # All features are float (0.0 for binary flags)
-    is_null: bool = False       # True if insufficient data to compute
-    confidence: float = 1.0     # 0–1 confidence in this value
-    computed_at: datetime = field(
-        default_factory=lambda: datetime.now(tz=UTC)
-    )
-    signal_count: int = 0       # How many signals contributed to this value
+    feature_version: str  # e.g. "v1"
+    horizon_days: int  # 30 | 60 | 90
+    value: float  # All features are float (0.0 for binary flags)
+    is_null: bool = False  # True if insufficient data to compute
+    confidence: float = 1.0  # 0–1 confidence in this value
+    computed_at: datetime = field(default_factory=lambda: datetime.now(tz=UTC))
+    signal_count: int = 0  # How many signals contributed to this value
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -107,21 +107,22 @@ class BaseFeature(ABC):
     Subclasses implement compute() for one company × one horizon.
     The feature runner fans out across companies and horizons.
     """
-    name: str           # e.g. "material_change_count"
+
+    name: str  # e.g. "material_change_count"
     version: str = "v1"
-    category: str       # "nlp" | "corporate" | "market" | "social" | "geo" | "temporal" | "graph"
+    category: str  # "nlp" | "corporate" | "market" | "social" | "geo" | "temporal" | "graph"
     description: str = ""
-    requires_mongo: bool = False    # True if this feature reads MongoDB
-    requires_market: bool = False   # True if this feature needs market data
-    null_if_no_signals: bool = True # Return is_null=True rather than 0 if no data
+    requires_mongo: bool = False  # True if this feature reads MongoDB
+    requires_market: bool = False  # True if this feature needs market data
+    null_if_no_signals: bool = True  # Return is_null=True rather than 0 if no data
 
     @abstractmethod
     async def compute(
         self,
         company_id: int,
         horizon_days: int,
-        db: Any,            # AsyncSession
-        mongo_db: Any,      # MongoDB handle (may be None)
+        db: Any,  # AsyncSession
+        mongo_db: Any,  # MongoDB handle (may be None)
     ) -> FeatureValue:
         """
         Compute this feature for one company over one horizon window.
@@ -142,18 +143,24 @@ class BaseFeature(ABC):
                 fv = await self.compute(company_id, horizon, db, mongo_db)
                 results.append(fv)
             except Exception as exc:
-                log.error("feature_compute_error",
-                          feature=self.name, company_id=company_id,
-                          horizon=horizon, error=str(exc))
-                results.append(FeatureValue(
+                log.error(
+                    "feature_compute_error",
+                    feature=self.name,
                     company_id=company_id,
-                    feature_name=self.name,
-                    feature_version=self.version,
-                    horizon_days=horizon,
-                    value=0.0,
-                    is_null=True,
-                    confidence=0.0,
-                ))
+                    horizon=horizon,
+                    error=str(exc),
+                )
+                results.append(
+                    FeatureValue(
+                        company_id=company_id,
+                        feature_name=self.name,
+                        feature_version=self.version,
+                        horizon_days=horizon,
+                        value=0.0,
+                        is_null=True,
+                        confidence=0.0,
+                    )
+                )
         return results
 
     def _cutoff(self, horizon_days: int) -> datetime:
@@ -191,8 +198,7 @@ class FeatureRegistry:
 
     @classmethod
     def by_category(cls, category: str) -> list[BaseFeature]:
-        return [klass() for klass in _FEATURE_REGISTRY.values()
-                if klass.category == category]
+        return [klass() for klass in _FEATURE_REGISTRY.values() if klass.category == category]
 
     @classmethod
     def count(cls) -> int:

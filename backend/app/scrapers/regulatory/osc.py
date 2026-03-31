@@ -21,12 +21,9 @@ from app.scrapers.registry import register
 log = structlog.get_logger(__name__)
 
 _OSC_ENFORCEMENT_URL = (
-    "https://www.osc.ca/en/securities-law/enforcement"
-    "/enforcement-notices-and-temporary-orders"
+    "https://www.osc.ca/en/securities-law/enforcement/enforcement-notices-and-temporary-orders"
 )
-_OSC_SETTLEMENTS_URL = (
-    "https://www.osc.ca/en/securities-law/enforcement/settlements"
-)
+_OSC_SETTLEMENTS_URL = "https://www.osc.ca/en/securities-law/enforcement/settlements"
 
 
 @register
@@ -97,9 +94,7 @@ class OSCScraper(BaseScraper):
 
         return results
 
-    def _parse_item(
-        self, item: Any, signal_type: str, cutoff: datetime
-    ) -> ScraperResult | None:
+    def _parse_item(self, item: Any, signal_type: str, cutoff: datetime) -> ScraperResult | None:
         title_el = item.find(["h2", "h3", "h4", "a"])
         if not title_el:
             return None

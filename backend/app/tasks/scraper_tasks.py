@@ -93,8 +93,8 @@ async def _update_scraper_health(
         log.warning("scraper_health_update_failed", source=source_id, error=str(exc))
         try:
             await db.rollback()
-        except Exception:
-            pass
+        except Exception as rollback_exc:
+            log.warning("scraper_health_rollback_failed", error=str(rollback_exc))
 
 
 async def _run_category(category_prefix: str) -> dict[str, Any]:

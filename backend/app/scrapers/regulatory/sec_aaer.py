@@ -147,9 +147,7 @@ class SECAAERScraper(BaseScraper):
 
         return results
 
-    def _parse_html_item(
-        self, item: Any, cutoff: datetime
-    ) -> ScraperResult | None:
+    def _parse_html_item(self, item: Any, cutoff: datetime) -> ScraperResult | None:
         link_el = item.find("a", href=True)
         title = self.safe_text(link_el or item)
         if not title or len(title) < 5:
@@ -162,15 +160,9 @@ class SECAAERScraper(BaseScraper):
         source_url = None
         if link_el:
             href = str(link_el.get("href", ""))
-            source_url = (
-                href
-                if href.startswith("http")
-                else f"https://www.sec.gov{href}"
-            )
+            source_url = href if href.startswith("http") else f"https://www.sec.gov{href}"
 
-        date_el = item.find("time") or item.find(
-            class_=lambda c: c and "date" in str(c).lower()
-        )
+        date_el = item.find("time") or item.find(class_=lambda c: c and "date" in str(c).lower())
         published_at = None
         if date_el:
             date_str = date_el.get("datetime") or self.safe_text(date_el)

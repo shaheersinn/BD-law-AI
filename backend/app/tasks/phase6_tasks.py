@@ -562,7 +562,9 @@ def seed_decay_config(self: Any) -> dict[str, Any]:
             pass
         raise self.retry(exc=exc) from exc
 
+
 # ── Phase CA-3: Class Action Signal Convergence Engine ──────────────────────────
+
 
 @celery_app.task(
     name="ml.score_class_action_risk",
@@ -589,16 +591,13 @@ def score_class_action_risk_task(self: Any) -> dict[str, Any]:
         scores = score_all_companies()
         elapsed = time.monotonic() - start
 
-        log.info(
-            "class_action_scoring_complete",
-            scored=len(scores),
-            elapsed=round(elapsed, 2)
-        )
+        log.info("class_action_scoring_complete", scored=len(scores), elapsed=round(elapsed, 2))
         return {"scored_companies": len(scores), "elapsed_seconds": round(elapsed, 2)}
     except Exception as exc:
         log.exception("class_action_scoring_error", error=str(exc))
         try:
             import sentry_sdk
+
             sentry_sdk.capture_exception(exc)
         except ImportError:
             pass

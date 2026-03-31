@@ -27,7 +27,14 @@ from app.ml.bayesian_engine import (
     HorizonScores,
     load_all_engines,
 )
-from app.ml.transformer_scorer import TransformerScorer
+
+try:
+    from app.ml.transformer_scorer import TransformerScorer as TransformerScorer
+
+    _TORCH_AVAILABLE = True
+except ImportError:
+    _TORCH_AVAILABLE = False
+    TransformerScorer = None  # type: ignore[assignment,misc]
 
 log = logging.getLogger(__name__)
 
@@ -78,7 +85,7 @@ class MandateOrchestrator:
 
     def __init__(self) -> None:
         self._bayesian_engines: dict[str, BayesianEngine] = {}
-        self._transformer_scorers: dict[str, TransformerScorer] = {}
+        self._transformer_scorers: dict[str, Any] = {}
         self._selections: dict[str, ModelSelection] = {}
         self._loaded = False
 
@@ -105,6 +112,9 @@ class MandateOrchestrator:
             transformer_active = set()
 
         for pa in transformer_active:
+            if not _TORCH_AVAILABLE or TransformerScorer is None:
+                log.warning("torch not available — TransformerScorer disabled for %s", pa)
+                continue
             try:
                 scorer = TransformerScorer(pa)
                 scorer.load()

@@ -36,9 +36,22 @@ _PRACTICE_AREAS = ["class_actions", "regulatory_compliance"]
 
 # Major Canadian TSPs tracked for complaint spikes
 _TELCOS = [
-    "rogers", "bell", "telus", "shaw", "videotron", "freedom",
-    "eastlink", "cogeco", "sasktel", "mts", "wind", "public mobile",
-    "koodo", "fido", "virgin", "lucky mobile",
+    "rogers",
+    "bell",
+    "telus",
+    "shaw",
+    "videotron",
+    "freedom",
+    "eastlink",
+    "cogeco",
+    "sasktel",
+    "mts",
+    "wind",
+    "public mobile",
+    "koodo",
+    "fido",
+    "virgin",
+    "lucky mobile",
 ]
 
 

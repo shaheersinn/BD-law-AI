@@ -94,9 +94,7 @@ class DarkWebBreachScraper(BaseScraper):
         log.info("dark_web_scrape_complete", results=len(results))
         return results
 
-    def _parse_breach(
-        self, breach: dict, cutoff: datetime
-    ) -> ScraperResult | None:
+    def _parse_breach(self, breach: dict, cutoff: datetime) -> ScraperResult | None:
         """Parse a single HIBP breach record."""
         added_date = self._parse_date(breach.get("AddedDate"))
         if added_date and added_date < cutoff:
@@ -120,9 +118,7 @@ class DarkWebBreachScraper(BaseScraper):
         elif pwn_count > 100_000:
             confidence = 0.8
 
-        signal_type = (
-            "geo_data_breach" if domain else "geo_darkweb_mention"
-        )
+        signal_type = "geo_data_breach" if domain else "geo_darkweb_mention"
 
         return ScraperResult(
             source_id=self.source_id,

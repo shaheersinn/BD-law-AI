@@ -150,7 +150,6 @@ class Settings(BaseSettings):
         description="Groq API key — Phase 4 training ONLY, never production scoring",
     )
 
-
     # ── Monitoring ─────────────────────────────────────────────────────────────
     sentry_dsn: str = Field(default="", description="Sentry DSN for error monitoring")
     slack_webhook_url: str = Field(default="", description="Slack webhook for critical alerts")

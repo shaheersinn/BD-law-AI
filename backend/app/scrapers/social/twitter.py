@@ -15,6 +15,7 @@ Signal types:
   social_twitter_regulatory — regulatory enforcement (SEC/OSC)
   social_twitter_ma         — M&A activity (merger, acquisition, hostile bid)
 """
+
 from __future__ import annotations
 
 import re
@@ -31,11 +32,27 @@ log = structlog.get_logger(__name__)
 _TWITTER_SEARCH = "https://api.twitter.com/2/tweets/search/recent"
 
 _SEARCH_QUERIES = [
-    ("lawsuit OR litigation OR \"class action\" OR \"cease trade\" lang:en -is:retweet", "social_twitter_legal", ["litigation"]),
-    ("CCAA OR receivership OR insolvency OR bankruptcy lang:en -is:retweet", "social_twitter_distress", ["insolvency"]),
-    ("TSX OR TSXV SEC enforcement penalty investigation fraud lang:en", "social_twitter_regulatory", ["securities"]),
-    ("\"data breach\" OR \"privacy violation\" Canada lang:en", "social_twitter_legal", ["privacy_data"]),
-    ("merger acquisition \"hostile bid\" \"going private\" TSX lang:en", "social_twitter_ma", ["ma"]),
+    (
+        'lawsuit OR litigation OR "class action" OR "cease trade" lang:en -is:retweet',
+        "social_twitter_legal",
+        ["litigation"],
+    ),
+    (
+        "CCAA OR receivership OR insolvency OR bankruptcy lang:en -is:retweet",
+        "social_twitter_distress",
+        ["insolvency"],
+    ),
+    (
+        "TSX OR TSXV SEC enforcement penalty investigation fraud lang:en",
+        "social_twitter_regulatory",
+        ["securities"],
+    ),
+    (
+        '"data breach" OR "privacy violation" Canada lang:en',
+        "social_twitter_legal",
+        ["privacy_data"],
+    ),
+    ('merger acquisition "hostile bid" "going private" TSX lang:en', "social_twitter_ma", ["ma"]),
 ]
 
 _TICKER_PATTERN = re.compile(r"\b(?:TSX|TSXV|TSE)\s*[:]\s*([A-Z]{1,5})\b")
@@ -87,29 +104,31 @@ class TwitterXScraper(BaseScraper):
                     ticker = self._extract_ticker(text)
                     company = self._extract_company_name(text)
 
-                    results.append(ScraperResult(
-                        source_id=self.source_id,
-                        signal_type=signal_type,
-                        raw_company_name=company,
-                        source_url=f"https://twitter.com/i/web/status/{tweet.get('id')}",
-                        signal_value={
-                            "tweet_id": tweet.get("id"),
-                            "retweet_count": metrics.get("retweet_count", 0),
-                            "like_count": metrics.get("like_count", 0),
-                            "reply_count": metrics.get("reply_count", 0),
-                            "ticker": ticker,
-                        },
-                        signal_text=text[:500],
-                        published_at=self._parse_date(tweet.get("created_at")),
-                        practice_area_hints=hints,
-                        raw_payload={
-                            "id": tweet.get("id"),
-                            "text": text,
-                            "metrics": metrics,
-                            "author_id": tweet.get("author_id"),
-                        },
-                        confidence_score=0.5,
-                    ))
+                    results.append(
+                        ScraperResult(
+                            source_id=self.source_id,
+                            signal_type=signal_type,
+                            raw_company_name=company,
+                            source_url=f"https://twitter.com/i/web/status/{tweet.get('id')}",
+                            signal_value={
+                                "tweet_id": tweet.get("id"),
+                                "retweet_count": metrics.get("retweet_count", 0),
+                                "like_count": metrics.get("like_count", 0),
+                                "reply_count": metrics.get("reply_count", 0),
+                                "ticker": ticker,
+                            },
+                            signal_text=text[:500],
+                            published_at=self._parse_date(tweet.get("created_at")),
+                            practice_area_hints=hints,
+                            raw_payload={
+                                "id": tweet.get("id"),
+                                "text": text,
+                                "metrics": metrics,
+                                "author_id": tweet.get("author_id"),
+                            },
+                            confidence_score=0.5,
+                        )
+                    )
                 await self._rate_limit_sleep()
             except Exception as exc:
                 log.error("twitter_query_error", query=query[:50], error=str(exc))

@@ -1,0 +1,6 @@
+# Heavy ML / training-only dependencies — NOT installed in production
+# Used for Azure batch jobs only
+torch==2.5.1
+transformers==4.47.1
+tokenizers==0.21.0
+sentence-transformers==3.3.1

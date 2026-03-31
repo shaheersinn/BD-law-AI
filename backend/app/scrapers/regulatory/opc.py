@@ -18,9 +18,7 @@ from app.scrapers.registry import register
 
 log = structlog.get_logger(__name__)
 
-_OPC_INVESTIGATIONS_URL = (
-    "https://www.priv.gc.ca/en/opc-actions-and-decisions/investigations/"
-)
+_OPC_INVESTIGATIONS_URL = "https://www.priv.gc.ca/en/opc-actions-and-decisions/investigations/"
 _OPC_FINDINGS_URL = (
     "https://www.priv.gc.ca/en/opc-actions-and-decisions/"
     "investigations/investigations-into-businesses/"
@@ -89,9 +87,7 @@ class OPCScraper(BaseScraper):
 
         return results
 
-    def _parse_item(
-        self, item: Any, signal_type: str, cutoff: datetime
-    ) -> ScraperResult | None:
+    def _parse_item(self, item: Any, signal_type: str, cutoff: datetime) -> ScraperResult | None:
         title_el = item.find(["h2", "h3", "h4", "a"])
         if not title_el:
             cells = item.find_all("td")
@@ -110,15 +106,9 @@ class OPCScraper(BaseScraper):
         source_url = None
         if link_el:
             href = str(link_el.get("href", ""))
-            source_url = (
-                href
-                if href.startswith("http")
-                else f"https://www.priv.gc.ca{href}"
-            )
+            source_url = href if href.startswith("http") else f"https://www.priv.gc.ca{href}"
 
-        date_el = item.find("time") or item.find(
-            class_=lambda c: c and "date" in str(c).lower()
-        )
+        date_el = item.find("time") or item.find(class_=lambda c: c and "date" in str(c).lower())
         published_at = None
         if date_el:
             date_str = date_el.get("datetime") or self.safe_text(date_el)
@@ -162,11 +152,7 @@ class OPCScraper(BaseScraper):
         source_url = None
         if link_el:
             href = str(link_el.get("href", ""))
-            source_url = (
-                href
-                if href.startswith("http")
-                else f"https://www.priv.gc.ca{href}"
-            )
+            source_url = href if href.startswith("http") else f"https://www.priv.gc.ca{href}"
 
         return ScraperResult(
             source_id=self.source_id,

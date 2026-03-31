@@ -3,6 +3,7 @@ app/features — ORACLE Feature Engineering Pipeline.
 
 Exports the public API for feature computation, registration, and retrieval.
 """
+
 # Force-import feature submodules so @register_feature decorators execute
 import app.features.corporate  # noqa: F401
 import app.features.geo  # noqa: F401

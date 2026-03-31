@@ -34,6 +34,7 @@ FIRM_JURISDICTIONS = {
     "lax_oleary": ["ON"],
 }
 
+
 class FirmMatcher:
     def __init__(self, firms: list[FirmConfig] = ALL_FIRMS):
         self.firms = firms
@@ -41,11 +42,11 @@ class FirmMatcher:
     def match_firms(self, action_type: str, jurisdiction: str) -> list[dict[str, Any]]:
         """
         Ranks firms for a given class action.
-        
+
         Args:
             action_type: e.g. 'securities_capital_markets', 'product_liability'
             jurisdiction: 'ON', 'BC', 'QC', 'AB', 'FED'
-            
+
         Returns:
             List of {firm_id, name, score, match_reasons}
         """
@@ -60,7 +61,7 @@ class FirmMatcher:
                 reasons.append("Tier 1 reputation")
 
             # 2. Jurisdiction Match
-            firm_locs = FIRM_JURISDICTIONS.get(firm.firm_id, ["ON"]) # Default ON
+            firm_locs = FIRM_JURISDICTIONS.get(firm.firm_id, ["ON"])  # Default ON
             if jurisdiction in firm_locs:
                 score += 0.2
                 reasons.append(f"Strong presence in {jurisdiction}")
@@ -84,14 +85,17 @@ class FirmMatcher:
                 score += 0.3
                 reasons.append(f"Specialized in {action_type.replace('_', ' ')}")
 
-            results.append({
-                "firm_id": firm.firm_id,
-                "name": firm.firm_name,
-                "score": round(min(score, 1.0), 2),
-                "match_reasons": reasons
-            })
+            results.append(
+                {
+                    "firm_id": firm.firm_id,
+                    "name": firm.firm_name,
+                    "score": round(min(score, 1.0), 2),
+                    "match_reasons": reasons,
+                }
+            )
 
         # Sort by score desc
         return sorted(results, key=lambda x: x["score"], reverse=True)
+
 
 matcher = FirmMatcher()

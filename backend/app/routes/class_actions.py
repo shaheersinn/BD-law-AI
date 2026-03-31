@@ -48,7 +48,9 @@ async def _get_score_and_company(
     )
     score = score_res.scalar_one_or_none()
     if score is None:
-        raise HTTPException(status_code=404, detail=f"No class action score for company {company_id}")
+        raise HTTPException(
+            status_code=404, detail=f"No class action score for company {company_id}"
+        )
 
     company = await db.get(Company, company_id)
     if company is None:
@@ -176,7 +178,9 @@ async def get_cases(
             "certification_date": (
                 row["certification_date"].isoformat() if row["certification_date"] else None
             ),
-            "settlement_date": row["settlement_date"].isoformat() if row["settlement_date"] else None,
+            "settlement_date": row["settlement_date"].isoformat()
+            if row["settlement_date"]
+            else None,
             "settlement_amount_cad": (
                 float(row["settlement_amount_cad"]) if row["settlement_amount_cad"] else None
             ),
@@ -219,7 +223,9 @@ async def get_case_detail(
         "case_type": row["case_type"],
         "plaintiff_firm": row["plaintiff_firm"],
         "filing_date": row["filing_date"].isoformat() if row["filing_date"] else None,
-        "certification_date": row["certification_date"].isoformat() if row["certification_date"] else None,
+        "certification_date": row["certification_date"].isoformat()
+        if row["certification_date"]
+        else None,
         "settlement_date": row["settlement_date"].isoformat() if row["settlement_date"] else None,
         "settlement_amount_cad": (
             float(row["settlement_amount_cad"]) if row["settlement_amount_cad"] else None
@@ -317,7 +323,7 @@ async def get_dashboard(
 ) -> dict[str, Any]:
     inserted = await seed_law_firms(db)
     if inserted:
-        log.info("class_actions: seeded law firms", inserted=inserted)
+        log.info("class_actions: seeded law firms", inserted=inserted)  # type: ignore[call-arg]
 
     result = await db.execute(
         text(
@@ -330,7 +336,7 @@ async def get_dashboard(
             """
         )
     )
-    summary = result.mappings().first() or {}
+    summary: dict[str, Any] = dict(result.mappings().first() or {})
 
     sectors = await db.execute(
         text(
@@ -361,7 +367,7 @@ async def get_dashboard(
             """
         )
     )
-    cases_summary = cases.mappings().first() or {}
+    cases_summary: dict[str, Any] = dict(cases.mappings().first() or {})
 
     law_firms_count = await db.scalar(select(func.count()).select_from(LawFirm))
 

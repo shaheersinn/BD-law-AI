@@ -87,9 +87,7 @@ class AlbertaClassProceedingsScraper(BaseScraper):
             log.error("alberta_class_error", error=str(exc))
         return results
 
-    def _parse_row(
-        self, row: Tag, cutoff: datetime
-    ) -> ScraperResult | None:
+    def _parse_row(self, row: Tag, cutoff: datetime) -> ScraperResult | None:
         text = self.safe_text(row)
         if not text or len(text) < 10:
             return None

@@ -29,18 +29,31 @@ log = structlog.get_logger(__name__)
 _CIRB_DECISIONS_URL = "https://cirb-ccri.gc.ca/en/decisions/"
 
 # Keywords indicating union certification actions
-_CERTIFICATION_KEYWORDS = frozenset({
-    "certification", "decertification", "bargaining unit",
-    "union representation", "bargaining agent",
-})
+_CERTIFICATION_KEYWORDS = frozenset(
+    {
+        "certification",
+        "decertification",
+        "bargaining unit",
+        "union representation",
+        "bargaining agent",
+    }
+)
 
 # Keywords for unfair labour practices and disputes
-_DISPUTE_KEYWORDS = frozenset({
-    "unfair labour practice", "unfair labor practice",
-    "strike", "lockout", "arbitration", "termination",
-    "dismissal", "reinstatement", "collective agreement",
-    "duty of fair representation",
-})
+_DISPUTE_KEYWORDS = frozenset(
+    {
+        "unfair labour practice",
+        "unfair labor practice",
+        "strike",
+        "lockout",
+        "arbitration",
+        "termination",
+        "dismissal",
+        "reinstatement",
+        "collective agreement",
+        "duty of fair representation",
+    }
+)
 
 
 @register

@@ -15,6 +15,7 @@ Signal types:
 Data: MongoDB ONLY.
 Rate: 0.05 rps (10 free credits/month — extremely conservative)
 """
+
 from __future__ import annotations
 
 from datetime import UTC, datetime
@@ -33,15 +34,27 @@ _DAILY_CREDIT_LIMIT = 5
 _CACHE_TTL_DAYS = 30
 
 _EXEC_TITLES = [
-    "ceo", "cfo", "coo", "cto", "clo", "general counsel",
-    "chief legal officer", "chief compliance officer",
-    "president", "vice president legal", "vp legal",
+    "ceo",
+    "cfo",
+    "coo",
+    "cto",
+    "clo",
+    "general counsel",
+    "chief legal officer",
+    "chief compliance officer",
+    "president",
+    "vice president legal",
+    "vp legal",
 ]
 
 _LEGAL_HIRE_TITLES = [
-    "general counsel", "chief legal officer", "clo",
-    "chief compliance officer", "head of legal",
-    "director of compliance", "vp legal",
+    "general counsel",
+    "chief legal officer",
+    "clo",
+    "chief compliance officer",
+    "head of legal",
+    "director of compliance",
+    "vp legal",
 ]
 
 
@@ -113,22 +126,26 @@ class LinkedInScraper(BaseScraper):
 
                 for emp in employees:
                     title = (emp.get("title") or "").lower()
-                    profile_url = emp.get("profile_url", "")
+                    _profile_url = emp.get("profile_url", "")
 
                     if any(t in title for t in _LEGAL_HIRE_TITLES):
-                        results.append(self._build_result(
-                            company=company,
-                            employee=emp,
-                            signal_type="social_linkedin_legal_hire",
-                            hints=["regulatory", "litigation"],
-                        ))
+                        results.append(
+                            self._build_result(
+                                company=company,
+                                employee=emp,
+                                signal_type="social_linkedin_legal_hire",
+                                hints=["regulatory", "litigation"],
+                            )
+                        )
                     elif any(t in title for t in _EXEC_TITLES):
-                        results.append(self._build_result(
-                            company=company,
-                            employee=emp,
-                            signal_type="social_linkedin_exec_departure",
-                            hints=["ma", "insolvency"],
-                        ))
+                        results.append(
+                            self._build_result(
+                                company=company,
+                                employee=emp,
+                                signal_type="social_linkedin_exec_departure",
+                                hints=["ma", "insolvency"],
+                            )
+                        )
 
                 await self._rate_limit_sleep()
             except Exception as exc:

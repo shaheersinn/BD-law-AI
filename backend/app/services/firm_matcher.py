@@ -16,7 +16,6 @@ from app.models.company import Company
 from app.models.law_firm import LawFirm
 from app.scrapers.law_blogs.firm_blogs import ALL_FIRMS
 
-
 _ALL_PROVINCES = [
     "AB",
     "BC",
@@ -360,8 +359,8 @@ def _track_record_score(firm: LawFirm, predicted_type: str | None) -> tuple[floa
     matching = [r for r in records if _norm(r.get("case_type")) == target] if target else records
     sample = matching if matching else records
     total_count = sum(int(r.get("count", 0) or 0) for r in sample)
-    avg_settlement = (
-        sum(float(r.get("avg_settlement", 0) or 0) for r in sample) / max(len(sample), 1)
+    avg_settlement = sum(float(r.get("avg_settlement", 0) or 0) for r in sample) / max(
+        len(sample), 1
     )
     count_score = min(total_count / 30.0, 1.0)
     settlement_score = min(avg_settlement / 50_000_000.0, 1.0)
@@ -387,7 +386,10 @@ def _capacity_score(firm: LawFirm, class_action_score: ClassActionScore) -> tupl
         1.0,
     )
     score = max(0.0, 1.0 - abs(capacity - complexity) * 0.9)
-    return score, f"Capacity fit: {int(class_action_lawyers)} CA lawyers vs complexity {complexity:.2f}"
+    return (
+        score,
+        f"Capacity fit: {int(class_action_lawyers)} CA lawyers vs complexity {complexity:.2f}",
+    )
 
 
 def _side_fit(side: str, firm: LawFirm) -> bool:

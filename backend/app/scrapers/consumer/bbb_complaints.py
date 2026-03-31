@@ -41,11 +41,27 @@ _PRACTICE_AREAS = ["class_actions", "litigation"]
 
 # Industries with historically high class action exposure from complaint spikes
 _HIGH_RISK_CATEGORIES = {
-    "telecom", "telecommunications", "internet service", "cable",
-    "financial services", "banking", "insurance", "credit",
-    "auto dealer", "vehicle", "home warranty", "subscription",
-    "retail", "e-commerce", "airline", "travel", "hotel",
-    "health", "medical", "pharmaceutical", "supplement",
+    "telecom",
+    "telecommunications",
+    "internet service",
+    "cable",
+    "financial services",
+    "banking",
+    "insurance",
+    "credit",
+    "auto dealer",
+    "vehicle",
+    "home warranty",
+    "subscription",
+    "retail",
+    "e-commerce",
+    "airline",
+    "travel",
+    "hotel",
+    "health",
+    "medical",
+    "pharmaceutical",
+    "supplement",
 }
 
 
@@ -159,8 +175,15 @@ class BBBComplaintsScraper(BaseScraper):
         return any(
             k in text
             for k in [
-                "complaint", "scam", "fraud", "deceptive", "mislead",
-                "warning", "alert", "investigation", "lawsuit",
+                "complaint",
+                "scam",
+                "fraud",
+                "deceptive",
+                "mislead",
+                "warning",
+                "alert",
+                "investigation",
+                "lawsuit",
             ]
         )
 
