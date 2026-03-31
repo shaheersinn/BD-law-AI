@@ -25,7 +25,14 @@ from starlette.responses import JSONResponse
 log = structlog.get_logger(__name__)
 
 # Endpoints exempt from rate limiting
-EXEMPT_PATHS = {"/api/health", "/api/ready", "/api/version", "/api/docs", "/api/redoc"}
+EXEMPT_PATHS = {
+    "/api/health",
+    "/api/ready",
+    "/api/version",
+    "/api/docs",
+    "/api/redoc",
+    "/api/auth/login",
+}
 
 
 async def enforce_rate_limit(
