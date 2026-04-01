@@ -31,7 +31,35 @@ services:
       - key: LIVE_FEEDS_ENABLED
         value: "true"
       - key: ALLOWED_ORIGINS
-        value: '["https://oracle-bd-for-law.ondigitalocean.app","https://oracle-legal-bd.vercel.app"]'
+        value: '["https://oracle-bd-for-law.ondigitalocean.app"]'
+      - key: SECRET_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: "SET_IN_DO_DASHBOARD"
+      - key: DATABASE_URL
+        scope: RUN_TIME
+        type: SECRET
+        value: "SET_IN_DO_DASHBOARD"
+      - key: MONGODB_URL
+        scope: RUN_TIME
+        type: SECRET
+        value: "SET_IN_DO_DASHBOARD"
+      - key: REDIS_URL
+        scope: RUN_TIME
+        type: SECRET
+        value: "SET_IN_DO_DASHBOARD"
+      - key: REDIS_RESULT_BACKEND
+        scope: RUN_TIME
+        type: SECRET
+        value: "SET_IN_DO_DASHBOARD"
+      - key: CELERY_BROKER_URL
+        scope: RUN_TIME
+        type: SECRET
+        value: "SET_IN_DO_DASHBOARD"
+      - key: CELERY_RESULT_BACKEND
+        scope: RUN_TIME
+        type: SECRET
+        value: "SET_IN_DO_DASHBOARD"
 
 workers:
   - name: worker
@@ -54,6 +82,34 @@ workers:
         value: production
       - key: LIVE_FEEDS_ENABLED
         value: "true"
+      - key: SECRET_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: "SET_IN_DO_DASHBOARD"
+      - key: DATABASE_URL
+        scope: RUN_TIME
+        type: SECRET
+        value: "SET_IN_DO_DASHBOARD"
+      - key: MONGODB_URL
+        scope: RUN_TIME
+        type: SECRET
+        value: "SET_IN_DO_DASHBOARD"
+      - key: REDIS_URL
+        scope: RUN_TIME
+        type: SECRET
+        value: "SET_IN_DO_DASHBOARD"
+      - key: REDIS_RESULT_BACKEND
+        scope: RUN_TIME
+        type: SECRET
+        value: "SET_IN_DO_DASHBOARD"
+      - key: CELERY_BROKER_URL
+        scope: RUN_TIME
+        type: SECRET
+        value: "SET_IN_DO_DASHBOARD"
+      - key: CELERY_RESULT_BACKEND
+        scope: RUN_TIME
+        type: SECRET
+        value: "SET_IN_DO_DASHBOARD"
 
   - name: beat
     github:
@@ -71,6 +127,34 @@ workers:
     envs:
       - key: ENVIRONMENT
         value: production
+      - key: SECRET_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: "SET_IN_DO_DASHBOARD"
+      - key: DATABASE_URL
+        scope: RUN_TIME
+        type: SECRET
+        value: "SET_IN_DO_DASHBOARD"
+      - key: MONGODB_URL
+        scope: RUN_TIME
+        type: SECRET
+        value: "SET_IN_DO_DASHBOARD"
+      - key: REDIS_URL
+        scope: RUN_TIME
+        type: SECRET
+        value: "SET_IN_DO_DASHBOARD"
+      - key: REDIS_RESULT_BACKEND
+        scope: RUN_TIME
+        type: SECRET
+        value: "SET_IN_DO_DASHBOARD"
+      - key: CELERY_BROKER_URL
+        scope: RUN_TIME
+        type: SECRET
+        value: "SET_IN_DO_DASHBOARD"
+      - key: CELERY_RESULT_BACKEND
+        scope: RUN_TIME
+        type: SECRET
+        value: "SET_IN_DO_DASHBOARD"
 
 static_sites:
   - name: frontend
