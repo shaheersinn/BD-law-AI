@@ -123,6 +123,11 @@ jobs:
         # Applies the updated do-app.yaml and triggers a new deployment
         # NEVER runs alembic upgrade head — migrations are manual via scripts/run_migrations.sh
         run: |
+          if grep -n "SET_IN_DO_DASHBOARD" do-app.yaml; then
+            echo "ERROR: do-app.yaml still contains placeholder secret values."
+            echo "Set real runtime secrets in DigitalOcean App Platform, then update do-app.yaml values before deploy."
+            exit 1
+          fi
           doctl apps update ${{ secrets.DO_APP_ID }} --spec do-app.yaml --wait --verbose
 
       - name: Verify deployment succeeded
