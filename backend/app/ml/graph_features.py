@@ -69,7 +69,7 @@ def build_interlock_graph(
 
 
 def compute_centrality_features(
-    G: nx.Graph,
+    G: nx.Graph,  # noqa: N803
     company_ids: list[int],
     current_scores: dict[int, float] | None = None,
 ) -> dict[int, dict[str, float]]:
@@ -137,7 +137,7 @@ def build_and_compute(
 
 
 def extract_subgraph(
-    G: nx.Graph,
+    G: nx.Graph,  # noqa: N803
     company_id: int,
     depth: int = 2,
 ) -> dict[str, Any]:

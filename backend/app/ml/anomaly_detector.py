@@ -169,7 +169,7 @@ class AnomalyDetector:
         if self._scaler is not None:
             try:
                 X = self._scaler.transform(X).astype(np.float32)
-            except Exception:
+            except Exception:  # noqa: S110
                 pass
 
         X_t = torch.tensor(X, dtype=torch.float32)
@@ -189,7 +189,7 @@ class AnomalyDetector:
 
     @staticmethod
     def train(
-        X_clean: np.ndarray,  # Feature matrix from companies with NO mandate labels
+        X_clean: np.ndarray,  # noqa: N803  # Feature matrix from companies with NO mandate labels
         output_dir: Path,
         n_epochs: int = TRAINING_EPOCHS,
     ) -> dict[str, Any]:

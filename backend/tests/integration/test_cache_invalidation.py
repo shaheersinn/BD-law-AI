@@ -53,9 +53,7 @@ class TestCacheInvalidation:
         }
         mock_result = MagicMock()
         mock_result.mappings.return_value = MagicMock()
-        mock_result.mappings.return_value.__iter__ = MagicMock(
-            return_value=iter([score_data])
-        )
+        mock_result.mappings.return_value.__iter__ = MagicMock(return_value=iter([score_data]))
         mock_db.execute.return_value = mock_result
 
         with patch("app.services.scoring_service.cache") as mock_cache:

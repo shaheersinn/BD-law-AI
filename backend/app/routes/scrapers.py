@@ -4,9 +4,9 @@ app/routes/scrapers.py — Phase 1B Scraper Health Dashboard.
 Endpoints:
   GET  /api/v1/scrapers/health            → paginated ScraperHealth list (auth required)
   GET  /api/v1/scrapers/health/{name}     → single scraper health record (auth required)
-  GET  /api/v1/scrapers/summary           → aggregate counts, cached 60s (public)
-  GET  /api/v1/scrapers/registry          → all registered source_ids (public)
-  GET  /api/v1/scrapers/categories        → per-category health summary (public)
+  GET  /api/v1/scrapers/summary           → aggregate counts, cached 60s (auth required)
+  GET  /api/v1/scrapers/registry          → all registered source_ids (auth required)
+  GET  /api/v1/scrapers/categories        → per-category health summary (auth required)
   POST /api/v1/scrapers/{source_id}/run   → trigger on-demand (partner role)
 """
 
@@ -127,6 +127,7 @@ async def get_scraper_health(
 @router.get("/summary", response_model=ScraperSummaryOut)
 async def scraper_summary(
     db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_auth),
 ) -> ScraperSummaryOut:
     """
     Aggregate scraper health summary.
@@ -156,8 +157,10 @@ async def scraper_summary(
 
 
 @router.get("/registry")
-async def list_registry() -> dict[str, Any]:
-    """List all registered scraper source_ids. No authentication required."""
+async def list_registry(
+    _: User = Depends(require_auth),
+) -> dict[str, Any]:
+    """List all registered scraper source_ids."""
     return {
         "count": ScraperRegistry.count(),
         "source_ids": ScraperRegistry.all_ids(),
@@ -167,6 +170,7 @@ async def list_registry() -> dict[str, Any]:
 @router.get("/categories", response_model=list[CategorySummaryOut])
 async def categories_summary(
     db: AsyncSession = Depends(get_db),
+    _: User = Depends(require_auth),
 ) -> list[CategorySummaryOut]:
     """Per-category health summary."""
     stmt = (

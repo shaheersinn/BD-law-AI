@@ -355,11 +355,11 @@ class BayesianEngine:
     @staticmethod
     def train(
         practice_area: str,
-        X_train: pd.DataFrame,
+        X_train: pd.DataFrame,  # noqa: N803
         y_train_30d: pd.Series,
         y_train_60d: pd.Series,
         y_train_90d: pd.Series,
-        X_holdout: pd.DataFrame,
+        X_holdout: pd.DataFrame,  # noqa: N803
         y_holdout_30d: pd.Series,
         y_holdout_60d: pd.Series,
         y_holdout_90d: pd.Series,
@@ -401,8 +401,13 @@ class BayesianEngine:
             n_neg = int(len(y_train) - n_pos)
             scale_pos_weight = n_neg / n_pos if n_pos > 0 else DEFAULT_SCALE_POS_WEIGHT
 
-            # Optuna objective
-            def objective(trial: optuna.Trial) -> float:
+            # Optuna objective — captures loop variables explicitly to avoid B023
+            def objective(  # noqa: B023
+                trial: optuna.Trial,
+                _spw: float = scale_pos_weight,
+                x_train_cap: pd.DataFrame = X_train,  # noqa: N803
+                y_train_cap: pd.Series = y_train,
+            ) -> float:
                 params = {
                     "n_estimators": trial.suggest_int("n_estimators", 100, 1000, step=50),
                     "max_depth": trial.suggest_int("max_depth", 3, 10),
@@ -412,7 +417,7 @@ class BayesianEngine:
                     "reg_alpha": trial.suggest_float("reg_alpha", 1e-8, 10.0, log=True),
                     "reg_lambda": trial.suggest_float("reg_lambda", 1e-8, 10.0, log=True),
                     "min_child_weight": trial.suggest_int("min_child_weight", 1, 10),
-                    "scale_pos_weight": scale_pos_weight,
+                    "scale_pos_weight": _spw,
                     "use_label_encoder": False,
                     "eval_metric": "logloss",
                     "random_state": 42,
@@ -423,11 +428,11 @@ class BayesianEngine:
                 model = XGBClassifier(**params)
                 skf = StratifiedKFold(n_splits=OPTUNA_CV_FOLDS, shuffle=True, random_state=42)
                 f1_scores: list[float] = []
-                for fold_train_idx, fold_val_idx in skf.split(X_train, y_train):
-                    X_fold_tr = X_train.iloc[fold_train_idx]
-                    y_fold_tr = y_train.iloc[fold_train_idx]
-                    X_fold_val = X_train.iloc[fold_val_idx]
-                    y_fold_val = y_train.iloc[fold_val_idx]
+                for fold_train_idx, fold_val_idx in skf.split(x_train_cap, y_train_cap):
+                    X_fold_tr = x_train_cap.iloc[fold_train_idx]
+                    y_fold_tr = y_train_cap.iloc[fold_train_idx]
+                    X_fold_val = x_train_cap.iloc[fold_val_idx]
+                    y_fold_val = y_train_cap.iloc[fold_val_idx]
                     model.fit(
                         X_fold_tr,
                         y_fold_tr,
@@ -494,7 +499,9 @@ class BayesianEngine:
             try:
                 raw_imp = base_model.feature_importances_
                 importances = {
-                    col: float(imp) for col, imp in zip(FEATURE_COLUMNS, raw_imp) if imp > 0
+                    col: float(imp)
+                    for col, imp in zip(FEATURE_COLUMNS, raw_imp, strict=False)
+                    if imp > 0
                 }
             except Exception:
                 log.warning(

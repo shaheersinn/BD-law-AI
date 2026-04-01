@@ -115,7 +115,7 @@ class DatasetBuilder:
         # Build label columns per horizon
         for horizon in [30, 60, 90]:
 
-            def has_mandate_in_window(row: pd.Series) -> int:
+            def has_mandate_in_window(row: pd.Series, _h: int = horizon) -> int:  # noqa: B023
                 if pd.isna(row.get("mandate_confirmed_at")):
                     return 0
                 if row.get("is_negative_label", False):
@@ -128,7 +128,7 @@ class DatasetBuilder:
                     fd = pd.Timestamp(feature_date).to_pydatetime()
                     md = pd.Timestamp(mandate_date).to_pydatetime()
                     delta = (md - fd).days
-                    return 1 if 0 <= delta <= horizon else 0
+                    return 1 if 0 <= delta <= _h else 0
                 except Exception:
                     return 0
 
