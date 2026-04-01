@@ -85,7 +85,7 @@ class MandateOrchestrator:
 
     def __init__(self) -> None:
         self._bayesian_engines: dict[str, BayesianEngine] = {}
-        self._transformer_scorers: dict[str, TransformerScorer] = {}
+        self._transformer_scorers: dict[str, Any] = {}
         self._selections: dict[str, ModelSelection] = {}
         self._loaded = False
 
@@ -112,6 +112,9 @@ class MandateOrchestrator:
             transformer_active = set()
 
         for pa in transformer_active:
+            if not _TORCH_AVAILABLE or TransformerScorer is None:
+                log.warning("torch not available — TransformerScorer disabled for %s", pa)
+                continue
             try:
                 if not _TORCH_AVAILABLE or TransformerScorer is None:
                     log.warning("torch not available — TransformerScorer disabled for %s", pa)

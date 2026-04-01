@@ -323,7 +323,7 @@ async def get_dashboard(
 ) -> dict[str, Any]:
     inserted = await seed_law_firms(db)
     if inserted:
-        log.info("class_actions: seeded law firms", inserted=inserted)
+        log.info("class_actions: seeded law firms", inserted=inserted)  # type: ignore[call-arg]
 
     result = await db.execute(
         text(
@@ -336,7 +336,7 @@ async def get_dashboard(
             """
         )
     )
-    summary = result.mappings().first() or {}
+    summary: dict[str, Any] = dict(result.mappings().first() or {})
 
     sectors = await db.execute(
         text(
@@ -367,7 +367,7 @@ async def get_dashboard(
             """
         )
     )
-    cases_summary = cases.mappings().first() or {}
+    cases_summary: dict[str, Any] = dict(cases.mappings().first() or {})
 
     law_firms_count = await db.scalar(select(func.count()).select_from(LawFirm))
 
