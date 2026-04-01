@@ -17,6 +17,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy import func, select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.dependencies import require_auth, require_write
@@ -114,8 +115,13 @@ async def live_triggers(
     if unactioned_only:
         q = q.where(not Trigger.actioned)
 
-    result = await db.execute(q)
-    triggers = result.scalars().all()
+    try:
+        result = await db.execute(q)
+        triggers = result.scalars().all()
+    except SQLAlchemyError:
+        log.exception("triggers_live_query_failed")
+        # Graceful fallback when trigger table/migration is not present in environment.
+        return []
 
     data = [
         {
@@ -145,58 +151,78 @@ async def trigger_stats(
     now = datetime.now(UTC)
 
     # Counts by time window
-    total_24h = (
-        await db.execute(
-            select(func.count(Trigger.id)).where(Trigger.detected_at >= now - timedelta(hours=24))
-        )
-    ).scalar() or 0
-
-    total_72h = (
-        await db.execute(
-            select(func.count(Trigger.id)).where(Trigger.detected_at >= now - timedelta(hours=72))
-        )
-    ).scalar() or 0
-
-    # By source
-    source_rows = await db.execute(
-        select(Trigger.source, func.count(Trigger.id))
-        .where(Trigger.detected_at >= now - timedelta(hours=72))
-        .group_by(Trigger.source)
-    )
-    by_source = {(s if isinstance(s, str) else s.value): c for s, c in source_rows.all()}
-
-    # By urgency band
-    all_recent = (
-        (
+    try:
+        total_24h = (
             await db.execute(
-                select(Trigger.urgency).where(Trigger.detected_at >= now - timedelta(hours=72))
+                select(func.count(Trigger.id)).where(Trigger.detected_at >= now - timedelta(hours=24))
             )
-        )
-        .scalars()
-        .all()
-    )
+        ).scalar() or 0
 
-    bands = {"CRITICAL (95-100)": 0, "HIGH (80-94)": 0, "MODERATE (65-79)": 0, "WATCH (50-64)": 0}
-    for u in all_recent:
-        if u >= 95:
-            bands["CRITICAL (95-100)"] += 1
-        elif u >= 80:
-            bands["HIGH (80-94)"] += 1
-        elif u >= 65:
-            bands["MODERATE (65-79)"] += 1
-        elif u >= 50:
-            bands["WATCH (50-64)"] += 1
-
-    # Unactioned high-urgency
-    unlabelled = (
-        await db.execute(
-            select(func.count(Trigger.id)).where(
-                Trigger.urgency >= 80,
-                not Trigger.actioned,
-                Trigger.detected_at >= now - timedelta(hours=72),
+        total_72h = (
+            await db.execute(
+                select(func.count(Trigger.id)).where(Trigger.detected_at >= now - timedelta(hours=72))
             )
+        ).scalar() or 0
+
+        # By source
+        source_rows = await db.execute(
+            select(Trigger.source, func.count(Trigger.id))
+            .where(Trigger.detected_at >= now - timedelta(hours=72))
+            .group_by(Trigger.source)
         )
-    ).scalar() or 0
+        by_source = {(s if isinstance(s, str) else s.value): c for s, c in source_rows.all()}
+
+        # By urgency band
+        all_recent = (
+            (
+                await db.execute(
+                    select(Trigger.urgency).where(Trigger.detected_at >= now - timedelta(hours=72))
+                )
+            )
+            .scalars()
+            .all()
+        )
+
+        bands = {
+            "CRITICAL (95-100)": 0,
+            "HIGH (80-94)": 0,
+            "MODERATE (65-79)": 0,
+            "WATCH (50-64)": 0,
+        }
+        for u in all_recent:
+            if u >= 95:
+                bands["CRITICAL (95-100)"] += 1
+            elif u >= 80:
+                bands["HIGH (80-94)"] += 1
+            elif u >= 65:
+                bands["MODERATE (65-79)"] += 1
+            elif u >= 50:
+                bands["WATCH (50-64)"] += 1
+
+        # Unactioned high-urgency
+        unlabelled = (
+            await db.execute(
+                select(func.count(Trigger.id)).where(
+                    Trigger.urgency >= 80,
+                    not Trigger.actioned,
+                    Trigger.detected_at >= now - timedelta(hours=72),
+                )
+            )
+        ).scalar() or 0
+    except SQLAlchemyError:
+        log.exception("triggers_stats_query_failed")
+        return TriggerStats(
+            total_24h=0,
+            total_72h=0,
+            by_source={},
+            by_urgency_band={
+                "CRITICAL (95-100)": 0,
+                "HIGH (80-94)": 0,
+                "MODERATE (65-79)": 0,
+                "WATCH (50-64)": 0,
+            },
+            unlabelled_high_urgency=0,
+        )
 
     result = {
         "total_24h": total_24h,
