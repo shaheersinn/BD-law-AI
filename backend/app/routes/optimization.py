@@ -12,8 +12,6 @@ Endpoints:
 
 from __future__ import annotations
 
-import json
-from datetime import UTC, datetime
 from typing import Any
 
 import structlog
@@ -22,7 +20,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth.dependencies import require_admin, require_partner
+from app.auth.dependencies import require_partner
 from app.auth.models import User
 from app.cache.client import cache
 from app.database import get_db

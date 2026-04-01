@@ -8,6 +8,7 @@ Uses the same _run_category pattern as scraper_tasks.py.
 from __future__ import annotations
 
 import asyncio
+import concurrent.futures
 import time
 from typing import Any
 
@@ -25,14 +26,10 @@ log = structlog.get_logger(__name__)
 def _run_async(coro: Any) -> Any:
     """Run a coroutine synchronously from a Celery worker context."""
     try:
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            import concurrent.futures
-
-            with concurrent.futures.ThreadPoolExecutor() as pool:
-                future = pool.submit(asyncio.run, coro)
-                return future.result(timeout=600)
-        return loop.run_until_complete(coro)
+        asyncio.get_running_loop()
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+            future = pool.submit(asyncio.run, coro)
+            return future.result(timeout=600)
     except RuntimeError:
         return asyncio.run(coro)
 

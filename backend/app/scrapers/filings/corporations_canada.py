@@ -6,7 +6,7 @@ from app.scrapers.base import BaseScraper, SignalData
 
 
 class CorporationsCanadaScraper(BaseScraper):
-    source_id = "corporate_corps_canada"
+    source_id = "filings_corps_canada"
     source_name = "Corporations Canada"
     CATEGORY = "corporate"
     signal_types = ["corporate_status_change"]

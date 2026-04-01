@@ -63,7 +63,6 @@ class CPSCRecallsScraper(BaseScraper):
     ttl_seconds = 3600
 
     async def scrape(self) -> list[ScraperResult]:
-        _results: list[ScraperResult] = []
         # Try RSS first — faster and simpler
         rss_results = await self._scrape_rss()
         if rss_results:

@@ -16,6 +16,7 @@ Phase 10 hardening:
 
 from __future__ import annotations
 
+import asyncio
 from typing import Any
 
 import structlog
@@ -47,8 +48,6 @@ def compute_prediction_accuracy(self: Any) -> dict[str, Any]:
     and computes was_correct + lead_days for each horizon (30/60/90).
     Idempotent: safe to re-run.
     """
-    import asyncio
-
     from app.database import get_db
     from app.services.accuracy_tracker import compute_all_pending
 
@@ -96,8 +95,6 @@ def run_drift_detector(self: Any) -> dict[str, Any]:
     Inserts model_drift_alerts for any practice area with > 10pp accuracy drop.
     Triggers orchestrator re-evaluation for flagged practice areas.
     """
-    import asyncio
-
     from app.database import get_db
     from app.ml.orchestrator import get_orchestrator
     from app.services.drift_detector import detect_drift
@@ -167,8 +164,6 @@ def run_confirmation_hunter(self: Any) -> dict[str, Any]:
     Creates mandate_confirmations with is_auto_detected=True.
     Partner review required before confirmations count in accuracy metrics.
     """
-    import asyncio
-
     from app.database import get_db
     from app.services.confirmation_hunter import run as hunter_run
 

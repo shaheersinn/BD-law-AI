@@ -1,4 +1,4 @@
-"""0009_phase12_optimization
+"""0011_phase12_optimization
 
 Phase 12: Post-Launch Optimization
 
@@ -8,8 +8,8 @@ New tables:
     - signal_weight_overrides:  Human BD team multipliers (override ML-calibrated weights)
     - retrain_submissions:      Targeted Azure ML retraining job records
 
-Revision ID: 0009_phase12_optimization
-Revises: 0007_phase7_api
+Revision ID: 0011_phase12_optimization
+Revises: 0010
 """
 
 from __future__ import annotations
@@ -19,8 +19,8 @@ from sqlalchemy.dialects.postgresql import JSONB
 
 from alembic import op
 
-revision = "0009_phase12_optimization"
-down_revision = "0007_phase7_api"
+revision = "0011_phase12_optimization"
+down_revision = "0010"
 branch_labels = None
 depends_on = None
 

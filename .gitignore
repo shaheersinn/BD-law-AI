@@ -4,6 +4,12 @@ __pycache__/
 *.pyd
 .pytest_cache/
 
+# Environment files — NEVER commit real credentials
+.env
+.env.*
+.envdocker
+!.env.example
+
 # Frontend build artifacts
 frontend/dist/
 frontend/node_modules/

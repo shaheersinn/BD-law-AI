@@ -122,7 +122,7 @@ class SedarScraper(BaseScraper):
     NOT a bulk crawler. Only queries companies already in our company table.
     """
 
-    source_id = "corporate_sedar"
+    source_id = "filings_sedar"
     source_name = "SEDAR+ Filings"
     CATEGORY = "corporate"
     signal_types = ["corporate_filing"]

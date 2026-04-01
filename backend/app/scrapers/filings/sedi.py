@@ -6,7 +6,7 @@ from app.scrapers.base import BaseScraper, SignalData
 
 
 class SediScraper(BaseScraper):
-    source_id = "corporate_sedi"
+    source_id = "filings_sedi"
     source_name = "SEDI Insider Trading"
     CATEGORY = "corporate"
     signal_types = ["insider_transaction"]

@@ -117,7 +117,7 @@ class EdgarScraper(BaseScraper):
     On subsequent runs: checks recent filings for known CIKs.
     """
 
-    source_id = "corporate_edgar"
+    source_id = "filings_edgar"
     source_name = "SEC EDGAR Filings"
     CATEGORY = "corporate"
     signal_types = [

@@ -6,7 +6,7 @@ from app.scrapers.base import BaseScraper, SignalData
 
 
 class IaacScraper(BaseScraper):
-    source_id = "corporate_iaac"
+    source_id = "filings_iaac"
     source_name = "IAAC Assessments"
     CATEGORY = "corporate"
     signal_types = ["impact_assessment"]

@@ -16,6 +16,7 @@ Design:
 from __future__ import annotations
 
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     BigInteger,
@@ -33,6 +34,9 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship, synonym
 
 from app.database import Base
+
+if TYPE_CHECKING:
+    from app.models.company import Company
 
 # ── Practice Area Bitmask Constants ───────────────────────────────────────────
 # Each practice area has a fixed bit position.
@@ -187,9 +191,7 @@ class Signal(Base):
     )
 
     # ── Relationships ─────────────────────────────────────────────────────────
-    company: Mapped[Company | None] = relationship(  # type: ignore[name-defined]  # noqa: F821
-        "Company", lazy="noload"
-    )
+    company: Mapped[Company | None] = relationship("Company", lazy="noload")
 
     # ── Feature Pipeline Aliases ───────────────────────────────────────────────
     # The feature engineering pipeline was written using these column names.

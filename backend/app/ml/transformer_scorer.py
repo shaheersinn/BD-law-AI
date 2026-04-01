@@ -271,7 +271,7 @@ class TransformerScorer:
         )
 
         # Class weights for BCE loss (handle imbalance)
-        _pos_weights = {  # noqa: F841
+        _ = {
             h: torch.tensor(
                 [(len(y) - y.sum()) / max(y.sum(), 1)],
                 dtype=torch.float32,

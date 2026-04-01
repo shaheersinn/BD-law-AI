@@ -6,7 +6,7 @@ from app.scrapers.base import BaseScraper, SignalData
 
 
 class CiroScraper(BaseScraper):
-    source_id = "corporate_ciro"
+    source_id = "filings_ciro"
     source_name = "CIRO Enforcement"
     CATEGORY = "corporate"
     signal_types = ["enforcement_action"]

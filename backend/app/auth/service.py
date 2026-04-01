@@ -167,6 +167,12 @@ async def authenticate_user(
     if user.is_locked:
         return None
 
+    # Lockout window expired — clear stale counter so the user gets a full attempt budget
+    if user.locked_until is not None and not user.is_locked:
+        user.failed_login_attempts = 0
+        user.locked_until = None
+        await db.commit()
+
     # Verify password
     if not verify_password(password, user.hashed_password):
         # Increment failed attempts

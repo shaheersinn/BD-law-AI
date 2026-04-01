@@ -126,7 +126,6 @@ class LinkedInScraper(BaseScraper):
 
                 for emp in employees:
                     title = (emp.get("title") or "").lower()
-                    _profile_url = emp.get("profile_url", "")
 
                     if any(t in title for t in _LEGAL_HIRE_TITLES):
                         results.append(

@@ -6,7 +6,7 @@ from app.scrapers.base import BaseScraper, SignalData
 
 
 class TmxListingsScraper(BaseScraper):
-    source_id = "corporate_tmx"
+    source_id = "filings_tmx"
     source_name = "TMX Listings"
     CATEGORY = "corporate"
     signal_types = ["signal"]
