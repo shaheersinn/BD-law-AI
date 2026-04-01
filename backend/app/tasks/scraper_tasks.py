@@ -25,6 +25,7 @@ Beat schedule (defined in celery_app.py):
 from __future__ import annotations
 
 import asyncio
+import concurrent.futures
 import time
 from datetime import UTC
 from typing import Any
@@ -43,15 +44,14 @@ log = structlog.get_logger(__name__)
 def _run_async(coro: Any) -> Any:
     """Run a coroutine synchronously from a Celery worker context."""
     try:
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            import concurrent.futures
-
-            with concurrent.futures.ThreadPoolExecutor() as pool:
-                future = pool.submit(asyncio.run, coro)
-                return future.result(timeout=300)
-        return loop.run_until_complete(coro)
+        asyncio.get_running_loop()
+        # A running event loop exists — dispatch to a new thread to avoid
+        # "cannot run nested event loop" errors (e.g. gevent/eventlet workers).
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+            future = pool.submit(asyncio.run, coro)
+            return future.result(timeout=300)
     except RuntimeError:
+        # No running loop — safe to call asyncio.run() directly.
         return asyncio.run(coro)
 
 
