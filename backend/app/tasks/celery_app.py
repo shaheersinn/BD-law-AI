@@ -221,67 +221,6 @@ celery_app.conf.beat_schedule = {
         "schedule": crontab(minute="*/30"),
         "options": {"queue": "default"},
     },
-    # ── Phase 1: Scrapers (legacy stubs) ─────────────────────────────────────
-    # SEDAR+ — every 2 hours during business hours (Toronto time = UTC-5)
-    "scrape-sedar": {
-        "task": "app.tasks._impl.scrape_sedar",
-        "schedule": crontab(minute=0, hour="6,8,10,12,14,16,18,20"),
-        "options": {"queue": "scrapers"},
-    },
-    # SEC EDGAR — every hour
-    "scrape-edgar": {
-        "task": "app.tasks._impl.scrape_edgar",
-        "schedule": crontab(minute=15),
-        "options": {"queue": "scrapers"},
-    },
-    # Regulatory RSS feeds — every 4 hours
-    "scrape-regulatory": {
-        "task": "app.tasks._impl.scrape_regulatory_feeds",
-        "schedule": crontab(minute=0, hour="*/4"),
-        "options": {"queue": "scrapers"},
-    },
-    # Job postings — daily at 6am UTC
-    "scrape-jobs": {
-        "task": "app.tasks._impl.scrape_jobs",
-        "schedule": crontab(minute=0, hour=6),
-        "options": {"queue": "scrapers"},
-    },
-    # CanLII — daily at 7am UTC
-    "scrape-canlii": {
-        "task": "app.tasks._impl.scrape_canlii",
-        "schedule": crontab(minute=0, hour=7),
-        "options": {"queue": "scrapers"},
-    },
-    # OpenSky ADS-B jets — daily at 3am UTC
-    "scrape-jets": {
-        "task": "app.tasks._impl.scrape_jets",
-        "schedule": crontab(minute=0, hour=3),
-        "options": {"queue": "scrapers"},
-    },
-    # Social media — every 6 hours
-    "scrape-social": {
-        "task": "app.tasks._impl.scrape_social",
-        "schedule": crontab(minute=30, hour="*/6"),
-        "options": {"queue": "scrapers"},
-    },
-    # Law firm blogs — every 6 hours
-    "scrape-law-firm-blogs": {
-        "task": "app.tasks._impl.scrape_law_firm_blogs",
-        "schedule": crontab(minute=0, hour="*/6"),
-        "options": {"queue": "scrapers"},
-    },
-    # OSB insolvency stats — weekly on Monday at 8am
-    "scrape-osb": {
-        "task": "app.tasks._impl.scrape_osb_insolvency",
-        "schedule": crontab(minute=0, hour=8, day_of_week=1),
-        "options": {"queue": "scrapers"},
-    },
-    # Google Trends — every 6 hours
-    "scrape-trends": {
-        "task": "app.tasks._impl.scrape_google_trends",
-        "schedule": crontab(minute=0, hour="*/6"),
-        "options": {"queue": "scrapers"},
-    },
     # ── Phase 2: Feature Engineering ──────────────────────────────────────────
     # Extract features after each scraper cycle
     "extract-features": {
@@ -352,64 +291,6 @@ celery_app.conf.beat_schedule = {
     "run-training-data-curator": {
         "task": "app.tasks._impl.run_training_data_curator",
         "schedule": crontab(minute=0, hour=5),
-        "options": {"queue": "agents"},
-    },
-    # ── Phase 5: Live Feed Scrapers ────────────────────────────────────────────
-    # SEDAR+ material change reports — every 5 minutes
-    "scrape-sedar-live": {
-        "task": "app.tasks._impl.scrape_sedar_live",
-        "schedule": crontab(minute="*/5"),
-        "options": {"queue": "scrapers"},
-    },
-    # OSC enforcement actions — every 10 minutes
-    "scrape-osc-live": {
-        "task": "app.tasks._impl.scrape_osc_live",
-        "schedule": crontab(minute="*/10"),
-        "options": {"queue": "scrapers"},
-    },
-    # CanLII new decisions — every 15 minutes
-    "scrape-canlii-live": {
-        "task": "app.tasks._impl.scrape_canlii_live",
-        "schedule": crontab(minute="*/15"),
-        "options": {"queue": "scrapers"},
-    },
-    # Globe, FP, Reuters RSS — every 5 minutes
-    "scrape-news-live": {
-        "task": "app.tasks._impl.scrape_news_live",
-        "schedule": crontab(minute="*/5"),
-        "options": {"queue": "scrapers"},
-    },
-    # SCC decisions — every 30 minutes
-    "scrape-scc-live": {
-        "task": "app.tasks._impl.scrape_scc_live",
-        "schedule": crontab(minute="*/30"),
-        "options": {"queue": "scrapers"},
-    },
-    # EDGAR 8-K filings — every 5 minutes
-    "scrape-edgar-live": {
-        "task": "app.tasks._impl.scrape_edgar_live",
-        "schedule": crontab(minute="*/5"),
-        "options": {"queue": "scrapers"},
-    },
-    # ── Phase 5: Live Feed Consumer (Agent 020) ────────────────────────────────
-    # Consumes oracle:live:signals stream and triggers priority scoring
-    "process-live-feed-events": {
-        "task": "app.tasks._impl.process_live_feed_events",
-        "schedule": crontab(minute="*"),  # Every minute
-        "options": {"queue": "scoring"},
-    },
-    # ── Phase 5: Velocity Monitor (Agent 021) ─────────────────────────────────
-    # Computes 48-hour rolling signal velocity for all active companies
-    "monitor-signal-velocity": {
-        "task": "app.tasks._impl.monitor_signal_velocity",
-        "schedule": crontab(minute="*/5"),
-        "options": {"queue": "agents"},
-    },
-    # ── Phase 5: Dead Signal Resurrector (Agent 022) ───────────────────────────
-    # Checks for silent scrapers and triggers immediate re-runs
-    "run-dead-signal-resurrector": {
-        "task": "app.tasks._impl.run_dead_signal_resurrector",
-        "schedule": crontab(minute="*/30"),
         "options": {"queue": "agents"},
     },
     # ── Phase CA-1: Class Action Scrapers ─────────────────────────────────────

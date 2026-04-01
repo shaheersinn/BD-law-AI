@@ -762,9 +762,9 @@ class TestPhase5CeleryTasks:
 
 
 class TestPhase5BeatSchedule:
-    """Verify Phase 5 beat schedule entries are present in celery_app.conf."""
+    """Beat: legacy Phase 5 _impl live/stub tasks are not scheduled (real data uses scrapers.*)."""
 
-    EXPECTED_BEAT_ENTRIES = [
+    REMOVED_STUB_BEAT_ENTRIES = [
         "scrape-sedar-live",
         "scrape-osc-live",
         "scrape-canlii-live",
@@ -776,45 +776,21 @@ class TestPhase5BeatSchedule:
         "run-dead-signal-resurrector",
     ]
 
-    def test_all_phase5_beat_entries_present(self) -> None:
+    def test_phase5_stub_beat_entries_removed(self) -> None:
         from app.tasks.celery_app import celery_app
 
         schedule = celery_app.conf.beat_schedule
-        for entry in self.EXPECTED_BEAT_ENTRIES:
-            assert entry in schedule, f"Beat entry missing: {entry}"
+        for entry in self.REMOVED_STUB_BEAT_ENTRIES:
+            assert entry not in schedule, f"Stub beat entry should be removed: {entry}"
 
-    def test_live_scrapers_routed_to_scrapers_queue(self) -> None:
+    def test_real_category_scrapers_on_beat(self) -> None:
         from app.tasks.celery_app import celery_app
 
         schedule = celery_app.conf.beat_schedule
-        live_entries = [
-            "scrape-sedar-live",
-            "scrape-osc-live",
-            "scrape-news-live",
-            "scrape-edgar-live",
-        ]
-        for entry in live_entries:
-            assert schedule[entry]["options"]["queue"] == "scrapers", (
-                f"{entry} not routed to scrapers queue"
-            )
-
-    def test_process_live_feed_events_routed_to_scoring(self) -> None:
-        from app.tasks.celery_app import celery_app
-
-        schedule = celery_app.conf.beat_schedule
-        assert schedule["process-live-feed-events"]["options"]["queue"] == "scoring"
-
-    def test_velocity_monitor_routed_to_agents(self) -> None:
-        from app.tasks.celery_app import celery_app
-
-        schedule = celery_app.conf.beat_schedule
-        assert schedule["monitor-signal-velocity"]["options"]["queue"] == "agents"
-
-    def test_resurrector_routed_to_agents(self) -> None:
-        from app.tasks.celery_app import celery_app
-
-        schedule = celery_app.conf.beat_schedule
-        assert schedule["run-dead-signal-resurrector"]["options"]["queue"] == "agents"
+        assert "run-news-scrapers" in schedule
+        assert schedule["run-news-scrapers"]["task"] == "scrapers.run_news"
+        assert "run-regulatory-scrapers" in schedule
+        assert schedule["run-regulatory-scrapers"]["task"] == "scrapers.run_regulatory"
 
     def test_phase5_task_routing_rules_present(self) -> None:
         from app.tasks.celery_app import celery_app

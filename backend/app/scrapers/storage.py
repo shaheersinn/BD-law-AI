@@ -2,17 +2,15 @@
 app/scrapers/storage.py — Signal persistence layer.
 
 Persists ScraperResult objects to:
-  - PostgreSQL (Signal model): structured fields for ML feature engineering
+  - PostgreSQL (signal_records table): structured fields
   - MongoDB (oracle_signals.raw_signals): raw_payload for NLP/analytics
 
-Deduplication strategy:
-  SHA256(source_id + source_url + published_at.date()) — prevents double-saves
-  on re-runs within the same day.
+Deduplication: source_id + source_url + DATE(scraped_at)
 """
 
 from __future__ import annotations
 
-import hashlib
+import json
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
@@ -25,44 +23,6 @@ if TYPE_CHECKING:
 
 log = structlog.get_logger(__name__)
 
-# Fallback for environments where Signal model isn't available yet (early bootstrap)
-_Signal: Any = None
-
-
-def _get_signal_model() -> Any:
-    global _Signal
-    if _Signal is None:
-        try:
-            from app.models.signal import Signal  # noqa: PLC0415
-
-            _Signal = Signal
-        except ImportError:
-            pass
-    return _Signal
-
-
-def _compute_content_hash(result: ScraperResult) -> str:
-    """SHA256 dedup hash: source_id + source_url + date portion of published_at."""
-    date_str = ""
-    if result.published_at:
-        date_str = result.published_at.date().isoformat()
-    raw = f"{result.source_id}|{result.source_url or ''}|{date_str}"
-    return hashlib.sha256(raw.encode()).hexdigest()
-
-
-def _practice_area_flags(hints: list[str]) -> int:
-    """Convert practice_area_hints list → bitmask integer."""
-    try:
-        from app.models.signal import PRACTICE_AREA_BITS  # noqa: PLC0415
-    except ImportError:
-        return 0
-    flags = 0
-    for hint in hints:
-        bit = PRACTICE_AREA_BITS.get(hint)
-        if bit is not None:
-            flags |= 1 << bit
-    return flags
-
 
 async def persist_signals(
     results: list[ScraperResult],
@@ -70,74 +30,78 @@ async def persist_signals(
     mongo_db: Any | None = None,
 ) -> int:
     """
-    Persist scraped signals to PostgreSQL + MongoDB.
-
-    Args:
-        results:   list of ScraperResult from a scraper run
-        db:        async SQLAlchemy session (PostgreSQL)
-        mongo_db:  Motor AsyncIOMotorDatabase or None (MongoDB optional)
+    Persist scraped signals to PostgreSQL signal_records + MongoDB.
 
     Returns:
-        Number of newly saved records (0 if all were duplicates or results was empty)
+        Number of newly saved records (0 if all duplicates or results empty)
     """
     if not results:
         return 0
 
-    Signal = _get_signal_model()
+    try:
+        from app.models.company import SignalRecord  # noqa: PLC0415
+    except ImportError:
+        log.error("storage: cannot import SignalRecord — signal_records table unavailable")
+        return 0
+
+    from sqlalchemy import text  # noqa: PLC0415
+
     saved = 0
 
     for result in results:
         try:
-            content_hash = _compute_content_hash(result)
+            dedup = await db.execute(
+                text("""
+                    SELECT id FROM signal_records
+                    WHERE source_id = :source_id
+                      AND COALESCE(source_url, '') = COALESCE(:source_url, '')
+                      AND DATE(scraped_at) = CURRENT_DATE
+                    LIMIT 1
+                """),
+                {
+                    "source_id": result.source_id,
+                    "source_url": result.source_url or "",
+                },
+            )
+            if dedup.scalar_one_or_none() is not None:
+                continue
 
-            # ── PostgreSQL persistence ─────────────────────────────────────────
-            if Signal is not None:
+            signal_value_str: str | None = None
+            if result.signal_value:
                 try:
-                    from sqlalchemy import select  # noqa: PLC0415
+                    signal_value_str = json.dumps(result.signal_value)
+                except (TypeError, ValueError):
+                    signal_value_str = str(result.signal_value)
 
-                    existing = await db.execute(
-                        select(Signal).where(Signal.content_hash == content_hash)
-                    )
-                    if existing.scalar_one_or_none() is not None:
-                        continue  # duplicate
+            practice_hints_str: str | None = None
+            if result.practice_area_hints:
+                try:
+                    practice_hints_str = json.dumps(result.practice_area_hints)
+                except (TypeError, ValueError):
+                    practice_hints_str = str(result.practice_area_hints)
 
-                    practice_flags = _practice_area_flags(result.practice_area_hints)
-                    primary_area = (
-                        result.practice_area_hints[0] if result.practice_area_hints else None
-                    )
+            record = SignalRecord(
+                source_id=result.source_id,
+                source_url=result.source_url,
+                signal_type=result.signal_type,
+                raw_company_name=result.raw_company_name,
+                raw_company_id=result.raw_company_id,
+                signal_value=signal_value_str,
+                signal_text=result.signal_text,
+                confidence_score=result.confidence_score,
+                published_at=result.published_at,
+                is_negative_label=result.is_negative_label,
+                practice_area_hints=practice_hints_str,
+                is_resolved=False,
+                is_processed=False,
+                company_id=None,
+            )
+            db.add(record)
+            await db.flush()
 
-                    signal_obj = Signal(
-                        scraper_name=result.source_id,
-                        source_url=result.source_url,
-                        signal_type=result.signal_type,
-                        practice_area_flags=practice_flags,
-                        primary_practice_area=primary_area,
-                        title=None,
-                        summary=result.signal_text,
-                        raw_entity_name=result.raw_company_name,
-                        content_hash=content_hash,
-                        signal_strength=result.confidence_score,
-                        source_reliability=0.8,
-                        entity_resolved=False,
-                        metadata=result.signal_value or None,
-                        published_at=result.published_at,
-                    )
-                    db.add(signal_obj)
-                    await db.flush()
-
-                except Exception as pg_exc:
-                    log.warning(
-                        "signal_pg_save_failed",
-                        source_id=result.source_id,
-                        error=str(pg_exc),
-                    )
-                    continue
-
-            # ── MongoDB persistence (raw_payload only) ─────────────────────────
             if mongo_db is not None and result.raw_payload:
                 try:
                     raw_doc = {
-                        "content_hash": content_hash,
                         "source_id": result.source_id,
                         "signal_type": result.signal_type,
                         "raw_company_name": result.raw_company_name,
@@ -147,11 +111,7 @@ async def persist_signals(
                         "raw_payload": result.raw_payload,
                         "practice_area_hints": result.practice_area_hints,
                     }
-                    await mongo_db["raw_signals"].update_one(
-                        {"content_hash": content_hash},
-                        {"$setOnInsert": raw_doc},
-                        upsert=True,
-                    )
+                    await mongo_db["raw_signals"].insert_one(raw_doc)
                 except Exception as mongo_exc:
                     log.warning(
                         "signal_mongo_save_failed",
@@ -169,7 +129,7 @@ async def persist_signals(
                 exc_info=True,
             )
 
-    if Signal is not None:
+    if saved > 0:
         try:
             await db.commit()
         except Exception as commit_exc:
