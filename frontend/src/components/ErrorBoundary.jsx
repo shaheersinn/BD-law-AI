@@ -81,9 +81,9 @@ export default class ErrorBoundary extends Component {
             </button>
             <button
               style={styles.secondaryBtn}
-              onClick={() => window.location.assign('/dashboard')}
+              onClick={() => window.location.assign('/constructlex')}
             >
-              Go to Dashboard
+              Go to command center
             </button>
           </div>
         </div>

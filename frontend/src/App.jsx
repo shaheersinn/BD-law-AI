@@ -1,10 +1,9 @@
 /**
- * App.jsx — ORACLE (Digital Atelier design system).
+ * App.jsx — Stitch-first ORACLE shell.
  *
- * - Imports design-system.css (CSS variables, Newsreader/Manrope, surface hierarchy)
- * - LoginPage has NO AppShell (full-screen split layout)
- * - LandingPage is public at / (no auth)
- * - All authenticated pages wrap with AppShell internally
+ * - design-system.css: Digital Atelier tokens (PR #19)
+ * - Authenticated routes use AppShell (icon rail + main) inside each page
+ * - Legacy paths (/dashboard, /modules, /geo, /scraper-dashboard) redirect to Stitch equivalents
  */
 
 import { useEffect } from 'react'
@@ -14,7 +13,6 @@ import './styles/design-system.css'
 import ErrorBoundary             from './components/ErrorBoundary'
 import PrivateRoute              from './components/PrivateRoute'
 import LoginPage                 from './pages/LoginPage'
-import DashboardPage             from './pages/DashboardPage'
 import SearchPage                from './pages/SearchPage'
 import CompanyDetailPage         from './pages/CompanyDetailPage'
 import ExplainPage               from './pages/ExplainPage'
@@ -38,9 +36,6 @@ import AssociateAcceleratorPage  from './pages/AssociateAcceleratorPage'
 import CompetitiveIntelPage      from './pages/CompetitiveIntelPage'
 import WalletSharePage           from './pages/WalletSharePage'
 import useAuthStore              from './stores/auth'
-import NewModulesPage            from './pages/NewModules'
-import GeoPagesWrapper           from './pages/GeoPages'
-import ScraperDashboard          from './pages/ScraperDashboard'
 
 function AppRoutes() {
   const { token, loadUser } = useAuthStore()
@@ -55,10 +50,21 @@ function AppRoutes() {
       <Route path="/login"   element={<LoginPage />} />
       <Route path="/landing" element={<LandingPage />} />
 
-      {/* Authenticated — AppShell is applied inside each page */}
+      {/* Legacy → Stitch redirects */}
       <Route path="/dashboard" element={
-        <PrivateRoute><DashboardPage /></PrivateRoute>
+        <PrivateRoute><Navigate to="/constructlex" replace /></PrivateRoute>
       } />
+      <Route path="/modules" element={
+        <PrivateRoute><Navigate to="/constructlex" replace /></PrivateRoute>
+      } />
+      <Route path="/geo" element={
+        <PrivateRoute><Navigate to="/m-a-dark-signals" replace /></PrivateRoute>
+      } />
+      <Route path="/scraper-dashboard" element={
+        <PrivateRoute adminOnly><Navigate to="/admin/scrapers" replace /></PrivateRoute>
+      } />
+
+      {/* Core data (Stitch shell via AppShell in each page) */}
       <Route path="/search" element={
         <PrivateRoute><SearchPage /></PrivateRoute>
       } />
@@ -75,7 +81,7 @@ function AppRoutes() {
         <PrivateRoute><ClassActionRadar /></PrivateRoute>
       } />
 
-      {/* Stitch pages */}
+      {/* Stitch command center + modules */}
       <Route path="/constructlex" element={
         <PrivateRoute><ConstructLexDashboardPage /></PrivateRoute>
       } />
@@ -113,23 +119,11 @@ function AppRoutes() {
         <PrivateRoute><WalletSharePage /></PrivateRoute>
       } />
 
-      {/* Partner+ */}
       <Route path="/feedback" element={
         <PrivateRoute><FeedbackPage /></PrivateRoute>
       } />
 
-      {/* New module pages */}
-      <Route path="/modules" element={
-        <PrivateRoute><NewModulesPage /></PrivateRoute>
-      } />
-      <Route path="/geo" element={
-        <PrivateRoute><GeoPagesWrapper /></PrivateRoute>
-      } />
-      <Route path="/scraper-dashboard" element={
-        <PrivateRoute><ScraperDashboard /></PrivateRoute>
-      } />
-
-      {/* Admin only */}
+      {/* Admin */}
       <Route path="/admin/scrapers" element={
         <PrivateRoute adminOnly><ScrapersAdminPage /></PrivateRoute>
       } />
@@ -140,7 +134,6 @@ function AppRoutes() {
         <PrivateRoute adminOnly><OptimizationPage /></PrivateRoute>
       } />
 
-      {/* Default redirects */}
       <Route path="/" element={
         token ? <Navigate to="/constructlex" replace /> : <LandingPage />
       } />

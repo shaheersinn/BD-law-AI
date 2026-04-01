@@ -1,9 +1,8 @@
 /**
- * pages/LandingPage.jsx — Digital Atelier public landing page.
+ * pages/LandingPage.jsx — Public marketing landing (Stitch / Digital Atelier tokens).
  *
- * Glass navbar, Newsreader hero, signal type cards,
- * practice area chip grid, social proof stats.
- * Public route at / — no auth required.
+ * Uses the same CSS variables as authenticated Stitch pages (design-system.css via App).
+ * Glass navbar, Newsreader hero, signal cards, practice chips. Route: / when logged out.
  */
 
 import { useNavigate } from 'react-router-dom'

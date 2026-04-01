@@ -17,7 +17,7 @@ export default function PrivateRoute({ children, adminOnly = false }) {
   }
 
   if (adminOnly && user && user.role !== 'admin') {
-    return <Navigate to="/dashboard" replace />
+    return <Navigate to="/constructlex" replace />
   }
 
   return children
