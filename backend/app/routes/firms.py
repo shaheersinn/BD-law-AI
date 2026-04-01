@@ -1,44 +1,67 @@
 """
-app/routes/firms.py — Competitive law firm intelligence.
-Router prefix: /v1/firms
+app/routes/firms.py — Law firm competitive intelligence endpoints.
 """
-from __future__ import annotations
-from typing import Any
 
+from __future__ import annotations
+
+import structlog
 from fastapi import APIRouter, Depends
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.dependencies import require_auth
 from app.auth.models import User
 from app.database import get_db
 
+log = structlog.get_logger(__name__)
+
 router = APIRouter(prefix="/v1/firms", tags=["firms"])
 
 
+# ── Endpoints ─────────────────────────────────────────────────────────────────
+
+
 @router.get("/competitive")
-async def competitive_intel(
+async def get_competitive_firms(
     db: AsyncSession = Depends(get_db),
-    _: User = Depends(require_auth),
-) -> list[dict[str, Any]]:
+    current_user: User = Depends(require_auth),
+):
     """
-    Competitive firm data: name, practice_strengths, lawyer_count, threat_level.
-    Queries law_firms table; returns [] if empty.
+    Returns law firms from the companies table.
+
+    Matches companies where sector ILIKE '%law%', name ILIKE '%llp%',
+    or name ILIKE '%legal%'.
     """
-    from sqlalchemy import select  # noqa: PLC0415
     try:
-        from app.models.law_firm import LawFirm  # noqa: PLC0415
-        result = await db.execute(select(LawFirm).limit(50))
-        firms = result.scalars().all()
+        result = await db.execute(
+            text("""
+                SELECT
+                    id,
+                    name,
+                    COALESCE(headcount, 0)               AS headcount,
+                    COALESCE(practice_area_hints, '{}')  AS practice_areas
+                FROM companies
+                WHERE
+                    sector ILIKE '%law%'
+                    OR name ILIKE '%llp%'
+                    OR name ILIKE '%legal%'
+                ORDER BY name
+                LIMIT 200
+            """)
+        )
+        rows = result.mappings().all()
         return [
             {
-                "id": str(f.id),
-                "name": f.name,
-                "tier": getattr(f, "tier", None),
-                "practice_strengths": getattr(f, "practice_strengths", {}),
-                "lawyer_count": getattr(f, "lawyer_count", None),
-                "threat_level": "medium",
+                "id": r["id"],
+                "name": r["name"],
+                "headcount": r["headcount"] or 0,
+                "practice_areas": list(r["practice_areas"]) if r["practice_areas"] else [],
+                "recent_laterals": 0,
+                "market_position": "unknown",
+                "threat_level": "low",
             }
-            for f in firms
+            for r in rows
         ]
     except Exception:
+        log.exception("firms_competitive_fetch_failed")
         return []

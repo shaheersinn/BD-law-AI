@@ -11,23 +11,35 @@ import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import './styles/design-system.css'
 
-import ErrorBoundary      from './components/ErrorBoundary'
-import PrivateRoute       from './components/PrivateRoute'
-import LoginPage          from './pages/LoginPage'
-import DashboardPage      from './pages/DashboardPage'
-import SearchPage         from './pages/SearchPage'
-import CompanyDetailPage  from './pages/CompanyDetailPage'
-import ExplainPage        from './pages/ExplainPage'
-import SignalsFeedPage    from './pages/SignalsFeedPage'
-import ScrapersAdminPage  from './pages/admin/ScrapersAdminPage'
-import UsersAdminPage     from './pages/admin/UsersAdminPage'
-import FeedbackPage       from './pages/FeedbackPage'
-import ClassActionRadar   from './pages/ClassActionRadar'
-import LandingPage        from './pages/LandingPage'
-import NewModulesPage     from './pages/NewModules'
-import GeoPagesWrapper    from './pages/GeoPages'
-import ScraperDashboard   from './pages/ScraperDashboard'
-import useAuthStore       from './stores/auth'
+import ErrorBoundary             from './components/ErrorBoundary'
+import PrivateRoute              from './components/PrivateRoute'
+import LoginPage                 from './pages/LoginPage'
+import DashboardPage             from './pages/DashboardPage'
+import SearchPage                from './pages/SearchPage'
+import CompanyDetailPage         from './pages/CompanyDetailPage'
+import ExplainPage               from './pages/ExplainPage'
+import SignalsFeedPage           from './pages/SignalsFeedPage'
+import ScrapersAdminPage         from './pages/admin/ScrapersAdminPage'
+import UsersAdminPage            from './pages/admin/UsersAdminPage'
+import FeedbackPage              from './pages/FeedbackPage'
+import ClassActionRadar          from './pages/ClassActionRadar'
+import LandingPage               from './pages/LandingPage'
+import ConstructLexDashboardPage from './pages/ConstructLexDashboardPage'
+import ChurnPredictorPage        from './pages/ChurnPredictorPage'
+import LiveTriggersPage          from './pages/LiveTriggersPage'
+import RegulatoryRipplePage      from './pages/RegulatoryRipplePage'
+import MADarkSignalsPage         from './pages/MADarkSignalsPage'
+import PreCrimeAcquisitionPage   from './pages/PreCrimeAcquisitionPage'
+import MandatePreFormationPage   from './pages/MandatePreFormationPage'
+import PitchAutopsyPage          from './pages/PitchAutopsyPage'
+import GCProfilerPage            from './pages/GCProfilerPage'
+import AssociateAcceleratorPage  from './pages/AssociateAcceleratorPage'
+import CompetitiveIntelPage      from './pages/CompetitiveIntelPage'
+import WalletSharePage           from './pages/WalletSharePage'
+import useAuthStore              from './stores/auth'
+import NewModulesPage            from './pages/NewModules'
+import GeoPagesWrapper           from './pages/GeoPages'
+import ScraperDashboard          from './pages/ScraperDashboard'
 
 function AppRoutes() {
   const { token, loadUser } = useAuthStore()
@@ -39,7 +51,7 @@ function AppRoutes() {
   return (
     <Routes>
       {/* Public */}
-      <Route path="/login" element={<LoginPage />} />
+      <Route path="/login"   element={<LoginPage />} />
       <Route path="/landing" element={<LandingPage />} />
 
       {/* Authenticated — AppShell is applied inside each page */}
@@ -60,6 +72,44 @@ function AppRoutes() {
       } />
       <Route path="/class-action-radar" element={
         <PrivateRoute><ClassActionRadar /></PrivateRoute>
+      } />
+
+      {/* Stitch pages */}
+      <Route path="/constructlex" element={
+        <PrivateRoute><ConstructLexDashboardPage /></PrivateRoute>
+      } />
+      <Route path="/churn-predictor" element={
+        <PrivateRoute><ChurnPredictorPage /></PrivateRoute>
+      } />
+      <Route path="/live-triggers" element={
+        <PrivateRoute><LiveTriggersPage /></PrivateRoute>
+      } />
+      <Route path="/regulatory-ripple" element={
+        <PrivateRoute><RegulatoryRipplePage /></PrivateRoute>
+      } />
+      <Route path="/m-a-dark-signals" element={
+        <PrivateRoute><MADarkSignalsPage /></PrivateRoute>
+      } />
+      <Route path="/precrime" element={
+        <PrivateRoute><PreCrimeAcquisitionPage /></PrivateRoute>
+      } />
+      <Route path="/mandate-formation" element={
+        <PrivateRoute><MandatePreFormationPage /></PrivateRoute>
+      } />
+      <Route path="/pitch-autopsy" element={
+        <PrivateRoute><PitchAutopsyPage /></PrivateRoute>
+      } />
+      <Route path="/gc-profiler" element={
+        <PrivateRoute><GCProfilerPage /></PrivateRoute>
+      } />
+      <Route path="/associate-accelerator" element={
+        <PrivateRoute><AssociateAcceleratorPage /></PrivateRoute>
+      } />
+      <Route path="/competitive-intel" element={
+        <PrivateRoute><CompetitiveIntelPage /></PrivateRoute>
+      } />
+      <Route path="/wallet-share" element={
+        <PrivateRoute><WalletSharePage /></PrivateRoute>
       } />
 
       {/* Partner+ */}

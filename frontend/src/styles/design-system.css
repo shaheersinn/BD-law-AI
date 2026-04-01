@@ -55,7 +55,7 @@
   --font-mono:        'JetBrains Mono', 'Courier New', monospace;
 
   /* ── Layout ───────────────────────────────────────── */
-  --sidebar-width:      240px;
+  --sidebar-width:      80px;
   --sidebar-collapsed:  64px;
 
   /* ── Elevation ────────────────────────────────────── */

@@ -164,4 +164,43 @@ export const firms = {
   competitive: () => api.get('/api/v1/firms/competitive').then(r => r.data),
 }
 
+// Stitch aliases expected by new pages
+export const triggers = {
+  live:  (params = {}) => api.get('/api/triggers/live', { params }).then(r => r.data),
+  stats: ()            => api.get('/api/triggers/stats').then(r => r.data),
+  get:   (id)          => api.get(`/api/triggers/${id}`).then(r => r.data),
+  label: (id, body)    => api.post(`/api/triggers/${id}/label`, body).then(r => r.data),
+  brief: (id)          => api.post(`/api/triggers/${id}/brief`).then(r => r.data),
+}
+
+export const geo = {
+  intensity:   () => api.get('/api/v1/geo/intensity').then(r => r.data),
+  jets:        () => api.get('/api/v1/geo/jets').then(r => r.data),
+  satellite:   () => api.get('/api/v1/geo/satellite').then(r => r.data),
+  footTraffic: () => api.get('/api/v1/geo/foot-traffic').then(r => r.data),
+  permits:     () => api.get('/api/v1/geo/permits').then(r => r.data),
+}
+
+export const watchlist = {
+  list:   (params = {}) => api.get('/api/v1/watchlist', { params }).then(r => r.data),
+  add:    (body)        => api.post('/api/v1/watchlist', body).then(r => r.data),
+  remove: (id)          => api.delete(`/api/v1/watchlist/${id}`).then(r => r.data),
+  search: (q)           => api.get('/api/v1/watchlist/search', { params: { q } }).then(r => r.data),
+}
+
+export const analytics = {
+  modelPerformance: () => api.get('/api/v1/analytics/model-performance').then(r => r.data),
+  signalQuality:    () => api.get('/api/v1/analytics/signal-quality').then(r => r.data),
+  bdPerformance:    () => api.get('/api/v1/analytics/bd-performance').then(r => r.data),
+  systemHealth:     () => api.get('/api/v1/analytics/health').then(r => r.data),
+}
+
+export const scrapersApi = {
+  health:     (limit = 200) => api.get('/api/scrapers/health', { params: { limit } }).then(r => r.data),
+  summary:    ()            => api.get('/api/scrapers/summary').then(r => r.data),
+  registry:   ()            => api.get('/api/scrapers/registry').then(r => r.data),
+  categories: ()            => api.get('/api/scrapers/categories').then(r => r.data),
+  trigger:    (sourceId)    => api.post(`/api/scrapers/${sourceId}/run`).then(r => r.data),
+}
+
 export default api
