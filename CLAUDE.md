@@ -220,8 +220,8 @@ make migrate
 ## Default Credentials (Development Only)
 
 ```
-Admin:   admin@halcyon.legal  / ChangeMe123!
-Partner: partner@halcyon.legal / partner123!
+Admin:   admin  / admin  (override `ADMIN_EMAIL` / `ADMIN_PASSWORD`; legacy `admin@halcyon.legal` login supported)
+Partner: partner / partner  (dev — `DEMO_PARTNER_EMAIL` / `DEMO_PARTNER_PASSWORD`)
 ```
 
 **Change these before any real deployment.**
@@ -739,7 +739,7 @@ reference for all 35+ environment variables.
 - `DIGITALOCEAN_ACCESS_TOKEN` — DO personal access token (App Platform read/write)
 - `DO_APP_ID` — App Platform app UUID (`doctl apps list`)
 - `DO_API_URL` — production API base URL
-- `SMOKE_TEST_TOKEN` — valid JWT for smoke test auth
+- `SMOKE_TEST_TOKEN` — JWT `access_token` from login (`admin` / `admin` with defaults, or production user)
 - `SLACK_WEBHOOK_URL` — Slack incoming webhook for failure alerts
 
 **`do-app.yaml` Changes**

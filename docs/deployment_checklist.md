@@ -10,8 +10,9 @@
   ```bash
   python -c "import secrets; print(secrets.token_urlsafe(64))"
   ```
-- [ ] ⚠️ Default admin password changed (`admin@halcyon.legal` / `ChangeMe123!`)
-- [ ] ⚠️ Default partner password changed (`partner@halcyon.legal` / `partner123!`)
+- [ ] ⚠️ Default admin credentials changed (repo defaults: `admin` / `admin` — set strong values in production)
+- [ ] ⚠️ `SMOKE_TEST_TOKEN` GitHub secret regenerated: `POST /api/auth/login` with `{"email":"admin","password":"admin"}` (or your real admin), use `access_token`
+- [ ] ⚠️ DigitalOcean App Platform: `ADMIN_EMAIL` / `ADMIN_PASSWORD` match the users in Postgres (or re-run seed); defaults in `do-app.yaml` are `admin` / `admin`
 - [ ] ⚠️ `ENVIRONMENT=production` set in DO App Platform environment variables
 - [ ] ⚠️ `DATABASE_URL` set to DO Managed PostgreSQL URL (asyncpg driver)
 - [ ] ⚠️ `MONGODB_URL` set to MongoDB Atlas connection string

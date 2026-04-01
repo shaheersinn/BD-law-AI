@@ -2,8 +2,8 @@
 scripts/seed_db.py — Seed database with required initial data.
 
 Creates:
-  - Admin user (credentials from environment variables)
-  - Demo partner user (development only)
+  - Admin user — defaults: email `admin`, password `admin` (`ADMIN_EMAIL` / `ADMIN_PASSWORD`)
+  - Demo partner user (development only) — defaults: `partner` / `partner` (`DEMO_PARTNER_*`)
 
 Usage:
   python -m scripts.seed_db
@@ -39,8 +39,8 @@ async def seed(skip_if_seeded: bool = False) -> None:
             log.info("Database already seeded (%d users) — skipping", len(existing_users))
             return
 
-        admin_email = os.getenv("ADMIN_EMAIL", "admin@halcyon.legal")
-        admin_password = os.getenv("ADMIN_PASSWORD", "ChangeMe123!")
+        admin_email = os.getenv("ADMIN_EMAIL", "admin")
+        admin_password = os.getenv("ADMIN_PASSWORD", "admin")
         admin_name = os.getenv("ADMIN_NAME", "ORACLE Administrator")
 
         existing_admin = await get_user_by_email(db, admin_email)
@@ -54,10 +54,11 @@ async def seed(skip_if_seeded: bool = False) -> None:
         settings = get_settings()
 
         if settings.is_development:
-            demo_email = "partner@halcyon.legal"
+            demo_email = os.getenv("DEMO_PARTNER_EMAIL", "partner")
+            demo_password = os.getenv("DEMO_PARTNER_PASSWORD", "partner")
             existing = await get_user_by_email(db, demo_email)
             if existing is None:
-                partner = await create_user(db, demo_email, "partner123!", "Demo Partner", role="partner")
+                partner = await create_user(db, demo_email, demo_password, "Demo Partner", role="partner")
                 log.info("Demo partner created: %s (id=%d)", partner.email, partner.id)
 
         log.info("Seed complete")

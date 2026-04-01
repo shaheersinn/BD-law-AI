@@ -197,7 +197,7 @@ Full interactive docs at `http://localhost:8000/api/docs`.
 # Login
 curl -X POST http://localhost:8000/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email": "admin@halcyon.legal", "password": "admin123"}'
+  -d '{"email": "admin", "password": "admin"}'
 # Returns: { "access_token": "...", "refresh_token": "...", "role": "admin" }
 
 # Use token
@@ -206,8 +206,8 @@ curl http://localhost:8000/api/clients/ \
 ```
 
 Default seeded credentials (change immediately in production):
-- `admin@halcyon.legal` / `admin123` — full access
-- `partner@halcyon.legal` / `partner123` — partner role
+- `admin` / `admin` — full access (legacy `admin@halcyon.legal` still works if that user exists)
+- `partner` / `partner` — partner role in development (`DEMO_PARTNER_*` in `.env`)
 
 ### Key Endpoints
 

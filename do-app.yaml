@@ -36,6 +36,10 @@ services:
         scope: RUN_TIME
         type: SECRET
         value: "SET_IN_DO_DASHBOARD"
+      - key: ADMIN_EMAIL
+        value: admin
+      - key: ADMIN_PASSWORD
+        value: admin
       - key: DATABASE_URL
         scope: RUN_TIME
         type: SECRET

@@ -211,8 +211,8 @@ make migrate
 ## Default Credentials (Development Only)
 
 ```
-Admin:   admin@halcyon.legal  / ChangeMe123!
-Partner: partner@halcyon.legal / partner123!
+Admin:   admin  / admin
+Partner: partner / partner (dev seed)
 ```
 
 **Change these before any real deployment.**

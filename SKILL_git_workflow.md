@@ -260,7 +260,7 @@ to the repo. Reference `.env.example` for the variable names.
 | `DIGITALOCEAN_ACCESS_TOKEN` | CD — doctl auth |
 | `DO_APP_ID` | CD — app update |
 | `DO_API_URL` | CD — smoke tests |
-| `SMOKE_TEST_TOKEN` | CD — authenticated smoke test |
+| `SMOKE_TEST_TOKEN` | CD — JWT from `POST /api/auth/login` with `admin` / `admin` (or your prod admin); paste `access_token` |
 | `SLACK_WEBHOOK_URL` | CD — failure alerts |
 | `ANTHROPIC_API_KEY` | Runtime — backend only |
 

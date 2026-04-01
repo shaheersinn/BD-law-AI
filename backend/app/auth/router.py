@@ -12,10 +12,10 @@ Endpoints:
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -34,6 +34,17 @@ from app.auth.service import (
 from app.database import get_db
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
+
+
+def _login_email_candidates(raw: str) -> list[str]:
+    """Email keys to try for login (canonical admin + legacy seeded email)."""
+    s = raw.strip()
+    key = s.lower()
+    if key == "admin":
+        return ["admin", "admin@halcyon.legal"]
+    if key == "admin@halcyon.legal":
+        return ["admin@halcyon.legal", "admin"]
+    return [s]
 
 
 # ── Request / Response Schemas ─────────────────────────────────────────────────
@@ -99,26 +110,11 @@ async def login(
     Raises:
         401: Invalid credentials or account locked.
     """
-    identifier = body.email.strip()
-    # Convenience alias requested for dashboard login.
-    normalized_identifier = (
-        "admin@halcyon.legal" if identifier.lower() == "admin" else identifier
-    )
-
-    user = await authenticate_user(db, normalized_identifier, body.password)
-    if user is None and identifier.lower() == "admin" and body.password == "admin":
-        # One-time compatibility path: reset the first active admin password to "admin".
-        result = await db.execute(
-            select(User).where(User.role == "admin", User.is_active.is_(True)).order_by(User.id.asc())
-        )
-        fallback_admin = result.scalar_one_or_none()
-        if fallback_admin is not None:
-            fallback_admin.hashed_password = hash_password("admin")
-            fallback_admin.failed_login_attempts = 0
-            fallback_admin.locked_until = None
-            fallback_admin.last_login_at = datetime.now(UTC)
-            await db.commit()
-            user = fallback_admin
+    user = None
+    for ident in _login_email_candidates(body.email):
+        user = await authenticate_user(db, ident, body.password)
+        if user is not None:
+            break
 
     if user is None:
         raise HTTPException(

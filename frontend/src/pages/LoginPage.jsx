@@ -231,7 +231,7 @@ export default function LoginPage() {
                 type="password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder="admin"
                 required
                 style={{
                   width: '100%',
