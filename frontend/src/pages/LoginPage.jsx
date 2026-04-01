@@ -23,7 +23,7 @@ export default function LoginPage() {
     setLoading(true); setError(null)
     try {
       await login(email, password)
-      navigate('/dashboard', { replace: true })
+      navigate('/constructlex', { replace: true })
     } catch (err) {
       setError(err?.response?.data?.detail || err.message || 'Login failed')
     } finally {

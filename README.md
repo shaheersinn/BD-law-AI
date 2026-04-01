@@ -344,9 +344,8 @@ cd backend && railway up
 # Set environment variables in Railway dashboard:
 # ANTHROPIC_API_KEY, SECRET_KEY, DATABASE_URL (Neon), REDIS_URL (Upstash)
 
-# Deploy frontend to Vercel
-cd frontend && npx vercel --prod
-# Set VITE_API_URL to your Railway backend URL
+# Deploy frontend on DigitalOcean App Platform static site
+# (configured via do-app.yaml)
 ```
 
 ### Estimated Monthly Cost (5-partner firm)
@@ -357,7 +356,7 @@ cd frontend && npx vercel --prod
 | Neon PostgreSQL | Free → $19/month |
 | Railway backend | Free → $10/month |
 | Upstash Redis | Free tier |
-| Vercel frontend | Free tier |
+| DigitalOcean frontend static site | Included with DO app |
 | **Total** | **$20-70/month** |
 
 ---
@@ -368,7 +367,7 @@ Before going live with real client data:
 
 1. **Change SECRET_KEY** to a real 32+ character random string
 2. **Set ENVIRONMENT=production** in your deployment env vars
-3. **Enable HTTPS** — Vercel and Railway enforce this automatically
+3. **Enable HTTPS** on your deployment platform
 4. **Create real user accounts** (`POST /api/auth/users`) and delete the demo seed accounts
 5. **Review ALLOWED_ORIGINS** — restrict to your actual domain
 6. **Set up Sentry** for error monitoring (`SENTRY_DSN`)
