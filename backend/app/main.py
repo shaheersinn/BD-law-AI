@@ -313,6 +313,11 @@ from app.routes.firms import router as firms_router  # noqa: E402
 app.include_router(bd_router, prefix=PREFIX)
 app.include_router(firms_router, prefix=PREFIX)
 
+# Phase 12 — Post-Launch Optimization (admin only)
+from app.routes.optimization import router as optimization_router  # noqa: E402
+
+app.include_router(optimization_router, prefix=PREFIX)
+
 
 # ── System Endpoints ───────────────────────────────────────────────────────────
 

@@ -30,7 +30,7 @@ from app.database import get_db
 from app.models import FootTrafficEvent, JetTrack, PermitFiling, SatelliteSignal
 
 log = logging.getLogger(__name__)
-router = APIRouter(prefix="/geo", tags=["geospatial"])
+router = APIRouter(prefix="/v1/geo", tags=["geospatial"])
 
 # Static jurisdiction data — in production this would be DB-driven with nightly updates
 GEO_JURISDICTIONS = [

@@ -10,7 +10,7 @@
 import { useEffect, useState } from 'react'
 import AppShell from '../../components/layout/AppShell'
 import { SkeletonTable, SkeletonCard } from '../../components/Skeleton'
-import api from '../../api/client'
+import { optimization as optimizationApi } from '../../api/client'
 
 /* ── Design tokens ─────────────────────────────────────────────────────────── */
 const AMBER  = '#F59E0B'
@@ -95,8 +95,8 @@ function ScoreQuality() {
   const [error, setError]   = useState(null)
 
   useEffect(() => {
-    api.optimization.scoreQuality()
-      .then(r => setData(r.data))
+    optimizationApi.scoreQuality()
+      .then(setData)
       .catch(e => {
         if (e.response?.status === 404) setData(null)
         else setError('Failed to load score quality report')
@@ -189,7 +189,7 @@ function SignalOverrides() {
     setSaving(true)
     setError(null)
     try {
-      await api.optimization.createOverride({
+      await optimizationApi.createOverride({
         signal_type: form.signal_type,
         practice_area: form.practice_area,
         multiplier: parseFloat(form.multiplier),
@@ -206,7 +206,7 @@ function SignalOverrides() {
 
   const handleDelete = async (id) => {
     try {
-      await api.optimization.deleteOverride(id)
+      await optimizationApi.deleteOverride(id)
       load()
     } catch {
       setError('Failed to deactivate override')

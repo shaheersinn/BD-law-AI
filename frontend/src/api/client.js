@@ -205,4 +205,13 @@ export const scrapersApi = {
   trigger:    (sourceId)    => api.post(`/api/scrapers/${sourceId}/run`).then(r => r.data),
 }
 
+export const optimization = {
+  usageReport:   ()         => api.get('/api/v1/optimization/usage-report').then(r => r.data),
+  scoreQuality:  ()         => api.get('/api/v1/optimization/score-quality').then(r => r.data),
+  perfReport:    ()         => api.get('/api/v1/optimization/perf-report').then(r => r.data),
+  listOverrides: ()         => api.get('/api/v1/optimization/overrides').then(r => r.data),
+  createOverride:(body)     => api.post('/api/v1/optimization/overrides', body).then(r => r.data),
+  deleteOverride:(id)       => api.delete(`/api/v1/optimization/overrides/${id}`).then(r => r.data),
+}
+
 export default api

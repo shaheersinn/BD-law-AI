@@ -25,7 +25,7 @@ from app.models import Alert, Client, Trigger
 from app.models.bd_activity import BDActivity, ContentPiece, MatterSource
 
 log = logging.getLogger(__name__)
-router = APIRouter(prefix="/analytics", tags=["analytics"])
+router = APIRouter(prefix="/v1/analytics", tags=["analytics"])
 
 
 # ── Schemas ────────────────────────────────────────────────────────────────────

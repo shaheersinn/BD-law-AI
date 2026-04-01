@@ -32,7 +32,7 @@ from app.services.entity_resolution import resolver
 
 log = logging.getLogger(__name__)
 
-router = APIRouter(tags=["watchlist"])
+router = APIRouter(prefix="/v1", tags=["watchlist"])
 
 
 # ── Schemas ────────────────────────────────────────────────────────────────────
