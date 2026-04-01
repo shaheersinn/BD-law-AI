@@ -19,6 +19,7 @@ log = structlog.get_logger(__name__)
 @register
 class CIROScraper(BaseScraper):
     source_id = "corporate_ciro"
+    CATEGORY = "corporate"
     source_name = "CIRO (Investment Industry Regulatory Organization)"
     signal_types = ["regulatory_ciro_proceeding", "regulatory_ciro_settlement"]
     rate_limit_rps = 0.2

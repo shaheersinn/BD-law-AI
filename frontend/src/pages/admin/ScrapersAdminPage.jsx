@@ -40,8 +40,8 @@ export function ScrapersAdminPage() {
 
   const loadScrapers = async () => {
     try {
-      const res = await fetch('/api/v1/scrapers/health', {
-        headers: { Authorization: `Bearer ${sessionStorage.getItem('oracle_token')}` },
+      const res = await fetch('/api/scrapers/health', {
+        headers: { Authorization: `Bearer ${sessionStorage.getItem('bdforlaw_token')}` },
       })
       if (!res.ok) throw new Error(`${res.status}`)
       const data = await res.json()

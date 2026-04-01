@@ -1,4 +1,5 @@
 ﻿import * as apiClient from "../api/client.js";
+import AppShell from '../components/layout/AppShell';
 // src/pages/GeoPages.jsx
 // Five geospatial intelligence modules:
 // GeoMap Â· JetTracker Â· FootTraffic Â· Satellite Â· PermitRadar
@@ -154,16 +155,20 @@ export const GeoMap = () => {
   async function gen() {
     setLoading(true); setBrief("");
     try {
-      const r = await fetch("/api/anthropic", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514", max_tokens: 600,
-          messages: [{ role: "user", content: `BigLaw BD AI. Write a 130-word market intelligence brief for a Canadian law firm considering a BD push into ${sel.label}.\n\nCurrent legal demand index: ${sel.v}/100\nTop practice areas: ${sel.practice}\nKey drivers: ${sel.drivers}\n\nProvide: (1) The single highest-value opportunity for a Canadian firm right now (2) Which existing client relationships have cross-border exposure here (3) One concrete BD action this quarter â€” event, thought leadership, or referral network to activate. Plain text, direct, no headers.` }]
-        })
-      });
-      const d = await r.json(); setBrief(d.content?.[0]?.text || "Error.");
-    } catch { setBrief("API error."); }
+      const token = sessionStorage.getItem('bdforlaw_token')
+      const r = await fetch(`/api/v1/signals?limit=10&category=geo`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!r.ok) throw new Error(`${r.status}`)
+      const data = await r.json()
+      const list = Array.isArray(data) ? data : []
+      setBrief(
+        list.length > 0
+          ? `${list.length} geo signals active.\n` +
+            list.slice(0, 5).map(s => `• ${s.signal_type || 'signal'}: ${s.raw_company_name || s.signal_text?.slice(0, 60) || 'event'}`).join('\n')
+          : 'No geo signals yet — scrapers accumulate data over 24–72 hours.'
+      )
+    } catch (e) { setBrief("API error.") }
     setLoading(false);
   }
 
@@ -291,16 +296,19 @@ export const JetTracker = () => {
   async function gen() {
     setLoading(true); setBrief("");
     try {
-      const r = await fetch("/api/anthropic", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514", max_tokens: 500,
-          messages: [{ role: "user", content: `BigLaw M&A BD. A corporate jet track has fired a mandate signal.\n\nCompany: ${sel.co}\nAircraft: ${sel.tail}\nExecutive: ${sel.exec}\nRoute: ${sel.from} â†’ ${sel.to}\nDate: ${sel.date}\nSignal: ${sel.sig}\nPredicted mandate: ${sel.mandate}\nConfidence: ${sel.conf}%\nRelationship warmth: ${sel.warmth}/100\n\nWrite a 120-word tactical action brief:\n1. Why this jet track means a mandate is imminent\n2. Exactly which partner should call and why\n3. The opening line for the call that demonstrates intelligence without revealing surveillance\n4. What to pitch in the first 5 minutes\n\nDirect, plain text. No headers.` }]
-        })
-      });
-      const d = await r.json(); setBrief(d.content?.[0]?.text || "Error.");
-    } catch { setBrief("API error."); }
+      const token = sessionStorage.getItem('bdforlaw_token')
+      const r = await fetch(`/api/v1/signals?signal_type=geo_flight_corporate_jet&limit=10`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!r.ok) throw new Error(`${r.status}`)
+      const data = await r.json()
+      const list = Array.isArray(data) ? data : []
+      setBrief(
+        list.length > 0
+          ? list.slice(0, 5).map(s => `• ${s.raw_company_name || 'Unknown'}: ${s.signal_text?.slice(0, 80) || 'Jet movement detected'}`).join('\n')
+          : 'No corporate jet signals yet — OpenSky scraper will populate within 24 hours.'
+      )
+    } catch (e) { setBrief("API error.") }
     setLoading(false);
   }
 
@@ -410,16 +418,19 @@ export const FootTraffic = () => {
   async function gen() {
     setLoading(true); setResp("");
     try {
-      const r = await fetch("/api/anthropic", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514", max_tokens: 400,
-          messages: [{ role: "user", content: `BigLaw BD AI. A client has been detected at a competitor law firm or significant third-party location.\n\nClient: ${sel.target}\nLocation detected: ${sel.loc}\nDevice cluster: ${sel.dev} devices Â· ${sel.dur}\nDate: ${sel.date}\nThreat assessment: ${sel.threat}\nSeverity: ${sel.sev.toUpperCase()}\n\nWrite a 100-word response strategy:\n1. What this likely means (RFP, active pitch, relationship-building)\n2. Which partner acts and what they say\n3. Whether to use conflict arbitrage if applicable\n4. The exact tone â€” urgent but not panicked\n\nPlain text. Direct.` }]
-        })
-      });
-      const d = await r.json(); setResp(d.content?.[0]?.text || "Error.");
-    } catch { setResp("API error."); }
+      const token = sessionStorage.getItem('bdforlaw_token')
+      const r = await fetch(`/api/v1/signals?category=geo&limit=10`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!r.ok) throw new Error(`${r.status}`)
+      const data = await r.json()
+      const list = Array.isArray(data) ? data : []
+      setResp(
+        list.length > 0
+          ? list.slice(0, 5).map(s => `• ${s.raw_company_name || 'Company'}: ${s.signal_text?.slice(0, 80) || 'Activity detected'}`).join('\n')
+          : 'No foot traffic signals yet — geo scrapers will populate within 24–48 hours.'
+      )
+    } catch (e) { setResp("API error.") }
     setLoading(false);
   }
 
@@ -521,16 +532,19 @@ export const Satellite = () => {
   async function gen() {
     setLoading(true); setAnalysis("");
     try {
-      const r = await fetch("/api/anthropic", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514", max_tokens: 450,
-          messages: [{ role: "user", content: `BigLaw BD analyst. A satellite intelligence signal has been detected.\n\nCompany: ${sel.co}\nLocation: ${sel.loc}\nSatellite observation: ${sel.sig}\nInference: ${sel.inf}\nSignal type: ${sel.type}\nConfidence: ${sel.conf}%\nUrgency: ${sel.urg.toUpperCase()}\n\nWrite a 120-word legal exposure brief:\n1. What this satellite observation legally means for the company\n2. Which specific legal matter is almost certainly forming (be specific â€” e.g. "WSIB mass layoff filing, mandatory 8-week notice period begins")\n3. Exactly which practice group should call, what they offer, and the opening line\n4. Timeline â€” how many days until this becomes a public event\n\nDirect, specific, plain text.` }]
-        })
-      });
-      const d = await r.json(); setAnalysis(d.content?.[0]?.text || "Error.");
-    } catch { setAnalysis("API error."); }
+      const token = sessionStorage.getItem('bdforlaw_token')
+      const r = await fetch(`/api/v1/signals?category=geo&limit=10`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!r.ok) throw new Error(`${r.status}`)
+      const data = await r.json()
+      const list = Array.isArray(data) ? data : []
+      setAnalysis(
+        list.length > 0
+          ? list.slice(0, 5).map(s => `• ${s.raw_company_name || 'Company'}: ${s.signal_type || 'signal'} — ${s.signal_text?.slice(0, 80) || 'detected'}`).join('\n')
+          : 'No satellite signals yet — geo scrapers accumulate data over 24–72 hours.'
+      )
+    } catch (e) { setAnalysis("API error.") }
     setLoading(false);
   }
 
@@ -633,16 +647,19 @@ export const PermitRadar = () => {
   async function gen() {
     setLoading(true); setBrief("");
     try {
-      const r = await fetch("/api/anthropic", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514", max_tokens: 450,
-          messages: [{ role: "user", content: `BigLaw BD analyst. A significant permit filing has appeared that predicts legal work.\n\nCompany: ${sel.co}\nPermit: ${sel.permit}\nLocation: ${sel.loc}\nFiled: ${sel.filed}\nProject type: ${sel.type}\nPractice areas triggered: ${sel.work.join(", ")}\nEstimated legal value: ${sel.rev}\nUrgency: ${sel.urg.toUpperCase()}\n${sel.lead ? `Existing relationship: ${sel.lead}` : "No existing relationship â€” prospect outreach"}\n\nWrite a 120-word outreach brief:\n1. Why this permit means legal work is imminent (be specific about which legal steps are legally required)\n2. The exact sequence of legal matters this project will generate and in what order\n3. Which partner calls, what they say, and when\n4. Opening line for the call\n\nDirect, plain text.` }]
-        })
-      });
-      const d = await r.json(); setBrief(d.content?.[0]?.text || "Error.");
-    } catch { setBrief("API error."); }
+      const token = sessionStorage.getItem('bdforlaw_token')
+      const r = await fetch(`/api/v1/signals?signal_type=geo_municipal_permit_issued&limit=10`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!r.ok) throw new Error(`${r.status}`)
+      const data = await r.json()
+      const list = Array.isArray(data) ? data : []
+      setBrief(
+        list.length > 0
+          ? list.slice(0, 5).map(s => `• ${s.raw_company_name || 'Applicant'}: ${s.signal_text?.slice(0, 100) || 'Permit filed'}`).join('\n')
+          : 'No permit signals yet — municipal permit scraper will populate within 24 hours.'
+      )
+    } catch (e) { setBrief("API error.") }
     setLoading(false);
   }
 
@@ -734,3 +751,46 @@ export const PermitRadar = () => {
     </div>
   );
 };
+
+// ── Default routable export ───────────────────────────────────────────────────
+const GEO_TABS = [
+  { key: 'heatmap',  label: 'Mandate Heat Map', Component: GeoMap },
+  { key: 'jets',     label: 'Jet Tracker',       Component: JetTracker },
+  { key: 'foot',     label: 'Foot Traffic',      Component: FootTraffic },
+  { key: 'sat',      label: 'Satellite Intel',   Component: Satellite },
+  { key: 'permits',  label: 'Permit Radar',      Component: PermitRadar },
+]
+
+export default function GeoPagesWrapper() {
+  const [tab, setTab] = useState('heatmap')
+  const active = GEO_TABS.find(t => t.key === tab) || GEO_TABS[0]
+
+  return (
+    <AppShell>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <div style={{
+          display: 'flex', gap: 4, padding: '12px 20px',
+          background: 'var(--color-surface-container-low)',
+          borderBottom: '1px solid rgba(197,198,206,0.15)',
+        }}>
+          {GEO_TABS.map(t => (
+            <button key={t.key} onClick={() => setTab(t.key)} style={{
+              padding: '6px 16px', borderRadius: 'var(--radius-md)',
+              fontFamily: 'var(--font-data)', fontSize: '0.75rem', fontWeight: 700,
+              letterSpacing: '0.04em', cursor: 'pointer',
+              background: tab === t.key ? 'var(--color-surface-container-lowest)' : 'transparent',
+              color: tab === t.key ? 'var(--color-on-surface)' : 'var(--color-on-surface-variant)',
+              boxShadow: tab === t.key ? 'var(--shadow-ambient)' : 'none',
+              transition: 'background 150ms ease-out',
+            }}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+        <div style={{ flex: 1, overflow: 'hidden' }}>
+          <active.Component />
+        </div>
+      </div>
+    </AppShell>
+  )
+}

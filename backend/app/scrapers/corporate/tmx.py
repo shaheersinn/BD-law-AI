@@ -22,6 +22,7 @@ _TMX_NEWS_RSS = "https://www.tmx.com/rss/tmxmoney/en/market_news.rss"
 @register
 class TMXScraper(BaseScraper):
     source_id = "corporate_tmx"
+    CATEGORY = "corporate"
     source_name = "TMX Group (TSX/TSXV)"
     signal_types = ["market_trading_halt", "market_company_news"]
     rate_limit_rps = 0.3

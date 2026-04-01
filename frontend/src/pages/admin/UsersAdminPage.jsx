@@ -33,8 +33,8 @@ export default function UsersAdminPage() {
   const [error,   setError]   = useState(null)
 
   useEffect(() => {
-    fetch('/api/v1/auth/users', {
-      headers: { Authorization: `Bearer ${sessionStorage.getItem('oracle_token')}` },
+    fetch('/api/auth/users', {
+      headers: { Authorization: `Bearer ${sessionStorage.getItem('bdforlaw_token')}` },
     })
       .then(r => { if (!r.ok) throw new Error(`${r.status}`); return r.json() })
       .then(d => setUsers(Array.isArray(d) ? d : d.users || []))

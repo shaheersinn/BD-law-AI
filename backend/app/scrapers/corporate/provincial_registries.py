@@ -17,6 +17,7 @@ log = structlog.get_logger(__name__)
 @register
 class ProvincialRegistriesScraper(BaseScraper):
     source_id = "corporate_provincial_registries"
+    CATEGORY = "corporate"
     source_name = "Provincial Business Registries (ON/BC/AB)"
     signal_types = ["company_dissolution", "company_registration"]
     rate_limit_rps = 0.1

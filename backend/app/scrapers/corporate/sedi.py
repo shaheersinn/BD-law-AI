@@ -35,6 +35,7 @@ _SEDI_SEARCH = f"{_SEDI_BASE}/SVTSearchFilingsResults.do"
 @register
 class SEDIScraper(BaseScraper):
     source_id = "corporate_sedi"
+    CATEGORY = "corporate"
     source_name = "SEDI Insider Trading"
     signal_types = ["insider_trade_sell", "insider_trade_cluster"]
     rate_limit_rps = 0.2

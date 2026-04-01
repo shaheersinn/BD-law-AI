@@ -55,6 +55,7 @@ _LEGAL_KEYWORDS = [
 @register
 class CanadaGazetteScraper(BaseScraper):
     source_id = "corporate_canada_gazette"
+    CATEGORY = "corporate"
     source_name = "Canada Gazette"
     signal_types = ["regulatory_gazette_notice", "regulatory_gazette_final"]
     rate_limit_rps = 0.1

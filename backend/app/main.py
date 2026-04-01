@@ -306,6 +306,13 @@ app.include_router(geo_router, prefix=PREFIX)
 app.include_router(clients_router, prefix=PREFIX)
 app.include_router(triggers_router, prefix=PREFIX)
 
+# BD intelligence + competitive firm routes
+from app.routes.bd import router as bd_router          # noqa: E402
+from app.routes.firms import router as firms_router    # noqa: E402
+
+app.include_router(bd_router, prefix=PREFIX)
+app.include_router(firms_router, prefix=PREFIX)
+
 
 # ── System Endpoints ───────────────────────────────────────────────────────────
 

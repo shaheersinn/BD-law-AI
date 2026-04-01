@@ -75,6 +75,7 @@ _PRACTICE_HINTS: dict[str, list[str]] = {
 @register
 class SEDARScraper(BaseScraper):
     source_id = "corporate_sedar"
+    CATEGORY = "corporate"
     source_name = "SEDAR+ Filing System"
     signal_types = ["filing_annual", "filing_material_change", "filing_cease_trade"]
     rate_limit_rps = 0.5

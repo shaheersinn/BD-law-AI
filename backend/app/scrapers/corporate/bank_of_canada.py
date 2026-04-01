@@ -24,6 +24,7 @@ _BOC_RSS_FEEDS = [
 @register
 class BankOfCanadaScraper(BaseScraper):
     source_id = "corporate_bank_of_canada"
+    CATEGORY = "corporate"
     source_name = "Bank of Canada"
     signal_types = ["monetary_policy_rate_change", "financial_system_alert"]
     rate_limit_rps = 0.1

@@ -17,6 +17,7 @@ log = structlog.get_logger(__name__)
 @register
 class CorpsCanadaScraper(BaseScraper):
     source_id = "corporate_corps_canada"
+    CATEGORY = "corporate"
     source_name = "Corporations Canada Registry"
     signal_types = ["company_dissolution", "company_registration"]
     rate_limit_rps = 0.2

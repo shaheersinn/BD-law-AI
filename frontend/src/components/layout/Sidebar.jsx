@@ -30,18 +30,25 @@ const icons = {
   logout:     'M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1',
   chevron:    'M11 19l-7-7 7-7m8 14l-7-7 7-7',
   expand:     'M13 5l7 7-7 7M5 5l7 7-7 7',
+  modules:    'M4 6h16M4 12h8m-8 6h16',
+  geo:        'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z',
+  law:        'M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z',
 }
 
 const navItems = [
-  { path: '/dashboard', label: 'Dashboard',  icon: 'dashboard' },
-  { path: '/search',    label: 'Search',     icon: 'search' },
-  { path: '/signals',   label: 'Signals',    icon: 'signals' },
-  { path: '/feedback',  label: 'Feedback',   icon: 'feedback', roles: ['partner', 'admin'] },
+  { path: '/dashboard', label: 'Dashboard',    icon: 'dashboard' },
+  { path: '/signals',   label: 'Signals',      icon: 'signals' },
+  { path: '/search',    label: 'Search',       icon: 'search' },
+  { path: '/modules',   label: 'Modules',      icon: 'modules' },
+  { path: '/geo',       label: 'Geo Intel',    icon: 'geo' },
+  { path: '/class-action-radar', label: 'Class Actions', icon: 'law' },
+  { path: '/feedback',  label: 'Feedback',     icon: 'feedback', roles: ['partner', 'admin'] },
 ]
 
 const adminItems = [
-  { path: '/admin/scrapers', label: 'Scrapers', icon: 'scrapers' },
-  { path: '/admin/users',    label: 'Users',    icon: 'users' },
+  { path: '/admin/scrapers',    label: 'Scrapers',   icon: 'scrapers' },
+  { path: '/scraper-dashboard', label: 'Scraper DB', icon: 'scrapers' },
+  { path: '/admin/users',       label: 'Users',      icon: 'users' },
 ]
 
 export default function Sidebar() {

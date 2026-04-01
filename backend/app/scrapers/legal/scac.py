@@ -17,6 +17,7 @@ _SCAC_URL = "https://securities.stanford.edu/class-action-filings/index-recently
 class StanfordScacScraper(BaseScraper):
     source_id = "legal_scac"
     source_name = "Stanford Class Action Clearinghouse"
+    CATEGORY = "legal"
     signal_types = ["litigation_class_action"]
     rate_limit_rps = 0.1
     concurrency = 1

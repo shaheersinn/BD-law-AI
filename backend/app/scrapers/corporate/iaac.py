@@ -19,6 +19,7 @@ log = structlog.get_logger(__name__)
 @register
 class IAACscraper(BaseScraper):
     source_id = "corporate_iaac"
+    CATEGORY = "corporate"
     source_name = "Impact Assessment Agency of Canada"
     signal_types = ["regulatory_environmental_assessment"]
     rate_limit_rps = 0.1

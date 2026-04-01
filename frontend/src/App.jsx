@@ -24,6 +24,9 @@ import UsersAdminPage     from './pages/admin/UsersAdminPage'
 import FeedbackPage       from './pages/FeedbackPage'
 import ClassActionRadar   from './pages/ClassActionRadar'
 import LandingPage        from './pages/LandingPage'
+import NewModulesPage     from './pages/NewModules'
+import GeoPagesWrapper    from './pages/GeoPages'
+import ScraperDashboard   from './pages/ScraperDashboard'
 import useAuthStore       from './stores/auth'
 
 function AppRoutes() {
@@ -62,6 +65,17 @@ function AppRoutes() {
       {/* Partner+ */}
       <Route path="/feedback" element={
         <PrivateRoute><FeedbackPage /></PrivateRoute>
+      } />
+
+      {/* New module pages */}
+      <Route path="/modules" element={
+        <PrivateRoute><NewModulesPage /></PrivateRoute>
+      } />
+      <Route path="/geo" element={
+        <PrivateRoute><GeoPagesWrapper /></PrivateRoute>
+      } />
+      <Route path="/scraper-dashboard" element={
+        <PrivateRoute><ScraperDashboard /></PrivateRoute>
       } />
 
       {/* Admin only */}

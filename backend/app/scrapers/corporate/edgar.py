@@ -61,6 +61,7 @@ _PRACTICE_MAP = {
 @register
 class EDGARScraper(BaseScraper):
     source_id = "corporate_edgar"
+    CATEGORY = "corporate"
     source_name = "SEC EDGAR"
     signal_types = [
         "filing_annual",

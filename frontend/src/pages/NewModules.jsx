@@ -1,4 +1,5 @@
 ﻿import * as apiClient from "../api/client.js";
+import AppShell from '../components/layout/AppShell';
 // src/pages/NewModules.jsx
 // Three modules from the Missing Features guide:
 // LiveTriggers Â· BDCoaching Â· GhostStudio
@@ -119,16 +120,19 @@ export const LiveTriggers = () => {
   async function gen() {
     setLoading(true); setBrief("");
     try {
-      const r = await fetch("/api/anthropic", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514", max_tokens: 450,
-          messages: [{ role: "user", content: `BigLaw BD analyst. A legal trigger signal just fired.\n\nSource: ${sel.source}\nSignal type: ${sel.type}\nCompany: ${sel.company}\nPractice area: ${sel.pa}\nUrgency: ${sel.urgency}/100\nDescription: ${sel.desc}\nFiled: ${sel.filed}\n\nWrite a 120-word partner action brief:\n1. What this signal almost certainly means for the company\n2. The specific legal matter type predicted and approximate fee\n3. Which partner should call and why them specifically\n4. The exact opening line for the call â€” demonstrates knowledge without revealing surveillance\n\nDirect, plain text. Partner reads on phone.` }]
-        })
-      });
-      const d = await r.json(); setBrief(d.content?.[0]?.text || "Error.");
-    } catch { setBrief("API error."); }
+      const token = sessionStorage.getItem('bdforlaw_token')
+      const r = await fetch(`/api/v1/signals?limit=5`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!r.ok) throw new Error(`${r.status}`)
+      const data = await r.json()
+      const list = Array.isArray(data) ? data : []
+      setBrief(
+        list.length > 0
+          ? list.map(s => `• ${s.signal_type?.toUpperCase() || 'SIGNAL'}: ${s.raw_company_name || s.signal_text?.slice(0, 60) || 'Signal detected'}`).join('\n')
+          : 'No live signals yet — scrapers are accumulating data. Check back in 24 hours.'
+      )
+    } catch (e) { setBrief("API error — check network tab.") }
     setLoading(false);
   }
 
@@ -240,16 +244,19 @@ export const BDCoaching = () => {
     setLoading(true); setCoaching("");
     const p = selPartner;
     try {
-      const r = await fetch("/api/anthropic", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514", max_tokens: 600,
-          messages: [{ role: "user", content: `You are a BigLaw BD performance coach. Analyse this partner's data and write 4 specific coaching observations. Each must cite the actual numbers. Each must end with a concrete action for THIS WEEK â€” not 'consider', not 'you might want to', but a specific directive.\n\nPartner: ${p.name} (${p.role})\n\nTop referral source: ${p.topSource} (${p.topCount} matters)\nStale referral contacts: ${p.staleReferrers.map(r => `${r.name} at ${r.firm} â€” ${r.days} days silent, sent ${r.matters} matter(s) worth $${(r.revenue/1000).toFixed(0)}K`).join("; ")}\nOpen follow-ups unresolved: ${p.openFollowups}\nFast follow-up win rate (within 48h): ${p.fastWinRate}%\nSlow follow-up win rate (>48h): ${p.slowWinRate}%\nDays since last content published: ${p.lastContent}\nBest performing content type: ${p.bestContentType}\nConference/CLE talks in 6 months: ${p.talks6m}\n\nStyle: direct, specific, respectful. Like a great coach, not a consultant. Max 280 words. Plain text, no headers.` }]
-        })
-      });
-      const d = await r.json(); setCoaching(d.content?.[0]?.text || "Error.");
-    } catch { setCoaching("API error."); }
+      const token = sessionStorage.getItem('bdforlaw_token')
+      const r = await fetch('/api/v1/trends/practice_areas', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!r.ok) throw new Error(`${r.status}`)
+      const data = await r.json()
+      const areas = Array.isArray(data) ? data : []
+      setCoaching(
+        areas.length > 0
+          ? areas.map(a => `${a.practice_area || 'Area'}: ${a.count_30d ?? 0} signals (30d), ${a.count_7d ?? 0} signals (7d)`).join('\n')
+          : 'No practice area trend data yet — ML scoring requires 7+ days of signals.'
+      )
+    } catch (e) { setCoaching("API error — check network tab.") }
     setLoading(false);
   }
 
@@ -389,16 +396,21 @@ export const GhostStudio = () => {
     setLoading(true); setDraft("");
     const p = selPartner;
     try {
-      const r = await fetch("/api/anthropic", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514", max_tokens: 550,
-          messages: [{ role: "user", content: `You are ghostwriting a LinkedIn post for ${p.name}, ${p.role} at a leading Canadian law firm.\n\nTheir writing style â€” match this exactly:\n"${WRITING_SAMPLES[p.id]}"\n\nDevelopment to write about:\n${topic}\n\nRules:\n- 200 to 260 words exactly\n- Open with the practical business implication for GCs and CLOs â€” NOT with 'I am pleased to share' or 'Excited to announce'\n- One concrete takeaway or action for the reader\n- End with a question that prompts comments\n- Maximum 3 hashtags, placed at the very end\n- Sound like a senior practitioner writing to peers â€” not a law firm press release\n- Do not use: 'game-changer', 'exciting', 'thrilled', 'proud to', 'unpacking', 'deep dive'\n\nOutput the post only. No preamble.` }]
-        })
-      });
-      const d = await r.json(); setDraft(d.content?.[0]?.text || "Error.");
-    } catch { setDraft("API error."); }
+      const token = sessionStorage.getItem('bdforlaw_token')
+      const r = await fetch('/api/v1/signals?limit=10', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!r.ok) throw new Error(`${r.status}`)
+      const data = await r.json()
+      const list = Array.isArray(data) ? data : []
+      setDraft(
+        list.length > 0
+          ? `Based on ${list.length} recent signals:\n` +
+            list.map(s => `• [${s.signal_type || 'signal'}] ${s.raw_company_name || s.signal_text?.slice(0, 60) || 'Signal detected'}`).join('\n') +
+            `\n\nTopic input: ${topic}`
+          : 'No signals yet to base a draft on. Scrapers will populate data within 24 hours.'
+      )
+    } catch (e) { setDraft("API error — check network tab.") }
     setLoading(false);
   }
 
@@ -583,3 +595,46 @@ export const GhostStudio = () => {
     </div>
   );
 };
+
+// ── Default routable export ───────────────────────────────────────────────────
+const TABS = [
+  { key: 'triggers', label: 'Live Triggers',       Component: LiveTriggers },
+  { key: 'coaching', label: 'BD Coaching',          Component: BDCoaching },
+  { key: 'ghost',    label: 'Ghost Studio',         Component: GhostStudio },
+]
+
+export default function NewModulesPage() {
+  const [tab, setTab] = useState('triggers')
+  const active = TABS.find(t => t.key === tab) || TABS[0]
+
+  return (
+    <AppShell>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        {/* Tab bar */}
+        <div style={{
+          display: 'flex', gap: 4, padding: '12px 20px',
+          background: 'var(--color-surface-container-low)',
+          borderBottom: '1px solid rgba(197,198,206,0.15)',
+        }}>
+          {TABS.map(t => (
+            <button key={t.key} onClick={() => setTab(t.key)} style={{
+              padding: '6px 16px', borderRadius: 'var(--radius-md)',
+              fontFamily: 'var(--font-data)', fontSize: '0.75rem', fontWeight: 700,
+              letterSpacing: '0.04em', cursor: 'pointer',
+              background: tab === t.key ? 'var(--color-surface-container-lowest)' : 'transparent',
+              color: tab === t.key ? 'var(--color-on-surface)' : 'var(--color-on-surface-variant)',
+              boxShadow: tab === t.key ? 'var(--shadow-ambient)' : 'none',
+              transition: 'background 150ms ease-out',
+            }}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+        {/* Active module */}
+        <div style={{ flex: 1, overflow: 'hidden' }}>
+          <active.Component />
+        </div>
+      </div>
+    </AppShell>
+  )
+}

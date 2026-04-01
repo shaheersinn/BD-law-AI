@@ -118,6 +118,18 @@ def _load_registry() -> None:
     _safe_import("app.scrapers.consumer.opc_breach_reports")
     _safe_import("app.scrapers.consumer.provincial_privacy_commissioners")
 
+    # ── Corporate scrapers (all use @register; previously unreachable) ─────────
+    _safe_import("app.scrapers.corporate.sedar")
+    _safe_import("app.scrapers.corporate.edgar")
+    _safe_import("app.scrapers.corporate.sedi")
+    _safe_import("app.scrapers.corporate.ciro")
+    _safe_import("app.scrapers.corporate.corps_canada")
+    _safe_import("app.scrapers.corporate.canada_gazette")
+    _safe_import("app.scrapers.corporate.bank_of_canada")
+    _safe_import("app.scrapers.corporate.iaac")
+    _safe_import("app.scrapers.corporate.tmx")
+    _safe_import("app.scrapers.corporate.provincial_registries")
+
     # ── Old-style scrapers (use NAME/CATEGORY attributes, no @register) ────────
     # These are registered explicitly since they predate the @register pattern.
     _register_old_style(

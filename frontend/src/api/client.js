@@ -124,4 +124,44 @@ export const authApi = {
     api.post('/api/auth/refresh', { refresh_token: refreshToken }).then(r => r.data),
 }
 
+// ── scrapers ─────────────────────────────────────────────────────────────────
+// NOTE: scrapers router has NO /v1/ prefix — /api/scrapers/*, not /api/v1/scrapers/*
+export const scrapers = {
+  health:   (limit = 200) => api.get('/api/scrapers/health',  { params: { limit } }).then(r => r.data),
+  summary:  ()            => api.get('/api/scrapers/summary').then(r => r.data),
+  run:      (sourceId)    => api.post(`/api/scrapers/${sourceId}/run`).then(r => r.data),
+  registry: ()            => api.get('/api/scrapers/registry').then(r => r.data),
+}
+
+// ── geo signals (filtered via signals endpoint) ───────────────────────────────
+export const geoSignals = {
+  jets:    (limit = 20) => api.get('/api/v1/signals', { params: { signal_type: 'geo_flight_corporate_jet', limit } }).then(r => r.data),
+  permits: (limit = 20) => api.get('/api/v1/signals', { params: { signal_type: 'geo_municipal_permit_issued', limit } }).then(r => r.data),
+  all:     (limit = 50) => api.get('/api/v1/signals', { params: { category: 'geo', limit } }).then(r => r.data),
+}
+
+// ── clients ───────────────────────────────────────────────────────────────────
+// NOTE: clients router has NO /v1/ prefix — /api/clients/*, not /api/v1/clients/*
+export const clients = {
+  list:        (params = {}) => api.get('/api/clients',              { params }).then(r => r.data),
+  churnScores: ()            => api.get('/api/clients/churn-scores').then(r => r.data),
+  get:         (id)          => api.get(`/api/clients/${id}`).then(r => r.data),
+  walletShare: ()            => api.get('/api/clients/wallet-share').then(r => r.data),
+}
+
+// ── bd ────────────────────────────────────────────────────────────────────────
+export const bd = {
+  partners:          ()          => api.get('/api/v1/bd/partners').then(r => r.data),
+  partnerCoaching:   (partnerId) => api.get(`/api/v1/bd/partner-coaching/${partnerId}`).then(r => r.data),
+  pitchHistory:      ()          => api.get('/api/v1/bd/pitch-history').then(r => r.data),
+  associateActivity: ()          => api.get('/api/v1/bd/associate-activity').then(r => r.data),
+  content:           ()          => api.get('/api/v1/bd/content').then(r => r.data),
+  submitInquiry:     (body)      => api.post('/api/v1/bd/inquiries', body).then(r => r.data),
+}
+
+// ── firms ─────────────────────────────────────────────────────────────────────
+export const firms = {
+  competitive: () => api.get('/api/v1/firms/competitive').then(r => r.data),
+}
+
 export default api

@@ -12,7 +12,7 @@
 
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { companies as companiesApi, signals as signalsApi } from '../api/client'
+import { companies as companiesApi, signals as signalsApi, scrapers } from '../api/client'
 import AppShell from '../components/layout/AppShell'
 import { Skeleton } from '../components/Skeleton'
 import useScoreStore from '../stores/scores'
@@ -23,23 +23,35 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [signals, setSignals] = useState([])
   const [horizon, setHorizon] = useState(30)
+  const [kpiData, setKpiData] = useState(null)
 
   useEffect(() => {
     Promise.all([
       fetchTopVelocity(20),
       signalsApi.list(null, { limit: 10 }),
+      scrapers.summary().catch(() => null),
     ])
-      .then(([, sigs]) => setSignals(sigs || []))
+      .then(([, sigs, scraperSummary]) => {
+        setSignals(sigs || [])
+        if (scraperSummary) {
+          setKpiData({
+            registryCount:   scraperSummary.registry_count ?? 0,
+            healthyScrapers: scraperSummary.healthy ?? 0,
+            totalScrapers:   scraperSummary.total ?? 0,
+            failingScrapers: scraperSummary.failing ?? 0,
+          })
+        }
+      })
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
 
   const kpis = [
-    { label: 'Active Pipeline', value: '$412M', change: '+12%', positive: true },
-    { label: 'Clients at Risk', value: '14', change: '03', positive: false },
-    { label: 'Active Prospects', value: '128', change: '+08', positive: true },
-    { label: 'Pitch Win Rate', value: '64.2%', change: '+2.4%', positive: true },
-    { label: 'Avg Wallet Share', value: '31.8%', sub: 'Legal Services' },
+    { label: 'Registered Scrapers', value: kpiData?.registryCount ?? '—',   sub: 'data sources' },
+    { label: 'Healthy Scrapers',    value: kpiData?.healthyScrapers ?? '—', sub: 'running clean' },
+    { label: 'Total in DB',         value: kpiData?.totalScrapers ?? '—',   sub: 'health records' },
+    { label: 'Pitch Win Rate',      value: '—',                             sub: 'requires BD data' },
+    { label: 'Avg Wallet Share',    value: '—',                             sub: 'requires billing data' },
   ]
 
   const horizonOptions = [30, 60, 90]

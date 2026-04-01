@@ -1,29 +1,30 @@
-"""app/scrapers/legal/osb_insolvency.py — OSB insolvency statistics (postal code level)."""
-
+"""app/scrapers/legal/osb_insolvency.py — OSB insolvency statistics."""
 from __future__ import annotations
-
 import io
-
 from app.scrapers.base import BaseScraper, SignalData
+from app.scrapers.registry import register
 
-
+@register
 class OsbInsolvencyScraper(BaseScraper):
-    NAME = "osb_insolvency_stats"
+    source_id = "legal_osb_insolvency"
+    source_name = "OSB Insolvency Statistics"
     CATEGORY = "legal"
+    signal_types = ["insolvency_statistic"]
     SOURCE_URL = "https://www.ic.gc.ca/eic/site/bsf-osb.nsf/eng/br04551.html"
-    RATE_LIMIT_RPS = 0.5
-    MAX_CONCURRENT = 1
+    rate_limit_rps = 0.5
+    concurrency = 1
     SOURCE_RELIABILITY = 0.90
 
-    # OSB open data Excel file URL
-    _EXCEL_URL = "https://www.ic.gc.ca/eic/site/bsf-osb.nsf/vwapj/OSB_Insolvency_Statistics_Business.xlsx/$FILE/OSB_Insolvency_Statistics_Business.xlsx"
+    _EXCEL_URL = (
+        "https://www.ic.gc.ca/eic/site/bsf-osb.nsf/vwapj/"
+        "OSB_Insolvency_Statistics_Business.xlsx/$FILE/"
+        "OSB_Insolvency_Statistics_Business.xlsx"
+    )
 
-    async def run(self) -> list[SignalData]:
-        """Download OSB insolvency Excel and extract recent business insolvencies."""
+    async def scrape(self) -> list[SignalData]:
         signals: list[SignalData] = []
         try:
             import openpyxl
-
             response = await self.get(self._EXCEL_URL)
             if not response:
                 return signals
@@ -32,8 +33,7 @@ class OsbInsolvencyScraper(BaseScraper):
             )
             ws = wb.active
             rows = list(ws.iter_rows(values_only=True))
-            # Extract recent sector-level insolvency counts
-            for row in rows[5:30]:  # Skip header rows
+            for row in rows[5:30]:
                 if not row or not row[0]:
                     continue
                 sector = str(row[0])
@@ -41,19 +41,16 @@ class OsbInsolvencyScraper(BaseScraper):
                 if not sector or sector.strip() in ("", "Sector", "Industry"):
                     continue
                 strength = min(0.90, 0.50 + (int(count or 0) / 100) * 0.40)
-                signals.append(
-                    SignalData(
-                        scraper_name=self.NAME,
-                        signal_type="insolvency_statistic",
-                        raw_entity_name=sector,
-                        title=f"OSB insolvency: {sector} — {count} filings",
-                        summary=f"Business insolvency statistics: {sector}, count: {count}",
-                        source_url=self.SOURCE_URL,
-                        practice_areas=["insolvency_restructuring", "banking_finance"],
-                        signal_strength=float(strength),
-                        metadata={"sector": sector, "count": count, "source": "OSB"},
-                    )
-                )
+                signals.append(SignalData(
+                    source_id=self.source_id,
+                    signal_type="insolvency_statistic",
+                    raw_company_name=sector,
+                    signal_text=f"OSB insolvency: {sector} — {count} filings",
+                    source_url=self.SOURCE_URL,
+                    practice_area_hints=["insolvency_restructuring", "banking_finance"],
+                    confidence_score=float(strength),
+                    signal_value={"sector": sector, "count": count, "source": "OSB"},
+                ))
         except Exception as exc:
             self.log.error("OSB: error parsing Excel: %s", exc)
         return signals

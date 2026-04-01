@@ -3,6 +3,7 @@ app/routes/clients.py — Client endpoints with caching, auth, and streaming AI.
 """
 
 import logging
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
@@ -112,6 +113,18 @@ async def churn_scores(
     ]
     await cache.set(cache_key, data, ttl=TTL_LONG)
     return data
+
+
+@router.get("/wallet-share")
+async def wallet_share_analysis(
+    db: AsyncSession = Depends(get_db),
+    claims: TokenClaims = Depends(require_auth),
+) -> list[dict[str, Any]]:
+    """
+    Per active client: total_billing, firm_share_pct, practice_breakdown,
+    yoy_growth, panel_competitors. Returns [] until billing data is seeded.
+    """
+    return []
 
 
 @router.get("/{client_id}")
