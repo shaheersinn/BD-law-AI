@@ -142,7 +142,7 @@ function AppRoutes() {
 
       {/* Default redirects */}
       <Route path="/" element={
-        token ? <Navigate to="/dashboard" replace /> : <LandingPage />
+        token ? <Navigate to="/constructlex" replace /> : <LandingPage />
       } />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

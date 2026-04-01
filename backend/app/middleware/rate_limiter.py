@@ -13,6 +13,7 @@ Rate limits:
 
 from __future__ import annotations
 
+import hashlib
 import time
 from collections.abc import Callable
 from typing import cast
@@ -32,6 +33,9 @@ EXEMPT_PATHS = {
     "/api/docs",
     "/api/redoc",
     "/api/auth/login",
+    "/api/auth/logout",
+    "/api/auth/refresh",
+    "/api/auth/me",
 }
 
 
@@ -89,6 +93,10 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     """
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:  # type: ignore[type-arg]
+        # Skip non-API paths (frontend routes/assets) and preflight requests
+        if not request.url.path.startswith("/api") or request.method == "OPTIONS":
+            return cast(Response, await call_next(request))
+
         # Skip exempt paths
         if request.url.path in EXEMPT_PATHS:
             return cast(Response, await call_next(request))  # type: ignore[no-any-return]
@@ -98,16 +106,23 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
         settings = get_settings()
 
-        # Determine rate limit key
-        user_id = getattr(request.state, "user_id", None)
-        if user_id:
-            key = f"rate_limit:user:{user_id}"
+        # Determine rate limit key.
+        # Middleware runs before route dependencies; request.state.user_id is usually unavailable.
+        # Use bearer token fingerprint when present so authenticated users don't hit IP-level caps.
+        auth_header = request.headers.get("Authorization", "")
+        token = ""
+        if auth_header.startswith("Bearer "):
+            token = auth_header.removeprefix("Bearer ").strip()
+
+        if token:
+            token_fingerprint = hashlib.sha256(token.encode("utf-8")).hexdigest()[:24]
+            key = f"rate_limit:bearer:{token_fingerprint}"
             limit = settings.rate_limit_requests
         else:
-            # Use IP for unauthenticated requests
+            # Use IP for unauthenticated requests.
             client_ip = self._get_client_ip(request)
             key = f"rate_limit:ip:{client_ip}"
-            limit = 20  # Stricter limit for unauthenticated
+            limit = max(60, settings.rate_limit_requests // 2)
 
         window_seconds = settings.rate_limit_window_seconds
 
