@@ -196,8 +196,8 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules  # Anonymous volume prevents host node_modules from overwriting
-    environment:
-      - VITE_API_URL=http://localhost:8000
+    # Omit VITE_API_URL: axios uses relative /api/*; Vite proxies /api → localhost:8000 (vite.config.js).
+    # Set VITE_API_URL only if the browser must call another origin.
     depends_on:
       - api
 

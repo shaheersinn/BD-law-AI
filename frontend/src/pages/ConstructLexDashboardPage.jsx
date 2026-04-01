@@ -57,6 +57,14 @@ export default function ConstructLexDashboardPage() {
     .sort((a, b) => (b.count_7d || 0) - (a.count_7d || 0))
     .slice(0, 10)
 
+  /** API: GET /api/triggers/stats → TriggerStats (not legacy dashboard keys). */
+  const metricTriggers72h = stats?.total_72h
+  const metricTriggers24h = stats?.total_24h
+  const metricUnlabelledHigh = stats?.unlabelled_high_urgency
+  const activeSources = stats?.by_source && typeof stats.by_source === 'object'
+    ? Object.keys(stats.by_source).length
+    : 0
+
   return (
     <AppShell>
       <div style={{ maxWidth: 1200, margin: '0 auto', padding: '2rem 2rem 3rem' }}>
@@ -67,7 +75,7 @@ export default function ConstructLexDashboardPage() {
           subtitle="Live mandate signals, velocity rankings, and practice area demand"
         />
 
-        {/* Metric cards */}
+        {/* Metric cards — wired to triggers.stats() TriggerStats */}
         <section style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(4, 1fr)',
@@ -75,23 +83,23 @@ export default function ConstructLexDashboardPage() {
           marginBottom: '2.5rem',
         }}>
           <MetricCard
-            label="Active Mandates"
-            value={loading ? <Skeleton width={60} height={24} /> : (stats?.active_mandates ?? '--')}
+            label="Triggers (72h)"
+            value={loading ? <Skeleton width={60} height={24} /> : (metricTriggers72h ?? '—')}
             accent="navy"
           />
           <MetricCard
-            label="This Week"
-            value={loading ? <Skeleton width={60} height={24} /> : (stats?.week_count ?? '--')}
+            label="Triggers (24h)"
+            value={loading ? <Skeleton width={60} height={24} /> : (metricTriggers24h ?? '—')}
             accent="teal"
           />
           <MetricCard
-            label="Avg Confidence"
-            value={loading ? <Skeleton width={60} height={24} /> : (stats?.avg_confidence != null ? `${stats.avg_confidence}%` : '--')}
+            label="High urgency (open)"
+            value={loading ? <Skeleton width={60} height={24} /> : (metricUnlabelledHigh ?? '—')}
             accent="blue"
           />
           <MetricCard
-            label="Conversion Rate"
-            value={loading ? <Skeleton width={60} height={24} /> : (stats?.conversion_rate != null ? `${stats.conversion_rate}%` : '--')}
+            label="Feed sources (72h)"
+            value={loading ? <Skeleton width={60} height={24} /> : activeSources}
             accent="gold"
           />
         </section>
@@ -186,8 +194,8 @@ export default function ConstructLexDashboardPage() {
                           textAlign: 'right',
                           whiteSpace: 'nowrap',
                         }}>
-                          {item.composite_score != null
-                            ? `${(item.composite_score * 100).toFixed(1)}%`
+                          {item.top_score_30d != null || item.composite_score != null
+                            ? `${((item.top_score_30d ?? item.composite_score) * 100).toFixed(1)}%`
                             : '—'}
                         </td>
                         <td style={{ padding: '13px 14px', whiteSpace: 'nowrap' }}>
@@ -223,7 +231,7 @@ export default function ConstructLexDashboardPage() {
                           textOverflow: 'ellipsis',
                           whiteSpace: 'nowrap',
                         }}>
-                          {item.top_practice || '—'}
+                          {item.top_practice_area || item.top_practice || '—'}
                         </td>
                       </tr>
                     ))}

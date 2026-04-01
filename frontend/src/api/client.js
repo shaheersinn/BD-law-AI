@@ -14,8 +14,10 @@ import useAuthStore from '../stores/auth'
 const MAX_RETRIES = 3
 const RETRY_DELAY_MS = 500  // base delay; multiplied by attempt number
 
+// Empty baseURL → relative /api/* (Vite dev proxy + production nginx). Avoid baking
+// http://localhost:8000 into production builds when VITE_API_URL is unset.
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
+  baseURL: import.meta.env.VITE_API_URL ?? '',
   timeout: 15_000,
 })
 

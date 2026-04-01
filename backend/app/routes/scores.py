@@ -84,7 +84,7 @@ WITH latest AS (
     SELECT DISTINCT ON (company_id)
         company_id, velocity_score, scores, scored_at, anomaly_score
     FROM scoring_results
-    WHERE scored_at >= NOW() - INTERVAL '48 hours'
+    WHERE scored_at >= NOW() - INTERVAL '30 days'
       AND velocity_score IS NOT NULL
     ORDER BY company_id, scored_at DESC
 )
@@ -112,7 +112,7 @@ async def get_top_velocity_companies(
     """
     Top N companies by 7-day mandate probability velocity.
     Returns company_id, velocity_score, top_practice_area, top_score_30d.
-    Reads from most recent scoring_results per company (last 48h).
+    Reads from most recent scoring_results per company (last 30 days).
     Cached 15 minutes.
     """
     import json as json_mod
