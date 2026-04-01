@@ -124,4 +124,72 @@ export const authApi = {
     api.post('/api/auth/refresh', { refresh_token: refreshToken }).then(r => r.data),
 }
 
+// ── clients ────────────────────────────────────────────────────────────────────
+export const clients = {
+  list:        (params = {}) => api.get('/api/v1/clients', { params }).then(r => r.data),
+  churnScores: ()            => api.get('/api/v1/clients/churn-scores').then(r => r.data),
+  get:         (id)          => api.get(`/api/v1/clients/${id}`).then(r => r.data),
+  churnBrief:  (id)          => api.post(`/api/v1/clients/${id}/churn-brief`).then(r => r.data),
+  walletShare: ()            => api.get('/api/v1/clients/wallet-share').then(r => r.data),
+}
+
+// ── triggers ───────────────────────────────────────────────────────────────────
+export const triggers = {
+  live:  (params = {}) => api.get('/api/triggers/live', { params }).then(r => r.data),
+  stats: ()            => api.get('/api/triggers/stats').then(r => r.data),
+  get:   (id)          => api.get(`/api/triggers/${id}`).then(r => r.data),
+  label: (id, body)    => api.post(`/api/triggers/${id}/label`, body).then(r => r.data),
+  brief: (id)          => api.post(`/api/triggers/${id}/brief`).then(r => r.data),
+}
+
+// ── geo ────────────────────────────────────────────────────────────────────────
+export const geo = {
+  intensity:   () => api.get('/api/v1/geo/intensity').then(r => r.data),
+  jets:        () => api.get('/api/v1/geo/jets').then(r => r.data),
+  satellite:   () => api.get('/api/v1/geo/satellite').then(r => r.data),
+  footTraffic: () => api.get('/api/v1/geo/foot-traffic').then(r => r.data),
+  permits:     () => api.get('/api/v1/geo/permits').then(r => r.data),
+}
+
+// ── watchlist ──────────────────────────────────────────────────────────────────
+export const watchlist = {
+  list:   (params = {}) => api.get('/api/v1/watchlist', { params }).then(r => r.data),
+  add:    (body)        => api.post('/api/v1/watchlist', body).then(r => r.data),
+  remove: (id)          => api.delete(`/api/v1/watchlist/${id}`).then(r => r.data),
+  search: (q)           => api.get('/api/v1/watchlist/search', { params: { q } }).then(r => r.data),
+}
+
+// ── analytics ──────────────────────────────────────────────────────────────────
+export const analytics = {
+  modelPerformance: () => api.get('/api/v1/analytics/model-performance').then(r => r.data),
+  signalQuality:    () => api.get('/api/v1/analytics/signal-quality').then(r => r.data),
+  bdPerformance:    () => api.get('/api/v1/analytics/bd-performance').then(r => r.data),
+  systemHealth:     () => api.get('/api/v1/analytics/health').then(r => r.data),
+}
+
+// ── scrapers client ────────────────────────────────────────────────────────────
+export const scrapersApi = {
+  health:     ()         => api.get('/api/v1/scrapers/health').then(r => r.data),
+  summary:    ()         => api.get('/api/v1/scrapers/summary').then(r => r.data),
+  registry:   ()         => api.get('/api/v1/scrapers/registry').then(r => r.data),
+  categories: ()         => api.get('/api/v1/scrapers/categories').then(r => r.data),
+  trigger:    (sourceId) => api.post(`/api/v1/scrapers/${sourceId}/run`).then(r => r.data),
+}
+
+// ── bd ─────────────────────────────────────────────────────────────────────────
+export const bd = {
+  pitchHistory:      (params = {}) => api.get('/api/v1/bd/pitch-history', { params }).then(r => r.data),
+  partnerCoaching:   (partnerId)   => api.get(`/api/v1/bd/partner-coaching/${partnerId}`).then(r => r.data),
+  partners:          ()            => api.get('/api/v1/bd/partners').then(r => r.data),
+  associateActivity: (params = {}) => api.get('/api/v1/bd/associate-activity', { params }).then(r => r.data),
+  writingSamples:    (partnerId)   => api.get(`/api/v1/bd/writing-samples/${partnerId}`).then(r => r.data),
+  contentPieces:     (params = {}) => api.get('/api/v1/bd/content', { params }).then(r => r.data),
+  logInquiry:        (body)        => api.post('/api/v1/bd/inquiries', body).then(r => r.data),
+}
+
+// ── firms ──────────────────────────────────────────────────────────────────────
+export const firms = {
+  competitive: () => api.get('/api/v1/firms/competitive').then(r => r.data),
+}
+
 export default api

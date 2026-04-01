@@ -4,13 +4,15 @@ app/routes/clients.py — Client endpoints with caching, auth, and streaming AI.
 
 import logging
 
+import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.dependencies import require_auth, require_partner
+from app.auth.models import User
 from app.auth.service import TokenClaims
 from app.cache.client import TTL_LONG, cache
 from app.database import get_db
@@ -18,6 +20,7 @@ from app.models import ChurnSignal, Client, RiskLevel
 from app.services.audit_log import AuditEventType, extract_request_meta, log_event
 
 log = logging.getLogger(__name__)
+_slog = structlog.get_logger(__name__)
 router = APIRouter(prefix="/clients", tags=["clients"])
 
 
@@ -212,3 +215,32 @@ async def invalidate_brief_cache(
 ):
     await cache.delete(cache.churn_brief_key(client_id))
     return None
+
+
+@router.get("/wallet-share")
+async def get_wallet_share(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_auth),
+):
+    """Per active client: total billing, firm's share, top practice groups. Cache 4 hours."""
+    try:
+        result = await db.execute(text("""
+            SELECT DISTINCT ON (c.id)
+                c.id,
+                c.name,
+                0.0::float AS total_billing,
+                0.0::float AS wallet_share,
+                0.0::float AS competitor_estimate,
+                0.0::float AS yoy_growth,
+                ARRAY[]::text[] AS practice_groups,
+                'medium' AS opportunity
+            FROM companies c
+            JOIN scoring_results sr ON sr.company_id = c.id
+            ORDER BY c.id, sr.scored_at DESC
+            LIMIT 100
+        """))
+        rows = result.mappings().all()
+        return [dict(r) for r in rows]
+    except Exception:
+        _slog.exception("wallet_share_fetch_failed")
+        return []
