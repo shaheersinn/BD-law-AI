@@ -177,3 +177,114 @@ def mine_all_practice_areas(
         rules = mine_rules(df, practice_area=pa)
         all_rules[pa] = rules
     return all_rules
+
+
+async def refresh_rules(db: Any) -> int:
+    """
+    Phase 12: Re-run Apriori co-occurrence mining on expanded mandate event set.
+
+    Pulls mandate events from mandate_confirmations + signal_records,
+    re-mines rules for all practice areas, and replaces signal_rules table entries.
+
+    Args:
+        db: Async SQLAlchemy session.
+
+    Returns:
+        Total number of rules written.
+    """
+    from datetime import UTC, datetime, timedelta
+
+    from sqlalchemy import text
+
+    since = datetime.now(UTC) - timedelta(days=90)
+
+    try:
+        rows = (
+            await db.execute(
+                text(
+                    """
+                    SELECT mc.practice_area, sr.signal_type
+                    FROM mandate_confirmations mc
+                    JOIN signal_records sr ON sr.company_id = mc.company_id
+                    WHERE mc.created_at >= :since
+                      AND sr.detected_at >= :since
+                    ORDER BY mc.practice_area
+                    """
+                ),
+                {"since": since},
+            )
+        ).all()
+    except Exception:
+        log.warning("cooccurrence.refresh_rules: mandate_confirmations not available (Phase 9 pending)")
+        return 0
+
+    if not rows:
+        log.info("cooccurrence.refresh_rules: no mandate events found — skipping")
+        return 0
+
+    # Group signal types by practice area to build event baskets
+    events_by_pa: dict[str, list[dict[str, Any]]] = {}
+    current_pa: str | None = None
+    current_signals: list[str] = []
+
+    for row in rows:
+        if row.practice_area != current_pa:
+            if current_pa is not None and current_signals:
+                events_by_pa.setdefault(current_pa, []).append(
+                    {"mandate_id": len(events_by_pa.get(current_pa, [])), "signal_types": current_signals}
+                )
+            current_pa = row.practice_area
+            current_signals = [row.signal_type]
+        else:
+            current_signals.append(row.signal_type)
+
+    if current_pa and current_signals:
+        events_by_pa.setdefault(current_pa, []).append(
+            {"mandate_id": 0, "signal_types": current_signals}
+        )
+
+    # Mine rules for all practice areas
+    all_rules = mine_all_practice_areas(events_by_pa)
+
+    # Replace signal_rules rows for each practice area
+    total_written = 0
+    for pa, rules in all_rules.items():
+        if not rules:
+            continue
+        try:
+            await db.execute(
+                text("DELETE FROM signal_rules WHERE practice_area = :pa"),
+                {"pa": pa},
+            )
+            for rule in rules:
+                await db.execute(
+                    text(
+                        """
+                        INSERT INTO signal_rules
+                            (practice_area, antecedent_signals, consequent_signals,
+                             support, confidence, lift)
+                        VALUES
+                            (:practice_area, :antecedents::jsonb, :consequents::jsonb,
+                             :support, :confidence, :lift)
+                        """
+                    ),
+                    {
+                        "practice_area": pa,
+                        "antecedents": __import__("json").dumps(rule["antecedent_signals"]),
+                        "consequents": __import__("json").dumps(rule["consequent_signals"]),
+                        "support": rule["support"],
+                        "confidence": rule["confidence"],
+                        "lift": rule["lift"],
+                    },
+                )
+                total_written += 1
+        except Exception:
+            log.warning("cooccurrence.refresh_rules: failed to write rules for %s", pa)
+
+    await db.commit()
+    log.info(
+        "cooccurrence.refresh_rules.complete",
+        practice_areas=len(all_rules),
+        total_rules=total_written,
+    )
+    return total_written

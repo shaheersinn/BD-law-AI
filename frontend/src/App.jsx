@@ -135,6 +135,9 @@ function AppRoutes() {
       <Route path="/admin/users" element={
         <PrivateRoute adminOnly><UsersAdminPage /></PrivateRoute>
       } />
+      <Route path="/admin/optimization" element={
+        <PrivateRoute adminOnly><OptimizationPage /></PrivateRoute>
+      } />
 
       {/* Default redirects */}
       <Route path="/" element={

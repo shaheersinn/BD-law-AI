@@ -123,11 +123,15 @@ def compute_aggregate_multiplier(
     sector: str,
     weights: dict[str, dict[str, float]],
     top_features: int = 5,
+    human_overrides: dict[str, float] | None = None,
 ) -> float:
     """
     Compute a single sector_weight_multiplier scalar feature.
     Average of the top N sector weight multipliers for the highest-value features.
     This becomes the sector_weight_multiplier column in company_features.
+
+    Phase 12: If human_overrides is provided ({signal_type: multiplier}), the human
+    multiplier wins over the ML-calibrated one for matching features.
     """
     sector_w = weights.get(sector, {})
     if not sector_w:
@@ -135,5 +139,147 @@ def compute_aggregate_multiplier(
 
     # Sort features by their raw value, take top N
     top = sorted(features.items(), key=lambda x: abs(x[1]), reverse=True)[:top_features]
-    multipliers = [sector_w.get(feat, 1.0) for feat, _ in top]
+
+    multipliers: list[float] = []
+    for feat, _ in top:
+        if human_overrides and feat in human_overrides:
+            multipliers.append(human_overrides[feat])  # human override wins
+        else:
+            multipliers.append(sector_w.get(feat, 1.0))
+
     return float(np.mean(multipliers)) if multipliers else 1.0
+
+
+async def recalibrate_from_confirmations(db: Any) -> dict[str, dict[str, float]]:
+    """
+    Phase 12: Re-run sector weight calibration using last 30 days of confirmed mandate data.
+
+    Pulls mandate_confirmations + company_features from PostgreSQL,
+    re-runs mutual information calibration, and updates sector_signal_weights table.
+
+    Args:
+        db: Async SQLAlchemy session.
+
+    Returns:
+        New weights dict {sector: {feature: multiplier}}.
+    """
+    from datetime import UTC, datetime, timedelta
+
+    import pandas as pd
+    from sqlalchemy import text
+
+    since = datetime.now(UTC) - timedelta(days=30)
+
+    try:
+        # Pull confirmed mandates joined to company features
+        rows = (
+            await db.execute(
+                text(
+                    """
+                    SELECT cf.signal_data, cf.sector, mc.practice_area
+                    FROM mandate_confirmations mc
+                    JOIN company_features cf ON cf.company_id = mc.company_id
+                    WHERE mc.created_at >= :since
+                      AND cf.sector IS NOT NULL
+                    LIMIT 50000
+                    """
+                ),
+                {"since": since},
+            )
+        ).all()
+    except Exception:
+        log.warning("sector_weights.recalibrate: mandate_confirmations not available (Phase 9 pending)")
+        return {}
+
+    if not rows:
+        log.info("sector_weights.recalibrate: no confirmed mandates in last 30 days — skipping")
+        return {}
+
+    try:
+        # Build DataFrame from signal_data JSONB
+        records = []
+        for row in rows:
+            signal_data = row.signal_data or {}
+            record = dict(signal_data)
+            record["sector"] = row.sector
+            record["label"] = 1
+            records.append(record)
+
+        df = pd.DataFrame(records).fillna(0)
+        feature_cols = [c for c in df.columns if c not in ("sector", "label")]
+
+        if not feature_cols:
+            log.warning("sector_weights.recalibrate: no feature columns found")
+            return {}
+
+        new_weights = calibrate_sector_weights(df, df["label"], feature_cols)
+
+        # Update sector_signal_weights table
+        await _persist_sector_weights(db, new_weights)
+
+        log.info(
+            "sector_weights.recalibrated",
+            sectors=len(new_weights),
+            features=len(feature_cols),
+            mandate_count=len(rows),
+        )
+        return new_weights
+
+    except Exception:
+        log.exception("sector_weights.recalibrate: calibration failed")
+        return {}
+
+
+async def _persist_sector_weights(db: Any, weights: dict[str, dict[str, float]]) -> None:
+    """Upsert new weights into sector_signal_weights table."""
+    from sqlalchemy import text
+
+    for sector, feature_weights in weights.items():
+        for feature, multiplier in feature_weights.items():
+            try:
+                await db.execute(
+                    text(
+                        """
+                        INSERT INTO sector_signal_weights (sector, signal_type, multiplier)
+                        VALUES (:sector, :signal_type, :multiplier)
+                        ON CONFLICT (sector, signal_type)
+                        DO UPDATE SET multiplier = EXCLUDED.multiplier
+                        """
+                    ),
+                    {"sector": sector, "signal_type": feature, "multiplier": multiplier},
+                )
+            except Exception:
+                log.warning(
+                    "sector_weights: failed to upsert", sector=sector, signal_type=feature
+                )
+    await db.commit()
+    log.info("sector_weights.persisted", total_entries=sum(len(v) for v in weights.values()))
+
+
+async def load_human_overrides_from_cache(
+    signal_type: str | None = None,
+    practice_area: str | None = None,
+) -> dict[str, float]:
+    """
+    Phase 12: Load active signal_weight_overrides from Redis cache.
+    Cache key: signal_overrides:v1 (TTL 1h).
+    Returns {signal_type: multiplier} filtered by practice_area if provided.
+    """
+    from app.cache.client import cache
+
+    cache_key = "signal_overrides:v1"
+    try:
+        cached = await cache.get(cache_key)
+        if cached is None:
+            return {}
+
+        # cached is a list of {signal_type, practice_area, multiplier} dicts
+        overrides: dict[str, float] = {}
+        for entry in cached:
+            if practice_area and entry.get("practice_area") != practice_area:
+                continue
+            overrides[entry["signal_type"]] = float(entry["multiplier"])
+        return overrides
+    except Exception:
+        log.warning("sector_weights: failed to load human overrides from cache")
+        return {}
