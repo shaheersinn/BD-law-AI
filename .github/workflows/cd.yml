@@ -119,16 +119,12 @@ jobs:
           docker push registry.digitalocean.com/oracle-containers/oracle-backend:latest
           docker push registry.digitalocean.com/oracle-containers/oracle-backend:${{ github.sha }}
 
-      - name: Update DO App Spec and Deploy
-        # Applies the updated do-app.yaml and triggers a new deployment
+      - name: Trigger DO deployment (dashboard-managed config)
+        # Uses the existing App Platform spec and runtime env vars stored in DO.
+        # This keeps secrets out of git-managed files.
         # NEVER runs alembic upgrade head — migrations are manual via scripts/run_migrations.sh
         run: |
-          if grep -n "SET_IN_DO_DASHBOARD" do-app.yaml; then
-            echo "ERROR: do-app.yaml still contains placeholder secret values."
-            echo "Set real runtime secrets in DigitalOcean App Platform, then update do-app.yaml values before deploy."
-            exit 1
-          fi
-          doctl apps update ${{ secrets.DO_APP_ID }} --spec do-app.yaml --wait --verbose
+          doctl apps create-deployment ${{ secrets.DO_APP_ID }} --wait --verbose
 
       - name: Verify deployment succeeded
         run: |

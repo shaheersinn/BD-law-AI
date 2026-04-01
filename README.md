@@ -332,20 +332,17 @@ All sources have free tiers. No data is required to run the demo (seeded data is
 
 ## Deployment
 
-### Railway (recommended for small firms)
+### DigitalOcean (production)
 
 ```bash
-# Install Railway CLI
-npm install -g @railway/cli && railway login
-
-# Deploy backend
-cd backend && railway up
-
-# Set environment variables in Railway dashboard:
-# ANTHROPIC_API_KEY, SECRET_KEY, DATABASE_URL (Neon), REDIS_URL (Upstash)
-
-# Deploy frontend on DigitalOcean App Platform static site
-# (configured via do-app.yaml)
+# Configure app, worker, beat, and frontend in DigitalOcean App Platform.
+# Set all runtime secrets in DO dashboard (not in git-managed files):
+# SECRET_KEY, DATABASE_URL, MONGODB_URL, REDIS_URL,
+# REDIS_RESULT_BACKEND, CELERY_BROKER_URL, CELERY_RESULT_BACKEND
+#
+# CI/CD triggers:
+# doctl apps create-deployment <DO_APP_ID> --wait
+# so existing DO app config/secrets are reused each deploy.
 ```
 
 ### Estimated Monthly Cost (5-partner firm)
@@ -354,7 +351,7 @@ cd backend && railway up
 |------|------|
 | Anthropic API | $20-40/month |
 | Neon PostgreSQL | Free → $19/month |
-| Railway backend | Free → $10/month |
+| DigitalOcean backend | App Platform pricing |
 | Upstash Redis | Free tier |
 | DigitalOcean frontend static site | Included with DO app |
 | **Total** | **$20-70/month** |
