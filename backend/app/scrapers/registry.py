@@ -190,6 +190,8 @@ def _load_registry() -> None:
             "app.scrapers.regulatory.asc",
             "app.scrapers.regulatory.sec_aaer",
             "app.scrapers.regulatory.us_doj",
+            "app.scrapers.regulatory.amf",
+            "app.scrapers.regulatory.doj",
         ]
     )
 

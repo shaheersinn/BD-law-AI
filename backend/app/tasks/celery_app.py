@@ -39,6 +39,7 @@ celery_app = Celery(
         "app.tasks.scraper_tasks",  # Phase S1-S4 category scraper tasks
         "app.tasks.phase6_tasks",  # Phase 6 ML agents
         "app.tasks.phase9_tasks",  # Phase 9 Feedback Loop agents
+        "app.tasks.class_action_tasks",  # Phase CA-1 class action scraper tasks
     ],
 )
 
