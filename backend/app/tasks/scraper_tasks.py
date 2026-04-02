@@ -439,6 +439,236 @@ def run_single_scraper(source_id: str) -> dict[str, Any]:
 # ── Canary System ─────────────────────────────────────────────────────────────
 
 
+# ── Phase S-NEW: 14 New Scraper Category Tasks ───────────────────────────────
+
+
+@celery_app.task(
+    name="scrapers.run_hnwi",
+    queue="scrapers",
+    max_retries=2,
+    soft_time_limit=1200,
+    time_limit=1500,
+    bind=True,
+)
+def run_hnwi_scrapers(self: Any) -> dict[str, Any]:
+    """Run all HNWI & estate intelligence scrapers."""
+    log.info("task_start", task="run_hnwi_scrapers")
+    result: dict[str, Any] = _run_async(_run_category("hnwi"))  # type: ignore[assignment]
+    log.info("task_complete", task="run_hnwi_scrapers", **result)
+    return result
+
+
+@celery_app.task(
+    name="scrapers.run_immigration",
+    queue="scrapers",
+    max_retries=2,
+    soft_time_limit=900,
+    time_limit=1200,
+    bind=True,
+)
+def run_immigration_scrapers(self: Any) -> dict[str, Any]:
+    """Run all immigration scrapers (LMIA, Express Entry)."""
+    log.info("task_start", task="run_immigration_scrapers")
+    result: dict[str, Any] = _run_async(_run_category("immigration"))  # type: ignore[assignment]
+    log.info("task_complete", task="run_immigration_scrapers", **result)
+    return result
+
+
+@celery_app.task(
+    name="scrapers.run_pe",
+    queue="scrapers",
+    max_retries=2,
+    soft_time_limit=1200,
+    time_limit=1500,
+    bind=True,
+)
+def run_pe_scrapers(self: Any) -> dict[str, Any]:
+    """Run all PE/VC fund lifecycle scrapers."""
+    log.info("task_start", task="run_pe_scrapers")
+    result: dict[str, Any] = _run_async(_run_category("pe"))  # type: ignore[assignment]
+    log.info("task_complete", task="run_pe_scrapers", **result)
+    return result
+
+
+@celery_app.task(
+    name="scrapers.run_financial_stress",
+    queue="scrapers",
+    max_retries=2,
+    soft_time_limit=1200,
+    time_limit=1500,
+    bind=True,
+)
+def run_financial_stress_scrapers(self: Any) -> dict[str, Any]:
+    """Run all financial stress scrapers (PPSA, S&P, private credit)."""
+    log.info("task_start", task="run_financial_stress_scrapers")
+    result: dict[str, Any] = _run_async(_run_category("financial_stress"))  # type: ignore[assignment]
+    log.info("task_complete", task="run_financial_stress_scrapers", **result)
+    return result
+
+
+@celery_app.task(
+    name="scrapers.run_restructuring",
+    queue="scrapers",
+    max_retries=2,
+    soft_time_limit=1200,
+    time_limit=1500,
+    bind=True,
+)
+def run_restructuring_scrapers(self: Any) -> dict[str, Any]:
+    """Run all restructuring scrapers (CCAA monitor reports)."""
+    log.info("task_start", task="run_restructuring_scrapers")
+    result: dict[str, Any] = _run_async(_run_category("restructuring"))  # type: ignore[assignment]
+    log.info("task_complete", task="run_restructuring_scrapers", **result)
+    return result
+
+
+@celery_app.task(
+    name="scrapers.run_grants",
+    queue="scrapers",
+    max_retries=2,
+    soft_time_limit=900,
+    time_limit=1200,
+    bind=True,
+)
+def run_grants_scrapers(self: Any) -> dict[str, Any]:
+    """Run all federal grants scrapers."""
+    log.info("task_start", task="run_grants_scrapers")
+    result: dict[str, Any] = _run_async(_run_category("grants"))  # type: ignore[assignment]
+    log.info("task_complete", task="run_grants_scrapers", **result)
+    return result
+
+
+@celery_app.task(
+    name="scrapers.run_courts",
+    queue="scrapers",
+    max_retries=2,
+    soft_time_limit=1800,
+    time_limit=2100,
+    bind=True,
+)
+def run_courts_scrapers(self: Any) -> dict[str, Any]:
+    """Run all provincial court scrapers (Ontario, BC, Quebec)."""
+    log.info("task_start", task="run_courts_scrapers")
+    result: dict[str, Any] = _run_async(_run_category("courts"))  # type: ignore[assignment]
+    log.info("task_complete", task="run_courts_scrapers", **result)
+    return result
+
+
+@celery_app.task(
+    name="scrapers.run_energy",
+    queue="scrapers",
+    max_retries=2,
+    soft_time_limit=900,
+    time_limit=1200,
+    bind=True,
+)
+def run_energy_scrapers(self: Any) -> dict[str, Any]:
+    """Run all energy scrapers (CER pipeline incidents)."""
+    log.info("task_start", task="run_energy_scrapers")
+    result: dict[str, Any] = _run_async(_run_category("energy"))  # type: ignore[assignment]
+    log.info("task_complete", task="run_energy_scrapers", **result)
+    return result
+
+
+@celery_app.task(
+    name="scrapers.run_macro",
+    queue="scrapers",
+    max_retries=2,
+    soft_time_limit=900,
+    time_limit=1200,
+    bind=True,
+)
+def run_macro_scrapers(self: Any) -> dict[str, Any]:
+    """Run all macro scrapers (CMHC housing data)."""
+    log.info("task_start", task="run_macro_scrapers")
+    result: dict[str, Any] = _run_async(_run_category("macro"))  # type: ignore[assignment]
+    log.info("task_complete", task="run_macro_scrapers", **result)
+    return result
+
+
+@celery_app.task(
+    name="scrapers.run_ip",
+    queue="scrapers",
+    max_retries=2,
+    soft_time_limit=900,
+    time_limit=1200,
+    bind=True,
+)
+def run_ip_scrapers(self: Any) -> dict[str, Any]:
+    """Run all IP scrapers (CIPO trademarks)."""
+    log.info("task_start", task="run_ip_scrapers")
+    result: dict[str, Any] = _run_async(_run_category("ip"))  # type: ignore[assignment]
+    log.info("task_complete", task="run_ip_scrapers", **result)
+    return result
+
+
+@celery_app.task(
+    name="scrapers.run_ownership",
+    queue="scrapers",
+    max_retries=2,
+    soft_time_limit=900,
+    time_limit=1200,
+    bind=True,
+)
+def run_ownership_scrapers(self: Any) -> dict[str, Any]:
+    """Run all beneficial ownership scrapers."""
+    log.info("task_start", task="run_ownership_scrapers")
+    result: dict[str, Any] = _run_async(_run_category("ownership"))  # type: ignore[assignment]
+    log.info("task_complete", task="run_ownership_scrapers", **result)
+    return result
+
+
+@celery_app.task(
+    name="scrapers.run_startups",
+    queue="scrapers",
+    max_retries=2,
+    soft_time_limit=900,
+    time_limit=1200,
+    bind=True,
+)
+def run_startups_scrapers(self: Any) -> dict[str, Any]:
+    """Run all startup/accelerator scrapers."""
+    log.info("task_start", task="run_startups_scrapers")
+    result: dict[str, Any] = _run_async(_run_category("startups"))  # type: ignore[assignment]
+    log.info("task_complete", task="run_startups_scrapers", **result)
+    return result
+
+
+@celery_app.task(
+    name="scrapers.run_environmental",
+    queue="scrapers",
+    max_retries=2,
+    soft_time_limit=900,
+    time_limit=1200,
+    bind=True,
+)
+def run_environmental_scrapers(self: Any) -> dict[str, Any]:
+    """Run all environmental scrapers (NPRI)."""
+    log.info("task_start", task="run_environmental_scrapers")
+    result: dict[str, Any] = _run_async(_run_category("environmental"))  # type: ignore[assignment]
+    log.info("task_complete", task="run_environmental_scrapers", **result)
+    return result
+
+
+@celery_app.task(
+    name="scrapers.run_labour",
+    queue="scrapers",
+    max_retries=2,
+    soft_time_limit=900,
+    time_limit=1200,
+    bind=True,
+)
+def run_labour_scrapers(self: Any) -> dict[str, Any]:
+    """Run all labour scrapers (Labour Code naming, WorkSafeBC)."""
+    log.info("task_start", task="run_labour_scrapers")
+    result: dict[str, Any] = _run_async(_run_category("labour"))  # type: ignore[assignment]
+    log.info("task_complete", task="run_labour_scrapers", **result)
+    return result
+
+
+# ── Canary System ─────────────────────────────────────────────────────────────
+
+
 @celery_app.task(
     name="scrapers.canary_check",
     queue="default",

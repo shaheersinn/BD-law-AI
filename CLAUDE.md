@@ -767,3 +767,101 @@ reference for all 35+ environment variables.
 
 *Last updated: Phase 11 — March 2026*
 *Next update: Phase 12 completion*
+
+---
+
+## Phase S-NEW — What Was Built (28 New Scrapers)
+
+Phase S-NEW adds 28 new scrapers across 14 new categories, 28 new signal types to the
+convergence engine, and 14 new Celery tasks. Implemented in 6 sub-phases (April 2026).
+
+### New Scraper Directories (14)
+
+| Directory | Scrapers | Category |
+|-----------|----------|----------|
+| `scrapers/hnwi/` | 5 | HNWI & Estate Intelligence |
+| `scrapers/immigration/` | 2 | Immigration (LMIA, Express Entry) |
+| `scrapers/pe/` | 3 | PE/VC Fund Lifecycle + Pension Funds |
+| `scrapers/financial_stress/` | 3 | PPSA, S&P Ratings, Private Credit |
+| `scrapers/restructuring/` | 1 | CCAA Monitor Reports |
+| `scrapers/grants/` | 1 | Federal Grants & Procurement |
+| `scrapers/courts/` | 3 | Provincial Courts (ON, BC, QC) |
+| `scrapers/energy/` | 1 | CER Pipeline Incidents |
+| `scrapers/macro/` | 1 | CMHC Housing Data |
+| `scrapers/ip/` | 1 | CIPO Trademarks |
+| `scrapers/ownership/` | 1 | Beneficial Ownership Registries |
+| `scrapers/startups/` | 1 | Accelerator Cohorts |
+| `scrapers/environmental/` | 1 | NPRI Pollution Data |
+| `scrapers/labour/` | 2 | Labour Code Naming + WorkSafeBC |
+
+Plus 1 enhancement to existing `scrapers/corporate/bank_of_canada.py` (BOS/SLOS support).
+
+### All 28 New Signal Types
+
+| Signal Type | Weight | Category |
+|-------------|--------|----------|
+| `trust_deemed_disposition_approaching` | 0.91 | hnwi |
+| `estate_art_liquidation` | 0.74 | hnwi |
+| `probate_filing_high_value` | 0.82 | hnwi |
+| `hnwi_foundation_director_change` | 0.72 | hnwi |
+| `vessel_registry_change` | 0.68 | hnwi |
+| `immigration_lmia_spike` | 0.76 | filings |
+| `immigration_express_entry_draw` | 0.52 | filings |
+| `pe_fund_exit_pressure` | 0.83 | filings |
+| `vc_series_b_plus` | 0.77 | filings |
+| `ppsa_layered_lending` | 0.87 | filings |
+| `credit_rating_downgrade_sp` | 0.86 | filings |
+| `tax_court_dispute` | 0.81 | litigation |
+| `ccaa_monitor_report` | **0.95** | litigation |
+| `federal_grant_awarded` | 0.73 | filings |
+| `ontario_commercial_list_filing` | 0.90 | litigation |
+| `bc_supreme_court_filing` | 0.88 | litigation |
+| `quebec_superior_court_filing` | 0.88 | litigation |
+| `cer_pipeline_incident` | 0.84 | enforcement |
+| `cmhc_housing_starts_decline` | 0.68 | geospatial |
+| `trademark_new_class_expansion` | 0.74 | filings |
+| `beneficial_owner_change` | 0.78 | filings |
+| `pension_fund_investment` | 0.85 | filings |
+| `accelerator_cohort_member` | 0.65 | filings |
+| `private_credit_deterioration` | 0.88 | filings |
+| `npri_pollution_spike` | 0.77 | enforcement |
+| `labour_code_payment_order` | 0.79 | enforcement |
+| `worksafebc_penalty` | 0.76 | enforcement |
+| `macro_bos_credit_tightening` | 0.72 | geospatial |
+
+### New Celery Tasks (14)
+
+| Task Name | Schedule | Queue |
+|-----------|----------|-------|
+| `scrapers.run_hnwi` | Quarterly | scrapers |
+| `scrapers.run_immigration` | Monthly | scrapers |
+| `scrapers.run_pe` | Daily | scrapers |
+| `scrapers.run_financial_stress` | Weekly | scrapers |
+| `scrapers.run_restructuring` | Daily | scrapers |
+| `scrapers.run_grants` | Quarterly | scrapers |
+| `scrapers.run_courts` | Daily | scrapers |
+| `scrapers.run_energy` | Weekly | scrapers |
+| `scrapers.run_macro` | Monthly | scrapers |
+| `scrapers.run_ip` | Weekly | scrapers |
+| `scrapers.run_ownership` | Monthly | scrapers |
+| `scrapers.run_startups` | Quarterly | scrapers |
+| `scrapers.run_environmental` | Weekly | scrapers |
+| `scrapers.run_labour` | Weekly | scrapers |
+
+### Convergence Engine Impact
+- `SIGNAL_WEIGHTS`: grew from ~130 entries to ~158 entries (+28)
+- `SIGNAL_CATEGORIES`: all 28 new types mapped to convergence categories
+- `PRACTICE_AREA_VOTES`: all 28 new types have weighted practice area votes
+- New "hnwi" category added to category convergence multiplier
+
+### Key Files Modified
+- `app/ml/convergence/engine.py` — SIGNAL_WEIGHTS, SIGNAL_CATEGORIES, PRACTICE_AREA_VOTES
+- `app/scrapers/registry.py` — 27 new `_safe_import()` calls
+- `app/tasks/celery_app.py` — 14 new beat schedule entries + 14 new task routes
+- `app/tasks/scraper_tasks.py` — 14 new Celery task functions
+- `app/scrapers/corporate/bank_of_canada.py` — BOS/SLOS enhancement
+
+### Tests
+- `tests/scrapers/test_new_scrapers.py` — comprehensive test suite covering all 28 scrapers
+
+*Last updated: Phase S-NEW — April 2026*

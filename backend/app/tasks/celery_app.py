@@ -148,6 +148,21 @@ celery_app.conf.task_routes = {
     "agents.run_confirmation_hunter": {"queue": "agents"},
     # Phase CA-3: Convergence Engine
     "ml.score_class_action_risk": {"queue": "scoring"},
+    # Phase S-NEW: 14 new scraper category tasks → scrapers queue
+    "scrapers.run_hnwi": {"queue": "scrapers"},
+    "scrapers.run_immigration": {"queue": "scrapers"},
+    "scrapers.run_pe": {"queue": "scrapers"},
+    "scrapers.run_financial_stress": {"queue": "scrapers"},
+    "scrapers.run_restructuring": {"queue": "scrapers"},
+    "scrapers.run_grants": {"queue": "scrapers"},
+    "scrapers.run_courts": {"queue": "scrapers"},
+    "scrapers.run_energy": {"queue": "scrapers"},
+    "scrapers.run_macro": {"queue": "scrapers"},
+    "scrapers.run_ip": {"queue": "scrapers"},
+    "scrapers.run_ownership": {"queue": "scrapers"},
+    "scrapers.run_startups": {"queue": "scrapers"},
+    "scrapers.run_environmental": {"queue": "scrapers"},
+    "scrapers.run_labour": {"queue": "scrapers"},
 }
 
 # ── Beat Schedule ──────────────────────────────────────────────────────────────
@@ -332,5 +347,90 @@ celery_app.conf.beat_schedule = {
         "task": "ml.score_class_action_risk",
         "schedule": crontab(hour=3, minute=0),
         "options": {"queue": "scoring"},
+    },
+    # ── Phase S-NEW: 14 new scraper category tasks ───────────────────────────────
+    # HNWI — quarterly (Jan, Apr, Jul, Oct 1st at 07:00 UTC)
+    "run-hnwi-scrapers": {
+        "task": "scrapers.run_hnwi",
+        "schedule": crontab(hour=7, minute=0, day_of_month=1, month_of_year="1,4,7,10"),
+        "options": {"queue": "scrapers"},
+    },
+    # Immigration — monthly (1st of month, 08:00 UTC)
+    "run-immigration-scrapers": {
+        "task": "scrapers.run_immigration",
+        "schedule": crontab(hour=8, minute=0, day_of_month=1),
+        "options": {"queue": "scrapers"},
+    },
+    # PE / VC — daily (16:00 UTC / 11am Toronto)
+    "run-pe-scrapers": {
+        "task": "scrapers.run_pe",
+        "schedule": crontab(hour=16, minute=0),
+        "options": {"queue": "scrapers"},
+    },
+    # Financial Stress — weekly (Monday 09:00 UTC)
+    "run-financial-stress-scrapers": {
+        "task": "scrapers.run_financial_stress",
+        "schedule": crontab(hour=9, minute=0, day_of_week="monday"),
+        "options": {"queue": "scrapers"},
+    },
+    # Restructuring — daily (12:00 UTC)
+    "run-restructuring-scrapers": {
+        "task": "scrapers.run_restructuring",
+        "schedule": crontab(hour=12, minute=0),
+        "options": {"queue": "scrapers"},
+    },
+    # Grants — quarterly (Jan, Apr, Jul, Oct 15th at 10:00 UTC)
+    "run-grants-scrapers": {
+        "task": "scrapers.run_grants",
+        "schedule": crontab(hour=10, minute=0, day_of_month=15, month_of_year="1,4,7,10"),
+        "options": {"queue": "scrapers"},
+    },
+    # Courts — daily (13:30 UTC / 8:30am Toronto)
+    "run-courts-scrapers": {
+        "task": "scrapers.run_courts",
+        "schedule": crontab(hour=13, minute=30),
+        "options": {"queue": "scrapers"},
+    },
+    # Energy — weekly (Wednesday 10:00 UTC)
+    "run-energy-scrapers": {
+        "task": "scrapers.run_energy",
+        "schedule": crontab(hour=10, minute=0, day_of_week="wednesday"),
+        "options": {"queue": "scrapers"},
+    },
+    # Macro — monthly (15th at 11:00 UTC)
+    "run-macro-scrapers": {
+        "task": "scrapers.run_macro",
+        "schedule": crontab(hour=11, minute=0, day_of_month=15),
+        "options": {"queue": "scrapers"},
+    },
+    # IP — weekly (Thursday 10:00 UTC)
+    "run-ip-scrapers": {
+        "task": "scrapers.run_ip",
+        "schedule": crontab(hour=10, minute=0, day_of_week="thursday"),
+        "options": {"queue": "scrapers"},
+    },
+    # Ownership — monthly (5th at 09:00 UTC)
+    "run-ownership-scrapers": {
+        "task": "scrapers.run_ownership",
+        "schedule": crontab(hour=9, minute=0, day_of_month=5),
+        "options": {"queue": "scrapers"},
+    },
+    # Startups — quarterly (Feb, May, Aug, Nov 1st at 08:00 UTC)
+    "run-startups-scrapers": {
+        "task": "scrapers.run_startups",
+        "schedule": crontab(hour=8, minute=0, day_of_month=1, month_of_year="2,5,8,11"),
+        "options": {"queue": "scrapers"},
+    },
+    # Environmental — weekly (Friday 10:00 UTC)
+    "run-environmental-scrapers": {
+        "task": "scrapers.run_environmental",
+        "schedule": crontab(hour=10, minute=0, day_of_week="friday"),
+        "options": {"queue": "scrapers"},
+    },
+    # Labour — weekly (Tuesday 10:00 UTC)
+    "run-labour-scrapers": {
+        "task": "scrapers.run_labour",
+        "schedule": crontab(hour=10, minute=0, day_of_week="tuesday"),
+        "options": {"queue": "scrapers"},
     },
 }
