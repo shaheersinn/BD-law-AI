@@ -18,6 +18,7 @@ RUN groupadd -r oracle && useradd -r -g oracle -d /app -s /sbin/nologin oracle
 COPY --from=builder /opt/venv /opt/venv
 COPY . .
 RUN mkdir -p data/models data/raw data/features data/labels data/training && \
+    chmod +x /app/start.sh && \
     chown -R oracle:oracle /app
 USER oracle
 ENV PATH="/opt/venv/bin:$PATH"
@@ -27,4 +28,4 @@ ENV PYTHONUNBUFFERED=1
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:8000/api/health || exit 1
 EXPOSE 8000
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2", "--no-access-log"]
+CMD ["/bin/bash", "/app/start.sh"]

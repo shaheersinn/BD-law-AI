@@ -1,5 +1,5 @@
 """
-app/models/company.py — Company entity + Signal + ScraperHealth ORM models.
+app/models/company.py — Company entity + company_aliases + signal_records ORM models.
 """
 
 from __future__ import annotations
@@ -63,6 +63,9 @@ class Company(Base):
     status: Mapped[CompanyStatus] = mapped_column(
         Enum(CompanyStatus), nullable=False, default=CompanyStatus.active
     )
+    is_active: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True, server_default="true"
+    )
     is_publicly_listed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     is_crown_corporation: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     is_foreign_private_issuer: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
@@ -124,33 +127,4 @@ class SignalRecord(Base):
     __table_args__ = (
         Index("ix_signal_source_scraped", "source_id", "scraped_at"),
         Index("ix_signal_company_type", "company_id", "signal_type"),
-    )
-
-
-class ScraperHealth(Base):
-    __tablename__ = "scraper_health"
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    source_id: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
-    source_name: Mapped[str] = mapped_column(String(200), nullable=False)
-    last_run_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
-    last_success_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
-    last_error_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
-    last_error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
-    total_runs: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    total_successes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    total_failures: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    total_records_scraped: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    consecutive_failures: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    avg_duration_seconds: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
-    avg_records_per_run: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
-    p95_duration_seconds: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
-    is_healthy: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
-    is_rate_limited: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
-    circuit_breaker_state: Mapped[str] = mapped_column(String(20), nullable=False, default="closed")
-    reliability_score: Mapped[float] = mapped_column(Float, nullable=False, default=1.0)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime, nullable=False, server_default=func.now()
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime, nullable=False, server_default=func.now(), onupdate=func.now()
     )

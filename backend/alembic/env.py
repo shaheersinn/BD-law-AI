@@ -1,22 +1,18 @@
 """
-alembic/env.py — Async Alembic migration environment for ORACLE.
+alembic/env.py — Alembic migration environment for ORACLE.
 
-Configured for:
-  - Async SQLAlchemy 2.0 with asyncpg driver
-  - Auto-detection of all models via Base.metadata
-  - DATABASE_URL read from environment (not hardcoded)
+Migrations run synchronously via psycopg2 (sync URL). The FastAPI app uses asyncpg.
+DATABASE_URL is read from the environment (not hardcoded in alembic.ini).
 """
 
 from __future__ import annotations
 
-import asyncio
 import os
 from logging.config import fileConfig
 
 from alembic import context
 from sqlalchemy import pool
-from sqlalchemy.engine import Connection
-from sqlalchemy.ext.asyncio import async_engine_from_config
+from sqlalchemy.engine import Connection, engine_from_config
 
 # Import Base and ALL models so Alembic can detect them for autogenerate
 from app.database import Base
@@ -39,7 +35,8 @@ database_url = os.getenv(
     "DATABASE_URL",
     "postgresql+asyncpg://oracle:oracle@localhost:5432/oracle_db",
 )
-config.set_main_option("sqlalchemy.url", database_url)
+sync_database_url = database_url.replace("postgresql+asyncpg://", "postgresql://")
+config.set_main_option("sqlalchemy.url", sync_database_url)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
@@ -72,19 +69,18 @@ def do_run_migrations(connection: Connection) -> None:
         context.run_migrations()
 
 
-async def run_async_migrations() -> None:
-    connectable = async_engine_from_config(
+def run_migrations_online() -> None:
+    url = config.get_main_option("sqlalchemy.url")
+    url = url.replace("postgresql+asyncpg://", "postgresql://")
+    config.set_main_option("sqlalchemy.url", url)
+    connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
-    async with connectable.connect() as connection:
-        await connection.run_sync(do_run_migrations)
-    await connectable.dispose()
-
-
-def run_migrations_online() -> None:
-    asyncio.run(run_async_migrations())
+    with connectable.connect() as connection:
+        do_run_migrations(connection)
+    connectable.dispose()
 
 
 if context.is_offline_mode():
