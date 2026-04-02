@@ -1,454 +1,360 @@
 /**
- * pages/LandingPage.jsx — Public marketing landing (Stitch / Digital Atelier tokens).
+ * pages/LandingPage.jsx - Public marketing landing
  *
- * Uses the same CSS variables as authenticated Stitch pages (design-system.css via App).
- * Glass navbar, Newsreader hero, signal cards, practice chips. Route: / when logged out.
+ * Updated to match the attached "The BigLaw Ledger" design (hero + mockup,
+ * Core Intelligence Engine, The Ledger OS, competitive banner, and apply form).
  */
 
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import './LandingPage.css'
 
-/* ── 34 practice areas from CLAUDE.md ─────────────────────────── */
-const PRACTICE_AREAS = [
-  'Mergers & Acquisitions', 'Capital Markets', 'Private Equity', 'Venture Capital',
-  'Banking & Finance', 'Project Finance', 'Restructuring & Insolvency', 'Tax',
-  'Competition / Antitrust', 'Corporate Governance', 'Securities Regulation',
-  'Real Estate', 'Infrastructure', 'Energy', 'Mining',
-  'Environmental', 'Indigenous Law', 'Technology & Data Privacy',
-  'Intellectual Property', 'Labour & Employment', 'Pensions & Benefits',
-  'Litigation', 'Arbitration', 'Class Actions', 'White Collar & Investigations',
-  'Insurance', 'Healthcare & Life Sciences', 'Government Relations',
-  'International Trade', 'Immigration', 'Wealth Management',
-  'Cannabis', 'Aerospace & Defence', 'Telecommunications',
-]
-
-/* ── Signal type showcases ──────────────────────────────────────── */
-const SIGNAL_TYPES = [
-  {
-    type: 'SEC & SEDAR Filings',
-    desc: 'Regulatory filing analysis across North American markets. Material change reports, annual information forms, and prospectus alerts.',
-    icon: '📄',
-  },
-  {
-    type: 'Court Records',
-    desc: 'Real-time monitoring of federal, provincial, and state court filings. Litigation risk detection before it becomes public knowledge.',
-    icon: '⚖️',
-  },
-  {
-    type: 'Job Postings',
-    desc: 'Track strategic hiring signals — in-house counsel expansion, regulatory affairs buildout, and C-suite transitions.',
-    icon: '💼',
-  },
-  {
-    type: 'ADS-B Flight Data',
-    desc: 'Executive jet movement patterns correlated with M&A activity. Private aviation tracking across 14,000+ registered aircraft.',
-    icon: '✈️',
-  },
-  {
-    type: 'Satellite Imagery',
-    desc: 'Construction activity, facility expansion, and environmental monitoring via orbital image analysis.',
-    icon: '🛰️',
-  },
-  {
-    type: 'Press & Market Data',
-    desc: 'NLP-processed news feeds, analyst reports, and credit rating changes. Sentiment scoring with 28-day momentum.',
-    icon: '📊',
-  },
-]
+function scrollToId(id) {
+  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
 
 export default function LandingPage() {
   const navigate = useNavigate()
 
+  const coreCards = useMemo(() => ([
+    {
+      title: 'Signal Engine',
+      body: 'Ingests regulatory filings, court events, market data, and executive movement-then normalizes into one signal layer.',
+    },
+    {
+      title: 'Mandate Scoring',
+      body: 'Calibrated models produce probability across 34 practice areas and 30/60/90-day horizons.',
+    },
+    {
+      title: 'Executive Context',
+      body: 'Profiles entity risk with network effects so your partners understand the "why" behind each score.',
+    },
+    {
+      title: 'Actionable Evidence',
+      body: 'SHAP-driven explanations and counterfactual features turn prediction into defensible outreach.',
+    },
+    {
+      title: 'Velocity Monitor',
+      body: 'Detects accelerating signal velocity so teams act before the market consensus catches up.',
+    },
+    {
+      title: 'Priority Routing',
+      body: 'Auto-routes mandates to the right queues-so BD time goes to the highest-leverage opportunities.',
+    },
+    {
+      title: 'Ledger Feedback Loop',
+      body: 'Captures confirmed mandates and improves lead-time accuracy through ongoing validation.',
+    },
+    {
+      title: 'Drift Detection',
+      body: 'Flags practice areas where accuracy degrades-prompting model re-evaluation and calibration.',
+    },
+  ]), [])
+
+  const ledgerItems = useMemo(() => ([
+    { title: '01. Strategic Dashboards', sub: 'A clean view of what is changing, where, and why-built for partner review.' },
+    { title: '02. Cross Product Signals', sub: 'Unifies scrapers, features, and evidence into one decision surface.' },
+    { title: '03. Client Predictive Landscape', sub: 'Maps near-term mandate likelihood across time horizons for outreach timing.' },
+    { title: '04. Litigation Routing', sub: 'Prioritizes disputes and enforcement actions with early leading indicators.' },
+    { title: '05. OS Layer Memory', sub: 'The ledger stores confirmations and adapts to outcomes over time.' },
+    { title: '06. Lighting Intelligence', sub: 'Explains drivers and counterfactuals so BD asks better questions.' },
+  ]), [])
+
+  const [form, setForm] = useState({
+    fullName: '',
+    workEmail: '',
+    firm: '',
+    practice: '',
+  })
+
+  const submit = (e) => {
+    e.preventDefault()
+    // No backend endpoint exists yet for access requests; send users to sign-in.
+    navigate('/login')
+  }
+
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'var(--color-surface)',
-      fontFamily: 'var(--font-data)',
-    }}>
-
-      {/* ── Glass Navbar ──────────────────────────────────────── */}
-      <nav style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 50,
-        padding: '1rem 3rem',
-        background: 'rgba(255, 255, 255, 0.80)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{
-            width: 32, height: 32,
-            background: 'linear-gradient(to bottom, var(--color-primary), var(--color-primary-container))',
-            borderRadius: 'var(--radius-md)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <span style={{
-              color: 'var(--color-on-primary)',
-              fontSize: 14, fontWeight: 700,
-              fontFamily: 'var(--font-editorial)',
-            }}>O</span>
+    <div className="lp-root">
+      {/* ---- Nav --------------------------------------------- */}
+      <div className="lp-nav">
+        <div className="lp-container lp-nav-inner">
+          <div className="lp-nav-left">
+            <div className="lp-logo-mark" aria-hidden="true">
+              <span className="lp-logo-letter">O</span>
+            </div>
+            <div className="lp-nav-brand">
+              <span className="lp-nav-brand-top">The BigLaw Ledger</span>
+              <span className="lp-nav-brand-name">ORACLE</span>
+            </div>
           </div>
-          <span style={{
-            fontFamily: 'var(--font-editorial)',
-            fontSize: 20,
-            fontWeight: 500,
-            color: 'var(--color-primary)',
-            letterSpacing: '-0.01em',
-          }}>
-            ORACLE
-          </span>
-        </div>
-        <button
-          onClick={() => navigate('/login')}
-          style={{
-            padding: '8px 20px',
-            background: 'linear-gradient(to bottom, var(--color-primary), var(--color-primary-container))',
-            color: 'var(--color-on-primary)',
-            borderRadius: 'var(--radius-md)',
-            fontWeight: 600,
-            fontSize: 13,
-            cursor: 'pointer',
-            transition: 'opacity 150ms ease-out',
-          }}
-          onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
-          onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-        >
-          Sign In
-        </button>
-      </nav>
 
+          <div className="lp-nav-links">
+            <div className="lp-nav-link" onClick={() => scrollToId('core-engine')}>How the platform works</div>
+            <div className="lp-nav-link" onClick={() => scrollToId('ledger-os')}>The Ledger OS</div>
+          </div>
 
-      {/* ── Hero Section ──────────────────────────────────────── */}
-      <section style={{
-        maxWidth: 960,
-        margin: '0 auto',
-        padding: '6rem 2rem 5rem',
-        textAlign: 'center',
-      }}>
-        <div style={{
-          fontFamily: 'var(--font-data)',
-          fontSize: '0.6875rem',
-          fontWeight: 700,
-          color: 'var(--color-secondary)',
-          letterSpacing: '0.05em',
-          textTransform: 'uppercase',
-          marginBottom: '1rem',
-        }}>
-          BigLaw BD Intelligence
-        </div>
-
-        <h1 style={{
-          fontFamily: 'var(--font-editorial)',
-          fontSize: 'clamp(2rem, 5vw, 3.5rem)',
-          fontWeight: 400,
-          color: 'var(--color-primary)',
-          lineHeight: 1.15,
-          letterSpacing: '-0.02em',
-          marginBottom: '1.5rem',
-        }}>
-          Predict Who Needs a Lawyer —<br />Before They Call
-        </h1>
-
-        <p style={{
-          fontFamily: 'var(--font-data)',
-          fontSize: '1rem',
-          color: 'var(--color-on-surface-variant)',
-          maxWidth: 600,
-          margin: '0 auto 2.5rem',
-          lineHeight: 1.6,
-          letterSpacing: '0.01em',
-        }}>
-          28 signal types. 34 practice areas. 30/60/90 day horizons.
-          Machine learning scores mandate probability across the full matrix
-          so your partners know who to call — and when.
-        </p>
-
-        <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
           <button
+            className="cl-btn-primary"
+            type="button"
             onClick={() => navigate('/login')}
-            style={{
-              padding: '12px 28px',
-              background: 'linear-gradient(to bottom, var(--color-primary), var(--color-primary-container))',
-              color: 'var(--color-on-primary)',
-              borderRadius: 'var(--radius-md)',
-              fontWeight: 600,
-              fontSize: '0.875rem',
-              cursor: 'pointer',
-              transition: 'opacity 150ms ease-out',
-            }}
-            onMouseEnter={e => e.currentTarget.style.opacity = '0.9'}
-            onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+            style={{ padding: '9px 18px', fontSize: '0.875rem' }}
           >
-            Access Dashboard
-          </button>
-          <button
-            onClick={() => document.getElementById('signals-section')?.scrollIntoView({ behavior: 'smooth' })}
-            style={{
-              padding: '12px 28px',
-              background: 'var(--color-secondary-container)',
-              color: 'var(--color-on-secondary-container)',
-              borderRadius: 'var(--radius-md)',
-              fontWeight: 600,
-              fontSize: '0.875rem',
-              cursor: 'pointer',
-              transition: 'opacity 150ms ease-out',
-            }}
-            onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
-            onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-          >
-            Explore Signals
+            Start free trial
           </button>
         </div>
-      </section>
+      </div>
 
+      {/* ---- Hero -------------------------------------------- */}
+      <section className="lp-hero">
+        <div className="lp-container">
+          <div className="lp-hero-grid">
+            <div>
+              <div className="lp-hero-kicker">
+                <span className="lp-hero-dot" />
+                <span className="lp-hero-kicker-text">The BigLaw Ledger</span>
+              </div>
 
-      {/* ── Signal Types Grid ─────────────────────────────────── */}
-      <section id="signals-section" style={{
-        maxWidth: 1100,
-        margin: '0 auto',
-        padding: '0 2rem 5rem',
-      }}>
-        <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-          <div style={{
-            fontFamily: 'var(--font-data)',
-            fontSize: '0.6875rem',
-            fontWeight: 700,
-            color: 'var(--color-secondary)',
-            letterSpacing: '0.05em',
-            textTransform: 'uppercase',
-            marginBottom: 8,
-          }}>
-            Intelligence Sources
-          </div>
-          <h2 style={{
-            fontFamily: 'var(--font-editorial)',
-            fontSize: '1.5rem',
-            fontWeight: 500,
-            color: 'var(--color-primary)',
-            letterSpacing: '-0.01em',
-          }}>
-            28 Signal Types. One Score.
-          </h2>
-        </div>
+              <h1 className="lp-hero-title">The Future of BigLaw Business Development</h1>
 
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-          gap: '1.25rem',
-        }}>
-          {SIGNAL_TYPES.map(sig => (
-            <div key={sig.type} style={{
-              background: 'var(--color-surface-container-lowest)',
-              borderRadius: 'var(--radius-xl)',
-              padding: '1.5rem',
-              boxShadow: 'var(--shadow-ambient)',
-              transition: 'transform 200ms ease-out',
-            }}
-              onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-              onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
-            >
-              <div style={{ fontSize: 28, marginBottom: 12 }}>{sig.icon}</div>
-              <h3 style={{
-                fontFamily: 'var(--font-data)',
-                fontWeight: 600,
-                fontSize: '0.875rem',
-                color: 'var(--color-on-surface)',
-                marginBottom: 8,
-              }}>
-                {sig.type}
-              </h3>
-              <p style={{
-                fontFamily: 'var(--font-data)',
-                fontSize: '0.875rem',
-                color: 'var(--color-on-surface-variant)',
-                lineHeight: 1.6,
-                letterSpacing: '0.01em',
-              }}>
-                {sig.desc}
+              <p className="lp-hero-sub">
+                Predict mandates before firms act. ORACLE unifies signals, scores probability
+                across practice areas, and delivers evidence so partners can move with confidence.
               </p>
+
+              <div className="lp-hero-actions">
+                <button
+                  type="button"
+                  className="cl-btn-primary"
+                  onClick={() => navigate('/login')}
+                >
+                  Start the demo
+                </button>
+                <button
+                  type="button"
+                  className="cl-btn-secondary"
+                  onClick={() => scrollToId('apply-access')}
+                >
+                  See how it works
+                </button>
+              </div>
             </div>
-          ))}
+
+            <div className="lp-hero-mock-wrap">
+              <div className="lp-hero-mock" aria-hidden="true">
+                <div className="lp-mock-topbar">
+                  <span className="lp-mock-pill">Priority Lead</span>
+                  <span className="lp-mock-pill" style={{ background: 'var(--color-secondary-container)' }}>Live</span>
+                </div>
+
+                <div className="lp-mock-cards">
+                  <div className="lp-mock-surface">
+                    <div className="lp-mock-row">
+                      <div className="lp-mock-chart">
+                        <svg viewBox="0 0 220 120" preserveAspectRatio="none">
+                          <defs>
+                            <linearGradient id="lpArea" x1="0" x2="0" y1="0" y2="1">
+                              <stop offset="0%" stopColor="var(--color-secondary)" stopOpacity="0.55" />
+                              <stop offset="100%" stopColor="var(--color-secondary)" stopOpacity="0.02" />
+                            </linearGradient>
+                          </defs>
+                          <path
+                            d="M0,95 C20,92 35,75 55,70 C75,65 90,50 110,45 C130,40 150,52 165,52 C180,52 195,40 220,30 L220,120 L0,120 Z"
+                            fill="url(#lpArea)"
+                          />
+                          <path
+                            d="M0,95 C20,92 35,75 55,70 C75,65 90,50 110,45 C130,40 150,52 165,52 C180,52 195,40 220,30"
+                            stroke="var(--color-secondary)"
+                            strokeWidth="3"
+                            fill="none"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                      </div>
+
+                      <div className="lp-mock-table">
+                        <div className="lp-mock-line" style={{ width: '72%' }} />
+                        <div className="lp-mock-line dim" style={{ width: '88%' }} />
+                        <div className="lp-mock-line" style={{ width: '64%' }} />
+                        <div className="lp-mock-line dim" style={{ width: '80%' }} />
+                      </div>
+                    </div>
+
+                    <div className="lp-mock-callout">
+                      <div className="lp-mock-callout-title">Bayesian Lead Timeline</div>
+                      <div className="lp-mock-callout-sub">
+                        When velocity increases, ORACLE routes the mandate to the correct queue with evidence-ready explanations.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-
-      {/* ── Practice Area Chips ────────────────────────────────── */}
-      <section style={{
-        background: 'var(--color-surface-container-low)',
-        padding: '4rem 2rem',
-      }}>
-        <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-            <div style={{
-              fontFamily: 'var(--font-data)',
-              fontSize: '0.6875rem',
-              fontWeight: 700,
-              color: 'var(--color-secondary)',
-              letterSpacing: '0.05em',
-              textTransform: 'uppercase',
-              marginBottom: 8,
-            }}>
-              Full Coverage
-            </div>
-            <h2 style={{
-              fontFamily: 'var(--font-editorial)',
-              fontSize: '1.5rem',
-              fontWeight: 500,
-              color: 'var(--color-primary)',
-              letterSpacing: '-0.01em',
-            }}>
-              34 Practice Areas × 3 Horizons
-            </h2>
+      {/* ---- Core Intelligence Engine ------------------------- */}
+      <section id="core-engine" className="lp-section">
+        <div className="lp-container">
+          <div className="lp-section-head">
+            <div className="lp-section-kicker">Core Intelligence Engine</div>
+            <div className="lp-section-title">One Score. Partner-Ready Evidence.</div>
           </div>
 
-          <div style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: 8,
-            justifyContent: 'center',
-          }}>
-            {PRACTICE_AREAS.map(pa => (
-              <span key={pa} style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                padding: '6px 14px',
-                borderRadius: 'var(--radius-full)',
-                background: 'var(--color-surface-container-lowest)',
-                fontFamily: 'var(--font-data)',
-                fontSize: '0.75rem',
-                fontWeight: 600,
-                color: 'var(--color-on-surface-variant)',
-                letterSpacing: '0.02em',
-                boxShadow: 'var(--shadow-ambient)',
-              }}>
-                {pa}
-              </span>
-            ))}
-          </div>
-        </div>
-      </section>
-
-
-      {/* ── Stats / Social Proof ──────────────────────────────── */}
-      <section style={{
-        maxWidth: 1100,
-        margin: '0 auto',
-        padding: '5rem 2rem',
-      }}>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: '2fr 1fr',
-          gap: '3rem',
-          alignItems: 'center',
-        }}>
-          <div>
-            <div style={{
-              fontFamily: 'var(--font-data)',
-              fontSize: '0.6875rem',
-              fontWeight: 700,
-              color: 'var(--color-secondary)',
-              letterSpacing: '0.05em',
-              textTransform: 'uppercase',
-              marginBottom: 8,
-            }}>
-              How It Works
-            </div>
-            <h2 style={{
-              fontFamily: 'var(--font-editorial)',
-              fontSize: '1.5rem',
-              fontWeight: 500,
-              color: 'var(--color-primary)',
-              letterSpacing: '-0.01em',
-              marginBottom: '1.5rem',
-            }}>
-              ML Models Score. Partners Act.
-            </h2>
-            <p style={{
-              fontFamily: 'var(--font-data)',
-              fontSize: '0.875rem',
-              color: 'var(--color-on-surface-variant)',
-              lineHeight: 1.8,
-              letterSpacing: '0.01em',
-              maxWidth: 500,
-            }}>
-              ORACLE's scoring engine processes signals daily through calibrated ML models.
-              Each company receives a probability score for each of 34 practice areas
-              across three time horizons (30, 60, and 90 days). SHAP explanations
-              surface the features driving each score — so partners see the reasoning,
-              not just the number.
-            </p>
-          </div>
-
-          <div style={{
-            background: 'var(--color-surface-container-lowest)',
-            borderRadius: 'var(--radius-xl)',
-            padding: '2rem',
-            boxShadow: 'var(--shadow-ambient)',
-          }}>
-            {[
-              { label: 'Practice Areas', value: '34' },
-              { label: 'Signal Types', value: '28' },
-              { label: 'Time Horizons', value: '3' },
-              { label: 'ML Engines', value: '34' },
-            ].map((s, i) => (
-              <div key={s.label} style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                background: i % 2 === 1 ? 'var(--color-surface-container-low)' : 'transparent',
-                margin: i % 2 === 1 ? '0 -2rem' : 0,
-                padding: i % 2 === 1 ? '1rem 2rem' : '1rem 0',
-              }}>
-                <span style={{
-                  fontFamily: 'var(--font-data)',
-                  fontSize: '0.6875rem',
-                  fontWeight: 700,
-                  color: 'var(--color-on-surface-variant)',
-                  letterSpacing: '0.05em',
-                  textTransform: 'uppercase',
-                }}>{s.label}</span>
-                <span style={{
-                  fontFamily: 'var(--font-editorial)',
-                  fontSize: '1.5rem',
-                  fontWeight: 500,
-                  color: 'var(--color-primary)',
-                  letterSpacing: '-0.01em',
-                }}>{s.value}</span>
+          <div className="lp-core-grid">
+            {coreCards.map((c) => (
+              <div key={c.title} className="lp-core-card">
+                <div className="lp-core-card-title">{c.title}</div>
+                <div className="lp-core-card-body">{c.body}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
+      {/* ---- Ledger OS ----------------------------------------- */}
+      <section id="ledger-os" className="lp-section" style={{ paddingTop: '1rem' }}>
+        <div className="lp-container">
+          <div className="lp-section-head" style={{ marginBottom: '1.75rem' }}>
+            <div className="lp-section-kicker">The Ledger OS</div>
+            <div className="lp-section-title">A system of dashboards, evidence, and feedback.</div>
+          </div>
 
-      {/* ── Footer ─────────────────────────────────────────────── */}
-      <footer style={{
-        background: 'var(--color-surface-container-low)',
-        padding: '2rem 3rem',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-      }}>
-        <span style={{
-          fontFamily: 'var(--font-editorial)',
-          fontSize: 16,
-          fontWeight: 500,
-          color: 'var(--color-primary)',
-          letterSpacing: '-0.01em',
-        }}>
-          ORACLE
-        </span>
-        <span style={{
-          fontFamily: 'var(--font-data)',
-          fontSize: '0.6875rem',
-          color: 'var(--color-on-surface-variant)',
-          letterSpacing: '0.05em',
-        }}>
-          BD Intelligence Platform · Halcyon Legal
-        </span>
+          <div className="lp-ledger-grid">
+            <div className="lp-ledger-left">
+              <h3>The Ledger OS</h3>
+              <p>
+                Every signal becomes a ledger entry. Every entry feeds the models. Every prediction learns from confirmation,
+                so your BD team builds momentum with each cycle--not with guesswork.
+              </p>
+            </div>
+
+            <div className="lp-ledger-right">
+              {ledgerItems.map((it) => (
+                <div key={it.title} className="lp-ledger-item">
+                  <div className="lp-ledger-item-title">{it.title}</div>
+                  <div className="lp-ledger-item-sub">{it.sub}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ---- Competitive banner ------------------------------ */}
+      <section className="lp-section" style={{ paddingTop: 0 }}>
+        <div className="lp-container">
+          <div className="lp-banner">
+            <div className="lp-banner-grid">
+              <div>
+                <div className="lp-banner-label">Mandates Captured (30/60/90)</div>
+                <div className="lp-banner-number">1,402</div>
+                <div className="lp-banner-text">
+                  Signal-to-score coverage designed for partner-led outreach at BigLaw speed.
+                </div>
+              </div>
+              <div>
+                <div className="lp-banner-label">The Competitive Advantages</div>
+                <div className="lp-banner-text" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
+                  <div>
+                    <div style={{ fontFamily: 'var(--font-editorial)', fontSize: '1.9rem', color: 'var(--color-on-primary)' }}>
+                      4.2x
+                    </div>
+                    <div style={{ color: 'rgba(255, 255, 255, 0.78)' }}>Lead-time acceleration</div>
+                  </div>
+                  <div>
+                    <div style={{ fontFamily: 'var(--font-editorial)', fontSize: '1.9rem', color: 'var(--color-on-primary)' }}>
+                      18/25
+                    </div>
+                    <div style={{ color: 'rgba(255, 255, 255, 0.78)' }}>Partner-ready evidence rate</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ---- Apply for Access ------------------------------- */}
+      <section id="apply-access" className="lp-apply">
+        <div className="lp-container">
+          <div className="lp-apply-head">
+            <div className="lp-section-kicker" style={{ marginBottom: 12 }}>Apply for Access</div>
+            <div className="lp-apply-title">Request your firm's onboarding slot</div>
+            <div className="lp-apply-sub">
+              Submit your details and we'll route you to the right workflow.
+            </div>
+          </div>
+
+          <div className="lp-apply-card">
+            <form onSubmit={submit}>
+              <div className="lp-form-grid">
+                <div>
+                  <label className="lp-form-label">Full name</label>
+                  <input
+                    className="cl-input"
+                    value={form.fullName}
+                    onChange={(e) => setForm((s) => ({ ...s, fullName: e.target.value }))}
+                    placeholder="Jane Smith"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="lp-form-label">Work email</label>
+                  <input
+                    className="cl-input"
+                    value={form.workEmail}
+                    onChange={(e) => setForm((s) => ({ ...s, workEmail: e.target.value }))}
+                    placeholder="jane@firm.com"
+                    type="email"
+                    required
+                  />
+                </div>
+                <div className="lp-span-2">
+                  <label className="lp-form-label">Firm</label>
+                  <input
+                    className="cl-input"
+                    value={form.firm}
+                    onChange={(e) => setForm((s) => ({ ...s, firm: e.target.value }))}
+                    placeholder="Halcyon Legal"
+                    required
+                  />
+                </div>
+                <div className="lp-span-2">
+                  <label className="lp-form-label">Area of practice</label>
+                  <input
+                    className="cl-input"
+                    value={form.practice}
+                    onChange={(e) => setForm((s) => ({ ...s, practice: e.target.value }))}
+                    placeholder="M&A / Litigation / Regulatory..."
+                    required
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'center', marginTop: 18 }}>
+                <button className="cl-btn-primary" type="submit" style={{ padding: '11px 26px' }}>
+                  REQUEST ACCESS
+                </button>
+              </div>
+
+              <div className="lp-footer" style={{ paddingBottom: 0 }}>
+                By requesting access, you agree to receive onboarding communications from Halcyon Legal.
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <footer className="lp-footer">
+        <div className="lp-container" style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+          <div>(c) 2026 The BigLaw Ledger - ORACLE</div>
+          <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+            <span style={{ cursor: 'pointer' }} onClick={() => scrollToId('core-engine')}>How it works</span>
+            <span style={{ cursor: 'pointer' }} onClick={() => scrollToId('ledger-os')}>Ledger OS</span>
+            <span style={{ cursor: 'pointer' }} onClick={() => scrollToId('apply-access')}>Apply</span>
+          </div>
+        </div>
       </footer>
     </div>
   )

@@ -204,7 +204,7 @@ async def trigger_stats(
             await db.execute(
                 select(func.count(Trigger.id)).where(
                     Trigger.urgency >= 80,
-                    not Trigger.actioned,
+                    Trigger.actioned.is_(False),
                     Trigger.detected_at >= now - timedelta(hours=72),
                 )
             )
