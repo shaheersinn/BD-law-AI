@@ -155,6 +155,53 @@ SIGNAL_WEIGHTS: dict[str, float] = {
     "class_action_filed_federal": 0.89,
     "class_action_investigation": 0.85,
     "class_action_analysis": 0.60,
+    # ── Phase S-NEW: 28 new signal types ─────────────────────────────────────
+    # HNWI & Estate (Phase 1)
+    "trust_deemed_disposition_approaching": 0.91,
+    "estate_art_liquidation": 0.74,
+    "probate_filing_high_value": 0.82,
+    "hnwi_foundation_director_change": 0.72,
+    "vessel_registry_change": 0.68,
+    # Immigration (Phase 2)
+    "immigration_lmia_spike": 0.76,
+    "immigration_express_entry_draw": 0.52,
+    # PE / VC (Phase 2)
+    "pe_fund_exit_pressure": 0.83,
+    "vc_series_b_plus": 0.77,
+    # Financial Stress (Phase 3)
+    "ppsa_layered_lending": 0.87,
+    "credit_rating_downgrade_sp": 0.86,
+    # Legal (Phase 3)
+    "tax_court_dispute": 0.81,
+    # Restructuring (Phase 3)
+    "ccaa_monitor_report": 0.95,
+    # Grants (Phase 3)
+    "federal_grant_awarded": 0.73,
+    # Courts (Phase 4)
+    "ontario_commercial_list_filing": 0.90,
+    "bc_supreme_court_filing": 0.88,
+    "quebec_superior_court_filing": 0.88,
+    # Energy (Phase 4)
+    "cer_pipeline_incident": 0.84,
+    # Macro (Phase 4)
+    "cmhc_housing_starts_decline": 0.68,
+    # IP (Phase 4)
+    "trademark_new_class_expansion": 0.74,
+    # Ownership (Phase 5)
+    "beneficial_owner_change": 0.78,
+    # PE — Pension (Phase 5)
+    "pension_fund_investment": 0.85,
+    # Startups (Phase 5)
+    "accelerator_cohort_member": 0.65,
+    # Financial Stress — Private Credit (Phase 5)
+    "private_credit_deterioration": 0.88,
+    # Environmental (Phase 6)
+    "npri_pollution_spike": 0.77,
+    # Labour (Phase 6)
+    "labour_code_payment_order": 0.79,
+    "worksafebc_penalty": 0.76,
+    # Macro — BOS/SLOS (Phase 6 enhancement)
+    "macro_bos_credit_tightening": 0.72,
 }
 
 # Signals grouped into categories for convergence multiplier
@@ -341,6 +388,66 @@ SIGNAL_CATEGORIES: dict[str, str] = {
         ],
         "news",
     ),
+    # ── Phase S-NEW: 28 new signal categories ────────────────────────────────
+    # HNWI (new category)
+    **dict.fromkeys(
+        [
+            "trust_deemed_disposition_approaching",
+            "estate_art_liquidation",
+            "probate_filing_high_value",
+            "hnwi_foundation_director_change",
+            "vessel_registry_change",
+        ],
+        "hnwi",
+    ),
+    # Immigration (new category — maps to filings)
+    **dict.fromkeys(
+        ["immigration_lmia_spike", "immigration_express_entry_draw"],
+        "filings",
+    ),
+    # PE / VC
+    **dict.fromkeys(
+        ["pe_fund_exit_pressure", "vc_series_b_plus", "pension_fund_investment"],
+        "filings",
+    ),
+    # Financial Stress
+    **dict.fromkeys(
+        ["ppsa_layered_lending", "credit_rating_downgrade_sp", "private_credit_deterioration"],
+        "filings",
+    ),
+    # Legal / Courts / Restructuring
+    **dict.fromkeys(
+        [
+            "tax_court_dispute",
+            "ontario_commercial_list_filing",
+            "bc_supreme_court_filing",
+            "quebec_superior_court_filing",
+            "ccaa_monitor_report",
+        ],
+        "litigation",
+    ),
+    # Grants
+    **dict.fromkeys(["federal_grant_awarded", "beneficial_owner_change"], "filings"),
+    # Energy / Environmental / Labour → enforcement
+    **dict.fromkeys(
+        [
+            "cer_pipeline_incident",
+            "npri_pollution_spike",
+            "labour_code_payment_order",
+            "worksafebc_penalty",
+        ],
+        "enforcement",
+    ),
+    # Macro / Geospatial
+    **dict.fromkeys(
+        ["cmhc_housing_starts_decline", "macro_bos_credit_tightening"],
+        "geospatial",
+    ),
+    # IP / Startups → filings
+    **dict.fromkeys(
+        ["trademark_new_class_expansion", "accelerator_cohort_member"],
+        "filings",
+    ),
 }
 
 # Practice area voting weights for each signal
@@ -453,7 +560,10 @@ PRACTICE_AREA_VOTES: dict[str, dict[str, float]] = {
     "geo_union_certification": {"Employment & Labour": 1.0},
     "geo_trade_remedy": {"Regulatory": 0.7, "Litigation": 0.3},
     "geo_procurement_contract_award": {"Regulatory": 0.4, "Corporate / M&A": 0.6},
-    "geo_property_tax_arrears": {"Real Estate & Construction": 0.6, "Restructuring / Insolvency": 0.4},
+    "geo_property_tax_arrears": {
+        "Real Estate & Construction": 0.6,
+        "Restructuring / Insolvency": 0.4,
+    },
     "geo_darkweb_mention": {"Privacy & Cybersecurity": 0.8, "Regulatory": 0.2},
     "geo_cipo_patent_grant": {"IP": 1.0},
     "geo_cfcj_access_to_justice": {},
@@ -468,6 +578,61 @@ PRACTICE_AREA_VOTES: dict[str, dict[str, float]] = {
     "class_action_filed_federal": {"Litigation": 1.0},
     "class_action_investigation": {"Litigation": 1.0},
     "class_action_analysis": {"Litigation": 0.6, "Regulatory": 0.4},
+    # ── Phase S-NEW: 28 new practice area votes ─────────────────────────────
+    # HNWI (Phase 1)
+    "trust_deemed_disposition_approaching": {"Tax": 0.8, "Wills / Estates": 0.2},
+    "estate_art_liquidation": {"Wills / Estates": 1.0},
+    "probate_filing_high_value": {"Wills / Estates": 1.0},
+    "hnwi_foundation_director_change": {
+        "Wills / Estates": 0.3,
+        "Tax": 0.3,
+        "Corporate / Governance": 0.4,
+    },
+    "vessel_registry_change": {
+        "Wills / Estates": 0.5,
+        "Banking & Finance": 0.3,
+        "Regulatory": 0.2,
+    },
+    # Immigration (Phase 2)
+    "immigration_lmia_spike": {"Employment & Labour": 0.6, "Corporate / M&A": 0.4},
+    "immigration_express_entry_draw": {"Employment & Labour": 1.0},
+    # PE / VC (Phase 2)
+    "pe_fund_exit_pressure": {"Corporate / M&A": 0.7, "Securities": 0.3},
+    "vc_series_b_plus": {"Corporate / M&A": 0.6, "Securities": 0.4},
+    # Financial Stress (Phase 3)
+    "ppsa_layered_lending": {"Restructuring / Insolvency": 0.6, "Banking & Finance": 0.4},
+    "credit_rating_downgrade_sp": {"Restructuring / Insolvency": 0.6, "Banking & Finance": 0.4},
+    # Legal (Phase 3)
+    "tax_court_dispute": {"Tax": 1.0},
+    # Restructuring (Phase 3)
+    "ccaa_monitor_report": {"Restructuring / Insolvency": 1.0},
+    # Grants (Phase 3)
+    "federal_grant_awarded": {"Corporate / M&A": 0.6, "IP": 0.4},
+    # Courts (Phase 4)
+    "ontario_commercial_list_filing": {"Restructuring / Insolvency": 0.5, "Litigation": 0.5},
+    "bc_supreme_court_filing": {"Litigation": 1.0},
+    "quebec_superior_court_filing": {"Litigation": 1.0},
+    # Energy (Phase 4)
+    "cer_pipeline_incident": {"Environmental": 0.5, "Regulatory": 0.5},
+    # Macro (Phase 4)
+    "cmhc_housing_starts_decline": {"Real Estate & Construction": 1.0},
+    # IP (Phase 4)
+    "trademark_new_class_expansion": {"IP": 0.6, "Corporate / M&A": 0.4},
+    # Ownership (Phase 5)
+    "beneficial_owner_change": {"Corporate / Governance": 1.0},
+    # Pension (Phase 5)
+    "pension_fund_investment": {"Corporate / M&A": 0.7, "Securities": 0.3},
+    # Startups (Phase 5)
+    "accelerator_cohort_member": {"Corporate / M&A": 0.6, "IP": 0.4},
+    # Private Credit (Phase 5)
+    "private_credit_deterioration": {"Restructuring / Insolvency": 1.0},
+    # Environmental (Phase 6)
+    "npri_pollution_spike": {"Environmental": 1.0},
+    # Labour (Phase 6)
+    "labour_code_payment_order": {"Employment & Labour": 1.0},
+    "worksafebc_penalty": {"Employment & Labour": 0.7, "Regulatory": 0.3},
+    # Macro BOS/SLOS (Phase 6)
+    "macro_bos_credit_tightening": {"Banking & Finance": 0.7, "Restructuring / Insolvency": 0.3},
 }
 
 

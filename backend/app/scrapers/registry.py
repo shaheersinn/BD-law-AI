@@ -118,6 +118,60 @@ def _load_registry() -> None:
     _safe_import("app.scrapers.consumer.opc_breach_reports")
     _safe_import("app.scrapers.consumer.provincial_privacy_commissioners")
 
+    # ── HNWI scrapers (Phase S-NEW-1) ──────────────────────────────────────────
+    _safe_import("app.scrapers.hnwi.trust_aging")
+    _safe_import("app.scrapers.hnwi.art_auctions")
+    _safe_import("app.scrapers.hnwi.probate_filings")
+    _safe_import("app.scrapers.hnwi.cra_charities")
+    _safe_import("app.scrapers.hnwi.vessel_registry")
+
+    # ── Immigration scrapers (Phase S-NEW-2) ─────────────────────────────────
+    _safe_import("app.scrapers.immigration.lmia")
+    _safe_import("app.scrapers.immigration.ircc_express_entry")
+
+    # ── PE / VC scrapers (Phase S-NEW-2, S-NEW-5) ────────────────────────────
+    _safe_import("app.scrapers.pe.fund_vintage")
+    _safe_import("app.scrapers.pe.vc_deals")
+    _safe_import("app.scrapers.pe.pension_funds")
+
+    # ── Financial Stress scrapers (Phase S-NEW-3, S-NEW-5) ───────────────────
+    _safe_import("app.scrapers.financial_stress.ppsa")
+    _safe_import("app.scrapers.financial_stress.sp_ratings")
+    _safe_import("app.scrapers.financial_stress.private_credit")
+
+    # ── Restructuring scrapers (Phase S-NEW-3) ───────────────────────────────
+    _safe_import("app.scrapers.restructuring.ccaa_monitors")
+
+    # ── Grants scrapers (Phase S-NEW-3) ──────────────────────────────────────
+    _safe_import("app.scrapers.grants.federal_grants")
+
+    # ── Courts scrapers (Phase S-NEW-4) ──────────────────────────────────────
+    _safe_import("app.scrapers.courts.ontario_commercial_list")
+    _safe_import("app.scrapers.courts.bc_cso")
+    _safe_import("app.scrapers.courts.soquij")
+
+    # ── Energy scrapers (Phase S-NEW-4) ──────────────────────────────────────
+    _safe_import("app.scrapers.energy.cer_pipeline")
+
+    # ── Macro scrapers (Phase S-NEW-4) ───────────────────────────────────────
+    _safe_import("app.scrapers.macro.cmhc")
+
+    # ── IP scrapers (Phase S-NEW-4) ──────────────────────────────────────────
+    _safe_import("app.scrapers.ip.cipo_trademarks")
+
+    # ── Ownership scrapers (Phase S-NEW-5) ───────────────────────────────────
+    _safe_import("app.scrapers.ownership.beneficial_ownership")
+
+    # ── Startups scrapers (Phase S-NEW-5) ────────────────────────────────────
+    _safe_import("app.scrapers.startups.accelerator_cohorts")
+
+    # ── Environmental scrapers (Phase S-NEW-6) ───────────────────────────────
+    _safe_import("app.scrapers.environmental.npri")
+
+    # ── Labour scrapers (Phase S-NEW-6) ──────────────────────────────────────
+    _safe_import("app.scrapers.labour.canada_labour_code_naming")
+    _safe_import("app.scrapers.labour.worksafebc")
+
     # ── Corporate scrapers (all use @register; previously unreachable) ─────────
     _safe_import("app.scrapers.corporate.sedar")
     _safe_import("app.scrapers.corporate.edgar")
