@@ -15,7 +15,7 @@ from __future__ import annotations
 from typing import Any
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -229,7 +229,6 @@ async def create_signal_override(
 @router.delete(
     "/signal-override/{override_id}",
     status_code=204,
-    response_class=Response,
     summary="Deactivate a signal weight override",
 )
 async def delete_signal_override(
@@ -263,7 +262,6 @@ async def delete_signal_override(
 
     await _invalidate_overrides_cache()
     log.info("signal_override.deactivated", override_id=override_id)
-    return Response(status_code=204)
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
