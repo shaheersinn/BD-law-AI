@@ -188,7 +188,9 @@ async def recalibrate_from_confirmations(db: Any) -> dict[str, dict[str, float]]
             )
         ).all()
     except Exception:
-        log.warning("sector_weights.recalibrate: mandate_confirmations not available (Phase 9 pending)")
+        log.warning(
+            "sector_weights.recalibrate: mandate_confirmations not available (Phase 9 pending)"
+        )  # noqa: E501
         return {}
 
     if not rows:
@@ -249,9 +251,7 @@ async def _persist_sector_weights(db: Any, weights: dict[str, dict[str, float]])
                     {"sector": sector, "signal_type": feature, "multiplier": multiplier},
                 )
             except Exception:
-                log.warning(
-                    "sector_weights: failed to upsert", sector=sector, signal_type=feature
-                )
+                log.warning("sector_weights: failed to upsert", sector=sector, signal_type=feature)
     await db.commit()
     log.info("sector_weights.persisted", total_entries=sum(len(v) for v in weights.values()))
 

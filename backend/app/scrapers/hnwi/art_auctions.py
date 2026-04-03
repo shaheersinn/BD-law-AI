@@ -58,9 +58,7 @@ class ArtAuctionScraper(BaseScraper):
 
         return results
 
-    async def _scrape_auction_house(
-        self, url: str, house_name: str
-    ) -> list[ScraperResult]:
+    async def _scrape_auction_house(self, url: str, house_name: str) -> list[ScraperResult]:
         results: list[ScraperResult] = []
 
         try:

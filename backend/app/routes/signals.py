@@ -21,14 +21,16 @@ from app.database import get_db
 
 log = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/v1/signals", tags=["signals"])
+router = APIRouter(prefix="/v1/signals", tags=["signals"], redirect_slashes=False)
 
 
-@router.get("/", summary="List recent signals across all companies")
+@router.get("", summary="List recent signals across all companies")
 async def list_signals(
     limit: int = Query(default=50, ge=1, le=200),
     signal_type: str | None = Query(default=None),
-    category: str | None = Query(default=None, description="Filter by signal_type prefix, e.g. 'geo'"),
+    category: str | None = Query(
+        default=None, description="Filter by signal_type prefix, e.g. 'geo'"
+    ),
     db: AsyncSession = Depends(get_db),
     _user: User = Depends(require_auth),
 ) -> list[dict[str, Any]]:

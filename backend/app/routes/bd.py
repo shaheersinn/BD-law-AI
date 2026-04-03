@@ -62,7 +62,9 @@ async def get_partner_coaching(
     """Returns coaching insights for a partner."""
     try:
         result = await db.execute(
-            text("SELECT id, email, full_name, role FROM users WHERE id = :pid AND role = 'partner'"),
+            text(
+                "SELECT id, email, full_name, role FROM users WHERE id = :pid AND role = 'partner'"
+            ),
             {"pid": partner_id},
         )
         row = result.mappings().first()

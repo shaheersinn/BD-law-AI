@@ -215,7 +215,9 @@ async def refresh_rules(db: Any) -> int:
             )
         ).all()
     except Exception:
-        log.warning("cooccurrence.refresh_rules: mandate_confirmations not available (Phase 9 pending)")
+        log.warning(
+            "cooccurrence.refresh_rules: mandate_confirmations not available (Phase 9 pending)"
+        )  # noqa: E501
         return 0
 
     if not rows:
@@ -231,7 +233,10 @@ async def refresh_rules(db: Any) -> int:
         if row.practice_area != current_pa:
             if current_pa is not None and current_signals:
                 events_by_pa.setdefault(current_pa, []).append(
-                    {"mandate_id": len(events_by_pa.get(current_pa, [])), "signal_types": current_signals}
+                    {
+                        "mandate_id": len(events_by_pa.get(current_pa, [])),
+                        "signal_types": current_signals,
+                    }  # noqa: E501
                 )
             current_pa = row.practice_area
             current_signals = [row.signal_type]

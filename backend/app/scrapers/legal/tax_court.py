@@ -16,12 +16,8 @@ from app.scrapers.registry import register
 
 log = structlog.get_logger(__name__)
 
-_TCC_DECISIONS_URL = (
-    "https://decision.tcc-cci.gc.ca/tcc-cci/en/d/rss.xml"
-)
-_TCC_HTML_URL = (
-    "https://decision.tcc-cci.gc.ca/tcc-cci/en/nav.do"
-)
+_TCC_DECISIONS_URL = "https://decision.tcc-cci.gc.ca/tcc-cci/en/d/rss.xml"
+_TCC_HTML_URL = "https://decision.tcc-cci.gc.ca/tcc-cci/en/nav.do"
 
 
 @register
@@ -133,7 +129,9 @@ class TaxCourtScraper(BaseScraper):
                 source_url = ""
                 if link_el:
                     href = str(link_el.get("href", ""))
-                    source_url = href if href.startswith("http") else f"https://decision.tcc-cci.gc.ca{href}"
+                    source_url = (
+                        href if href.startswith("http") else f"https://decision.tcc-cci.gc.ca{href}"
+                    )
 
                 party = self._extract_party(title)
 

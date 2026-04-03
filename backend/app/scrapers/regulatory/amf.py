@@ -74,9 +74,7 @@ class AMFDisciplinaryScraper(BaseScraper):
         log.info("amf_scrape_complete", count=len(results))
         return results
 
-    def _parse_item(
-        self, item: Any, cutoff: datetime
-    ) -> ScraperResult | None:
+    def _parse_item(self, item: Any, cutoff: datetime) -> ScraperResult | None:
         cells = item.find_all("td")
         if cells and len(cells) >= 2:
             return self._parse_table_row(cells, cutoff)
@@ -94,9 +92,7 @@ class AMFDisciplinaryScraper(BaseScraper):
             href = str(link_el.get("href", ""))
             source_url = href if href.startswith("http") else f"{_AMF_BASE}{href}"
 
-        date_el = item.find("time") or item.find(
-            class_=lambda c: c and "date" in str(c).lower()
-        )
+        date_el = item.find("time") or item.find(class_=lambda c: c and "date" in str(c).lower())
         published_at = None
         if date_el:
             date_str = date_el.get("datetime") or self.safe_text(date_el)
@@ -124,9 +120,7 @@ class AMFDisciplinaryScraper(BaseScraper):
             confidence_score=0.85,
         )
 
-    def _parse_table_row(
-        self, cells: list[Any], cutoff: datetime
-    ) -> ScraperResult | None:
+    def _parse_table_row(self, cells: list[Any], cutoff: datetime) -> ScraperResult | None:
         respondent = self.safe_text(cells[0])
         if not respondent or len(respondent) < 3:
             return None

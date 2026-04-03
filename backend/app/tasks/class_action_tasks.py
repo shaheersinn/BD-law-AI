@@ -96,7 +96,7 @@ async def _run_class_action_scrapers() -> dict[str, Any]:
                 try:
                     await scraper.close()
                 except Exception:
-                    pass
+                    log.debug("scraper_close_failed_ignored", source=scraper.source_id)
 
     log.info(
         "class_action_scrapers_complete",
@@ -121,4 +121,4 @@ def run_class_actions(self: Any) -> dict[str, Any]:
         return _run_async(_run_class_action_scrapers())
     except Exception as exc:
         log.error("class_action_task_failed", error=str(exc))
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc

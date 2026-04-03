@@ -91,5 +91,7 @@ class PrivateCreditScraper(BaseScraper):
             )
             return []
 
-        log.info("private_credit_equifax_ready", msg="Equifax API key configured but scraper stub active")
+        log.info(
+            "private_credit_equifax_ready", msg="Equifax API key configured but scraper stub active"
+        )
         return []

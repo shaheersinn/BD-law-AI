@@ -152,9 +152,8 @@ class PensionFundsScraper(BaseScraper):
             log.warning("pension_html_error", source=source["name"], error=str(exc))
             return results
 
-        articles = (
-            soup.find_all("article")
-            or soup.find_all("div", class_=re.compile(r"news|press|post", re.I))
+        articles = soup.find_all("article") or soup.find_all(
+            "div", class_=re.compile(r"news|press|post", re.I)
         )
 
         for article in articles[:20]:

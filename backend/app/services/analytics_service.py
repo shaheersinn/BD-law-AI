@@ -116,9 +116,7 @@ async def compute_weekly_usage_report(db: AsyncSession) -> dict[str, Any]:
             {"since": since},
         )
     ).all()
-    top_practice_areas = [
-        {"endpoint": row.endpoint, "view_count": row.cnt} for row in pa_rows
-    ]
+    top_practice_areas = [{"endpoint": row.endpoint, "view_count": row.cnt} for row in pa_rows]
 
     # ── Redis cache hit rate ───────────────────────────────────────────────────
     cache_hit_rate = await _get_redis_cache_hit_rate()
@@ -259,7 +257,9 @@ async def _deliver_report(report: dict[str, Any]) -> None:
     text_body = (
         f"*ORACLE Weekly Usage Report* — week of {report.get('week_start')}\n"
         f"• Top companies: {top_co or 'none'}\n"
-        f"• Overall p95 response time: {p95:.0f}ms\n" if p95 else ""
+        f"• Overall p95 response time: {p95:.0f}ms\n"
+        if p95
+        else ""
         f"• Cache hit rate: {hit_pct}\n"
         f"• Endpoints tracked: {len(report.get('endpoint_breakdown') or [])}"
     )

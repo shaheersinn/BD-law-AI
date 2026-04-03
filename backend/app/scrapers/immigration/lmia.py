@@ -92,8 +92,12 @@ class LMIAScraper(BaseScraper):
             if signal_reason:
                 province = ""
                 for row in rows_list:
-                    if (row.get("Employer", "") or row.get("employer_name", "")).strip() == employer:
-                        province = (row.get("Province/Territory", "") or row.get("province", "") or "").strip()
+                    if (
+                        row.get("Employer", "") or row.get("employer_name", "")
+                    ).strip() == employer:
+                        province = (
+                            row.get("Province/Territory", "") or row.get("province", "") or ""
+                        ).strip()
                         break
 
                 results.append(

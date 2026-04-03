@@ -1,8 +1,12 @@
 """app/scrapers/legal/osb_insolvency.py — OSB insolvency statistics."""
+
 from __future__ import annotations
+
 import io
+
 from app.scrapers.base import BaseScraper, SignalData
 from app.scrapers.registry import register
+
 
 @register
 class OsbInsolvencyScraper(BaseScraper):
@@ -25,6 +29,7 @@ class OsbInsolvencyScraper(BaseScraper):
         signals: list[SignalData] = []
         try:
             import openpyxl
+
             response = await self.get(self._EXCEL_URL)
             if not response:
                 return signals
@@ -41,16 +46,18 @@ class OsbInsolvencyScraper(BaseScraper):
                 if not sector or sector.strip() in ("", "Sector", "Industry"):
                     continue
                 strength = min(0.90, 0.50 + (int(count or 0) / 100) * 0.40)
-                signals.append(SignalData(
-                    source_id=self.source_id,
-                    signal_type="insolvency_statistic",
-                    raw_company_name=sector,
-                    signal_text=f"OSB insolvency: {sector} — {count} filings",
-                    source_url=self.SOURCE_URL,
-                    practice_area_hints=["insolvency_restructuring", "banking_finance"],
-                    confidence_score=float(strength),
-                    signal_value={"sector": sector, "count": count, "source": "OSB"},
-                ))
+                signals.append(
+                    SignalData(
+                        source_id=self.source_id,
+                        signal_type="insolvency_statistic",
+                        raw_company_name=sector,
+                        signal_text=f"OSB insolvency: {sector} — {count} filings",
+                        source_url=self.SOURCE_URL,
+                        practice_area_hints=["insolvency_restructuring", "banking_finance"],
+                        confidence_score=float(strength),
+                        signal_value={"sector": sector, "count": count, "source": "OSB"},
+                    )
+                )
         except Exception as exc:
             self.log.error("OSB: error parsing Excel: %s", exc)
         return signals

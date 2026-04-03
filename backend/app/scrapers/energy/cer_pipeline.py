@@ -18,16 +18,10 @@ from app.scrapers.registry import register
 log = structlog.get_logger(__name__)
 
 _CER_INCIDENTS_URL = (
-    "https://www.cer-rec.gc.ca/en/safety-environment/industry-performance/"
-    "pipeline-incidents/"
+    "https://www.cer-rec.gc.ca/en/safety-environment/industry-performance/pipeline-incidents/"
 )
-_CER_COMPLIANCE_URL = (
-    "https://www.cer-rec.gc.ca/en/safety-environment/compliance/"
-)
-_CER_OPEN_DATA_URL = (
-    "https://open.canada.ca/data/en/dataset/"
-    "7dffedc4-23fa-4b36-9cc3-d3f3d3d4f66b"
-)
+_CER_COMPLIANCE_URL = "https://www.cer-rec.gc.ca/en/safety-environment/compliance/"
+_CER_OPEN_DATA_URL = "https://open.canada.ca/data/en/dataset/7dffedc4-23fa-4b36-9cc3-d3f3d3d4f66b"
 
 
 @register

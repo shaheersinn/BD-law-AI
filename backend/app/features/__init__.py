@@ -12,14 +12,14 @@ importlib.import_module("app.features.geo")
 importlib.import_module("app.features.macro")
 importlib.import_module("app.features.nlp")
 importlib.import_module("app.features.temporal")
-from app.features.base import (
+from app.features.base import (  # noqa: E402
     VALID_HORIZONS,
     BaseFeature,
     FeatureRegistry,
     FeatureValue,
     register_feature,
 )
-from app.features.runner import FeatureRunner
+from app.features.runner import FeatureRunner  # noqa: E402
 
 __all__ = [
     "BaseFeature",

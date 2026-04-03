@@ -234,9 +234,7 @@ async def _get_label_counts(db: AsyncSession) -> dict[str, int]:
 
 def _identify_worst_five(summary: list[dict[str, Any]]) -> list[str]:
     """Return the 5 practice areas with lowest precision (excluding None)."""
-    ranked = [
-        s for s in summary if s.get("precision") is not None and s["sample_count"] >= 5
-    ]
+    ranked = [s for s in summary if s.get("precision") is not None and s["sample_count"] >= 5]
     ranked.sort(key=lambda s: s["precision"])  # type: ignore[arg-type]
     return [s["practice_area"] for s in ranked[:5]]
 

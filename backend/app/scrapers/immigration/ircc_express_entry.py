@@ -62,10 +62,14 @@ class IRCCExpressEntryScraper(BaseScraper):
 
         for row in recent:
             try:
-                draw_number = (row.get("Draw Number", "") or row.get("draw_number", "") or "").strip()
+                draw_number = (
+                    row.get("Draw Number", "") or row.get("draw_number", "") or ""
+                ).strip()
                 draw_date = (row.get("Date", "") or row.get("draw_date", "") or "").strip()
                 draw_type = (row.get("Draw Type", "") or row.get("category", "") or "").strip()
-                invitations = (row.get("Number of Invitations", "") or row.get("invitations", "") or "").strip()
+                invitations = (
+                    row.get("Number of Invitations", "") or row.get("invitations", "") or ""
+                ).strip()
                 crs_cutoff = (row.get("CRS Cut-Off", "") or row.get("crs_score", "") or "").strip()
 
                 if not draw_date:

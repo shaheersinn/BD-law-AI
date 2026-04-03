@@ -160,8 +160,7 @@ class CCAAMonitorsScraper(BaseScraper):
                             "case_title": title,
                         },
                         signal_text=(
-                            f"{proceeding_type} — {debtor or title} "
-                            f"(monitor: {source['firm']})"
+                            f"{proceeding_type} — {debtor or title} (monitor: {source['firm']})"
                         ),
                         published_at=self._now_utc(),
                         practice_area_hints=["Restructuring / Insolvency"],

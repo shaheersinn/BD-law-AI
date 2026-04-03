@@ -154,13 +154,17 @@ async def trigger_stats(
     try:
         total_24h = (
             await db.execute(
-                select(func.count(Trigger.id)).where(Trigger.detected_at >= now - timedelta(hours=24))
+                select(func.count(Trigger.id)).where(
+                    Trigger.detected_at >= now - timedelta(hours=24)
+                )
             )
         ).scalar() or 0
 
         total_72h = (
             await db.execute(
-                select(func.count(Trigger.id)).where(Trigger.detected_at >= now - timedelta(hours=72))
+                select(func.count(Trigger.id)).where(
+                    Trigger.detected_at >= now - timedelta(hours=72)
+                )
             )
         ).scalar() or 0
 

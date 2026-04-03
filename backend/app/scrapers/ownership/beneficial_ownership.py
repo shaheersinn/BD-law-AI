@@ -98,12 +98,15 @@ class BeneficialOwnershipScraper(BaseScraper):
                     continue
 
                 company = self._extract_field(text, ["corporation", "company", "entity"])
-                individual = self._extract_field(text, [
-                    "individual with significant control",
-                    "significant control",
-                    "owner",
-                    "director",
-                ])
+                individual = self._extract_field(
+                    text,
+                    [
+                        "individual with significant control",
+                        "significant control",
+                        "owner",
+                        "director",
+                    ],
+                )
 
                 if not company:
                     continue
@@ -122,8 +125,7 @@ class BeneficialOwnershipScraper(BaseScraper):
                         },
                         signal_text=(
                             f"Beneficial ownership ({source['province']}): "
-                            f"{company}"
-                            + (f" — ISC: {individual}" if individual else "")
+                            f"{company}" + (f" — ISC: {individual}" if individual else "")
                         ),
                         published_at=self._now_utc(),
                         practice_area_hints=["Corporate / Governance"],

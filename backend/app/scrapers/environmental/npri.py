@@ -62,10 +62,12 @@ class NPRIScraper(BaseScraper):
 
         for row in reader:
             try:
-                facility = (row.get("FacilityName", "") or row.get("Facility Name", "") or "").strip()
+                facility = (
+                    row.get("FacilityName", "") or row.get("Facility Name", "") or ""
+                ).strip()
                 company = (row.get("CompanyName", "") or row.get("Company Name", "") or "").strip()
                 year = (row.get("ReportingYear", "") or row.get("Reporting Year", "") or "").strip()
-                quantity_str = (row.get("TotalRelease", "") or row.get("Total Release", "") or "0")
+                quantity_str = row.get("TotalRelease", "") or row.get("Total Release", "") or "0"
 
                 key = company or facility
                 if not key or not year:

@@ -20,9 +20,7 @@ from app.scrapers.registry import register
 log = structlog.get_logger(__name__)
 
 _CIPO_SEARCH_URL = "https://ised-isde.canada.ca/cipo/trademark-search/srch"
-_CIPO_BULK_URL = (
-    "https://ised-isde.canada.ca/cipo/trademark-search/data/trademarks-data.csv"
-)
+_CIPO_BULK_URL = "https://ised-isde.canada.ca/cipo/trademark-search/data/trademarks-data.csv"
 
 
 @register
@@ -58,9 +56,7 @@ class CIPOTrademarksScraper(BaseScraper):
         for row in reader:
             try:
                 applicant = (
-                    row.get("Applicant Name", "")
-                    or row.get("Owner Name", "")
-                    or ""
+                    row.get("Applicant Name", "") or row.get("Owner Name", "") or ""
                 ).strip()
                 if not applicant:
                     continue
@@ -77,8 +73,7 @@ class CIPOTrademarksScraper(BaseScraper):
 
                 # Determine signal reason
                 is_international = bool(
-                    row.get("International Registration", "")
-                    or row.get("Madrid Protocol", "")
+                    row.get("International Registration", "") or row.get("Madrid Protocol", "")
                 )
                 class_count = len(nice_classes.split(",")) if nice_classes else 0
 
@@ -87,7 +82,9 @@ class CIPOTrademarksScraper(BaseScraper):
                         source_id=self.source_id,
                         signal_type="trademark_new_class_expansion",
                         raw_company_name=applicant,
-                        source_url=f"{_CIPO_SEARCH_URL}?appNo={app_number}" if app_number else _CIPO_SEARCH_URL,
+                        source_url=f"{_CIPO_SEARCH_URL}?appNo={app_number}"
+                        if app_number
+                        else _CIPO_SEARCH_URL,
                         signal_value={
                             "applicant": applicant,
                             "trademark": trademark,
@@ -124,9 +121,8 @@ class CIPOTrademarksScraper(BaseScraper):
             log.warning("cipo_search_fetch_error", error=str(exc))
             return results
 
-        entries = (
-            soup.select("table tbody tr")
-            or soup.find_all("div", class_=re.compile(r"result|trademark", re.I))
+        entries = soup.select("table tbody tr") or soup.find_all(
+            "div", class_=re.compile(r"result|trademark", re.I)
         )
 
         for entry in entries[:30]:

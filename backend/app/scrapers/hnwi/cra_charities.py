@@ -18,9 +18,7 @@ from app.scrapers.registry import register
 
 log = structlog.get_logger(__name__)
 
-_CRA_CHARITIES_SEARCH_URL = (
-    "https://apps.cra-arc.gc.ca/ebci/hacc/srch/pub/dsplyBscSrch"
-)
+_CRA_CHARITIES_SEARCH_URL = "https://apps.cra-arc.gc.ca/ebci/hacc/srch/pub/dsplyBscSrch"
 _CRA_CHARITIES_BULK_URL = (
     "https://open.canada.ca/data/dataset/f4cad712-4382-4184-93b3-4c39b370dcb0/"
     "resource/download/t3010-charities.csv"
@@ -65,9 +63,7 @@ class CRACharitiesScraper(BaseScraper):
                 if "private" not in designation:
                     continue
 
-                name = (
-                    row.get("Legal Name", "") or row.get("Operating Name", "") or ""
-                ).strip()
+                name = (row.get("Legal Name", "") or row.get("Operating Name", "") or "").strip()
                 if not name:
                     continue
 
@@ -106,7 +102,9 @@ class CRACharitiesScraper(BaseScraper):
                         source_id=self.source_id,
                         signal_type="hnwi_foundation_director_change",
                         raw_company_name=name,
-                        source_url=f"{_CRA_CHARITIES_SEARCH_URL}?q={bn}" if bn else _CRA_CHARITIES_SEARCH_URL,
+                        source_url=f"{_CRA_CHARITIES_SEARCH_URL}?q={bn}"
+                        if bn
+                        else _CRA_CHARITIES_SEARCH_URL,
                         signal_value={
                             "foundation_name": name,
                             "bn_registration": bn,

@@ -74,9 +74,7 @@ class CanadaDOJScraper(BaseScraper):
         log.info("doj_canada_scrape_complete", count=len(results))
         return results
 
-    def _parse_item(
-        self, item: Any, cutoff: datetime
-    ) -> ScraperResult | None:
+    def _parse_item(self, item: Any, cutoff: datetime) -> ScraperResult | None:
         title_el = item.find(["h2", "h3", "h4", "a"])
         if not title_el:
             return None
@@ -90,9 +88,7 @@ class CanadaDOJScraper(BaseScraper):
             href = str(link_el.get("href", ""))
             source_url = href if href.startswith("http") else f"{_DOJ_BASE}{href}"
 
-        date_el = item.find("time") or item.find(
-            class_=lambda c: c and "date" in str(c).lower()
-        )
+        date_el = item.find("time") or item.find(class_=lambda c: c and "date" in str(c).lower())
         published_at = None
         if date_el:
             date_str = date_el.get("datetime") or self.safe_text(date_el)

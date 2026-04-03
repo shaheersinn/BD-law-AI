@@ -88,9 +88,8 @@ class PPSAScraper(BaseScraper):
             return results
 
         # Parse registration entries
-        entries = (
-            soup.select("table tbody tr")
-            or soup.find_all("div", class_=re.compile(r"registration|result", re.I))
+        entries = soup.select("table tbody tr") or soup.find_all(
+            "div", class_=re.compile(r"registration|result", re.I)
         )
 
         for entry in entries[:50]:

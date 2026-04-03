@@ -31,7 +31,7 @@ import structlog
 log = structlog.get_logger(__name__)
 _stdlib_log = logging.getLogger(__name__)
 
-from app.tasks.celery_app import celery_app  # noqa: E402
+from app.tasks.celery_app import celery_app  # noqa: E402,I001
 
 
 # ── Agent 033 — Usage Analytics + Score Quality ────────────────────────────────
@@ -60,7 +60,7 @@ def compute_usage_report(self) -> dict:  # type: ignore[type-arg]
         return result
     except Exception as exc:
         _stdlib_log.exception("Agent 033: compute_usage_report failed")
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
 
 
 async def _run_usage_report() -> dict:  # type: ignore[type-arg]
@@ -105,7 +105,7 @@ def recalibrate_signal_weights(self) -> dict:  # type: ignore[type-arg]
         return result
     except Exception as exc:
         _stdlib_log.exception("Agent 034: recalibrate_signal_weights failed")
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
 
 
 async def _run_recalibration() -> dict:  # type: ignore[type-arg]
@@ -151,13 +151,14 @@ def check_retrain_trigger(self) -> dict:  # type: ignore[type-arg]
         return result
     except Exception as exc:
         _stdlib_log.exception("Agent 035: check_retrain_trigger failed")
-        raise self.retry(exc=exc)
+        raise self.retry(exc=exc) from exc
 
 
 async def _run_retrain_check() -> dict:  # type: ignore[type-arg]
+    from sqlalchemy import text
+
     from app.config import get_settings
     from app.database import AsyncSessionLocal
-    from sqlalchemy import text
 
     settings = get_settings()
     threshold = settings.retrain_drift_threshold
@@ -181,9 +182,7 @@ async def _run_retrain_check() -> dict:  # type: ignore[type-arg]
                 )
             ).all()
         except Exception:
-            log.warning(
-                "check_retrain_trigger: model_drift_alerts not available (Phase 9 pending)"
-            )
+            log.warning("check_retrain_trigger: model_drift_alerts not available (Phase 9 pending)")
             return {"status": "skipped", "reason": "model_drift_alerts table not yet available"}
 
         if not rows:

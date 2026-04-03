@@ -16,9 +16,7 @@ from app.scrapers.registry import register
 
 log = structlog.get_logger(__name__)
 
-_WORKSAFEBC_URL = (
-    "https://www.worksafebc.com/en/health-safety/enforcement-orders-and-penalties"
-)
+_WORKSAFEBC_URL = "https://www.worksafebc.com/en/health-safety/enforcement-orders-and-penalties"
 
 
 @register

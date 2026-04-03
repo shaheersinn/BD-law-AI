@@ -72,9 +72,7 @@ class VCDealsScraper(BaseScraper):
                 combined = f"{title} {description}".lower()
 
                 # Check for Series B+ or large funding rounds
-                is_series_b_plus = bool(
-                    re.search(r"series\s+[b-z]", combined, re.I)
-                )
+                is_series_b_plus = bool(re.search(r"series\s+[b-z]", combined, re.I))
                 amount = self._extract_amount(combined)
                 is_large_round = amount is not None and amount >= _FUNDING_THRESHOLD
 

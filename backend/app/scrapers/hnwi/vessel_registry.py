@@ -103,7 +103,9 @@ class VesselRegistryScraper(BaseScraper):
                         source_id=self.source_id,
                         signal_type="vessel_registry_change",
                         raw_company_name=owner,
-                        source_url=f"{_TC_VESSEL_QUERY_URL}?on={official_number}" if official_number else _TC_VESSEL_QUERY_URL,
+                        source_url=f"{_TC_VESSEL_QUERY_URL}?on={official_number}"
+                        if official_number
+                        else _TC_VESSEL_QUERY_URL,
                         signal_value={
                             "vessel_name": vessel_name,
                             "official_number": official_number,

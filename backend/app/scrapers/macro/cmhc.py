@@ -21,10 +21,7 @@ _CMHC_DATA_URL = (
     "https://www.cmhc-schl.gc.ca/professionals/housing-markets-data-and-research/"
     "housing-data/data-tables/housing-market-data/housing-starts-completions"
 )
-_CMHC_OPEN_DATA_URL = (
-    "https://open.canada.ca/data/en/dataset/"
-    "43dea6c6-71c4-4105-84ed-32b766e4cfaa"
-)
+_CMHC_OPEN_DATA_URL = "https://open.canada.ca/data/en/dataset/43dea6c6-71c4-4105-84ed-32b766e4cfaa"
 
 _YOY_DECLINE_THRESHOLD = -0.20  # 20% decline
 

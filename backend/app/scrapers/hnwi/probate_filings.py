@@ -72,9 +72,7 @@ class ProbateFilingsScraper(BaseScraper):
             if not soup:
                 return results
         except Exception as exc:
-            log.warning(
-                "probate_fetch_error", court=source["name"], error=str(exc)
-            )
+            log.warning("probate_fetch_error", court=source["name"], error=str(exc))
             return results
 
         # Look for filing entries in tables or lists
