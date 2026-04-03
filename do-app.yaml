@@ -1,5 +1,5 @@
 name: oracle-bd-for-law
-region: tor1
+region: nyc3
 
 services:
   - name: api
@@ -37,9 +37,13 @@ services:
         type: SECRET
         value: "SET_IN_DO_DASHBOARD"
       - key: ADMIN_EMAIL
-        value: admin
+        scope: RUN_TIME
+        type: SECRET
+        value: "SET_IN_DO_DASHBOARD"
       - key: ADMIN_PASSWORD
-        value: admin
+        scope: RUN_TIME
+        type: SECRET
+        value: "SET_IN_DO_DASHBOARD"
       - key: DATABASE_URL
         scope: RUN_TIME
         type: SECRET
