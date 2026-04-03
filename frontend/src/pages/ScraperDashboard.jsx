@@ -129,7 +129,7 @@ export default function ScraperDashboard() {
       const token = sessionStorage.getItem('bdforlaw_token')
       const authHeaders = token ? { Authorization: `Bearer ${token}` } : {}
       const [sumRes, healthRes] = await Promise.all([
-        fetch("/api/scrapers/summary"),
+        fetch("/api/scrapers/summary", { headers: authHeaders }),
         fetch("/api/scrapers/health?limit=200", { headers: authHeaders }),
       ]);
       if (!sumRes.ok || !healthRes.ok) throw new Error("API error");

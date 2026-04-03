@@ -187,7 +187,7 @@ export const watchlist = {
   list:   (params = {}) => api.get('/api/v1/watchlist', { params }).then(r => r.data),
   add:    (body)        => api.post('/api/v1/watchlist', body).then(r => r.data),
   remove: (id)          => api.delete(`/api/v1/watchlist/${id}`).then(r => r.data),
-  search: (q)           => api.get('/api/v1/watchlist/search', { params: { q } }).then(r => r.data),
+  search: (q)           => api.get('/api/v1/search', { params: { q } }).then(r => r.data),
 }
 
 export const analytics = {
