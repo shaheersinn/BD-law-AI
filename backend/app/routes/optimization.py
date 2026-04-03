@@ -229,6 +229,7 @@ async def create_signal_override(
 @router.delete(
     "/signal-override/{override_id}",
     status_code=204,
+    response_model=None,
     summary="Deactivate a signal weight override",
 )
 async def delete_signal_override(
