@@ -28,6 +28,7 @@ from sqlalchemy import create_engine, event, text
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.config import get_settings
+from app.db_url_sync import normalize_postgresql_url_for_psycopg2
 
 log = structlog.get_logger(__name__)
 
@@ -36,14 +37,8 @@ _SyncSession: sessionmaker | None = None  # type: ignore[type-arg]
 
 
 def _build_sync_url(async_url: str) -> str:
-    """
-    Convert asyncpg URL to psycopg2 URL.
-
-    postgresql+asyncpg://user:pass@host:port/db
-    →
-    postgresql+psycopg2://user:pass@host:port/db
-    """
-    return re.sub(r"postgresql\+asyncpg://", "postgresql+psycopg2://", async_url, count=1)
+    """Convert app DATABASE_URL to a psycopg2-safe sync SQLAlchemy URL."""
+    return normalize_postgresql_url_for_psycopg2(async_url)
 
 
 def _get_sync_engine():  # type: ignore[return]

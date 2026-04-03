@@ -38,6 +38,7 @@ from app.models.class_action_score import ClassActionScore  # noqa: F401
 from app.models.geo import JetTrack, FootTrafficEvent, SatelliteSignal, PermitFiling  # noqa: F401
 from app.models.training import TrainingDataset  # noqa: F401
 from app.models.features import CompanyFeature  # noqa: F401
+from app.db_url_sync import normalize_postgresql_url_for_psycopg2
 
 config = context.config
 
@@ -45,7 +46,7 @@ database_url = os.getenv(
     "DATABASE_URL",
     "postgresql+asyncpg://oracle:oracle@localhost:5432/oracle_db",
 )
-sync_database_url = database_url.replace("postgresql+asyncpg://", "postgresql://")
+sync_database_url = normalize_postgresql_url_for_psycopg2(database_url)
 config.set_main_option("sqlalchemy.url", sync_database_url)
 
 if config.config_file_name is not None:
@@ -81,7 +82,6 @@ def do_run_migrations(connection: Connection) -> None:
 
 def run_migrations_online() -> None:
     url = config.get_main_option("sqlalchemy.url")
-    url = url.replace("postgresql+asyncpg://", "postgresql://")
     config.set_main_option("sqlalchemy.url", url)
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),

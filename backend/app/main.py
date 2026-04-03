@@ -361,6 +361,15 @@ async def health() -> dict:  # type: ignore[type-arg]
     }
 
 
+@app.get("/health", include_in_schema=False)
+async def health_ingress_alias() -> dict:  # type: ignore[type-arg]
+    """
+    Same payload as /api/health when the edge strips the /api path prefix
+    (DigitalOcean App Platform routes the service under /api).
+    """
+    return await health()
+
+
 @app.get("/api/ready", tags=["system"], summary="Readiness check")
 async def ready() -> JSONResponse:
     """
