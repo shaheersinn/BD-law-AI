@@ -19,15 +19,25 @@ from app.database import Base
 from app.auth.models import User  # noqa: F401
 from app.models.signal import Signal  # noqa: F401 — table: signals
 from app.models.company import Company, SignalRecord  # noqa: F401 — SignalRecord → signal_records
-from app.models.client import Client, ChurnSignal, Prospect  # noqa: F401
+from app.models.client import Client, ChurnSignal, Prospect, BillingRecord, Matter  # noqa: F401
 from app.models.trigger import Trigger, Alert  # noqa: F401
 from app.models.ground_truth import GroundTruthLabel, LabelingRun  # noqa: F401
-from app.models.bd_activity import BDActivity, ContentPiece, MatterSource  # noqa: F401
+from app.models.bd_activity import (  # noqa: F401
+    Alumni,
+    BDActivity,
+    ClientInquiry,
+    ContentPiece,
+    MatterSource,
+    Partner,
+    ReferralContact,
+    WritingSample,
+)
 from app.models.scraper_health import ScraperHealth  # noqa: F401
 from app.models.law_firm import LawFirm  # noqa: F401
 from app.models.class_action_score import ClassActionScore  # noqa: F401
 from app.models.geo import JetTrack, FootTrafficEvent, SatelliteSignal, PermitFiling  # noqa: F401
 from app.models.training import TrainingDataset  # noqa: F401
+from app.models.features import CompanyFeature  # noqa: F401
 
 config = context.config
 
