@@ -288,8 +288,8 @@ async def refresh_rules(db: Any) -> int:
 
     await db.commit()
     log.info(
-        "cooccurrence.refresh_rules.complete",
-        practice_areas=len(all_rules),
-        total_rules=total_written,
+        "cooccurrence.refresh_rules.complete: practice_areas=%d total_rules=%d",
+        len(all_rules),
+        total_written,
     )
     return total_written

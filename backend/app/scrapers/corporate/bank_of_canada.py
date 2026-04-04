@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import re
 import xml.etree.ElementTree as ET  # nosec B405
+from typing import Any
 
 import structlog
 
@@ -113,7 +114,7 @@ class BankOfCanadaScraper(BaseScraper):
 
         return results
 
-    def _parse_slos(self, soup: object) -> list[ScraperResult]:
+    def _parse_slos(self, soup: Any) -> list[ScraperResult]:
         """Parse SLOS publications for credit tightening signals."""
         results: list[ScraperResult] = []
 
@@ -185,7 +186,7 @@ class BankOfCanadaScraper(BaseScraper):
 
         return results
 
-    def _parse_bos(self, soup: object) -> list[ScraperResult]:
+    def _parse_bos(self, soup: Any) -> list[ScraperResult]:
         """Parse BOS publications for business outlook deterioration signals."""
         results: list[ScraperResult] = []
 

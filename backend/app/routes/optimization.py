@@ -213,6 +213,9 @@ async def create_signal_override(
         set_by=user.id,
     )
 
+    if row is None:
+        raise HTTPException(status_code=500, detail="Failed to create signal override")
+
     return {
         "id": row.id,
         "signal_type": row.signal_type,

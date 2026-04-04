@@ -220,10 +220,10 @@ async def recalibrate_from_confirmations(db: Any) -> dict[str, dict[str, float]]
         await _persist_sector_weights(db, new_weights)
 
         log.info(
-            "sector_weights.recalibrated",
-            sectors=len(new_weights),
-            features=len(feature_cols),
-            mandate_count=len(rows),
+            "sector_weights.recalibrated: sectors=%d features=%d mandate_count=%d",
+            len(new_weights),
+            len(feature_cols),
+            len(rows),
         )
         return new_weights
 
@@ -251,9 +251,11 @@ async def _persist_sector_weights(db: Any, weights: dict[str, dict[str, float]])
                     {"sector": sector, "signal_type": feature, "multiplier": multiplier},
                 )
             except Exception:
-                log.warning("sector_weights: failed to upsert", sector=sector, signal_type=feature)
+                log.warning(
+                    "sector_weights: failed to upsert sector=%s signal_type=%s", sector, feature
+                )
     await db.commit()
-    log.info("sector_weights.persisted", total_entries=sum(len(v) for v in weights.values()))
+    log.info("sector_weights.persisted: total_entries=%d", sum(len(v) for v in weights.values()))
 
 
 async def load_human_overrides_from_cache(

@@ -1,4 +1,5 @@
 """app/models/features.py — CompanyFeature: pre-computed ML feature vectors."""
+
 from __future__ import annotations
 
 from datetime import UTC, datetime

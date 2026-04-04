@@ -225,7 +225,7 @@ async def _get_redis_cache_hit_rate() -> float | None:
     try:
         from app.cache.client import cache
 
-        info = await cache._redis.info("stats")
+        info = await cache._redis.info("stats")  # type: ignore[attr-defined]
         hits = int(info.get("keyspace_hits", 0))
         misses = int(info.get("keyspace_misses", 0))
         total = hits + misses
