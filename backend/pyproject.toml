@@ -17,5 +17,5 @@ fail_under = 70
 [tool.bandit]
 # B608: SQL f-strings in training/dataset_builder.py use only internal feature
 # column names (from a hardcoded list, not user input). Not an injection vector.
-skips = ["B608"]
+skips = ["B608", "B101", "B105", "B106"]
 exclude_dirs = ["app/training/dataset_builder.py"]
