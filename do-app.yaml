@@ -1,5 +1,5 @@
 name: oracle-bd-for-law
-region: nyc3
+region: tor1
 
 services:
   - name: api
