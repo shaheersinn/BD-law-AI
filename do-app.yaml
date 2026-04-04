@@ -1,5 +1,5 @@
 name: oracle-bd-for-law
-region: tor1
+region: nyc3
 
 services:
   - name: api
@@ -30,6 +30,8 @@ services:
         value: INFO
       - key: LIVE_FEEDS_ENABLED
         value: "true"
+      - key: SEED_DEMO_DASHBOARD
+        value: "1"
       - key: ALLOWED_ORIGINS
         value: '["https://oracle-bd-for-law.ondigitalocean.app"]'
       - key: SECRET_KEY
@@ -177,4 +179,4 @@ static_sites:
     error_document: index.html
     envs:
       - key: VITE_API_URL
-        value: ${api.PUBLIC_URL}
+        value: ""

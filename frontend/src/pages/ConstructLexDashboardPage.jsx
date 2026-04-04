@@ -30,18 +30,42 @@ export default function ConstructLexDashboardPage() {
   const [practiceAreas, setPracticeAreas] = useState([])
 
   useEffect(() => {
-    Promise.all([
+    Promise.allSettled([
       triggers.stats(),
       scores.topVelocity(20),
       trends.practiceAreas(),
-    ])
-      .then(([statsData, velocityData, paData]) => {
-        setStats(statsData)
-        setTopVelocity(Array.isArray(velocityData) ? velocityData : [])
-        setPracticeAreas(Array.isArray(paData) ? paData : [])
-      })
-      .catch(err => setError(err.message || 'Failed to load dashboard'))
-      .finally(() => setLoading(false))
+    ]).then(([statsResult, velocityResult, paResult]) => {
+      // Each result is { status: 'fulfilled', value: ... } or { status: 'rejected', reason: ... }
+      // Apply whichever calls succeeded. Never blank the whole page for a partial failure.
+      if (statsResult.status === 'fulfilled') {
+        setStats(statsResult.value)
+      } else {
+        console.warn('triggers.stats() failed:', statsResult.reason?.message)
+      }
+
+      if (velocityResult.status === 'fulfilled') {
+        setTopVelocity(Array.isArray(velocityResult.value) ? velocityResult.value : [])
+      } else {
+        console.warn('scores.topVelocity() failed:', velocityResult.reason?.message)
+        setTopVelocity([])
+      }
+
+      if (paResult.status === 'fulfilled') {
+        setPracticeAreas(Array.isArray(paResult.value) ? paResult.value : [])
+      } else {
+        console.warn('trends.practiceAreas() failed:', paResult.reason?.message)
+        setPracticeAreas([])
+      }
+
+      // Only show the global error banner if ALL three calls failed simultaneously.
+      const allFailed =
+        statsResult.status === 'rejected' &&
+        velocityResult.status === 'rejected' &&
+        paResult.status === 'rejected'
+      if (allFailed) {
+        setError(statsResult.reason?.message || 'Failed to load dashboard — please retry')
+      }
+    }).finally(() => setLoading(false))
   }, [])
 
   if (error) return (

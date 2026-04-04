@@ -122,7 +122,8 @@ jobs:
       - name: Trigger DO deployment (dashboard-managed config)
         # Uses the existing App Platform spec and runtime env vars stored in DO.
         # This keeps secrets out of git-managed files.
-        # NEVER runs alembic upgrade head — migrations are manual via scripts/run_migrations.sh
+        # Migrations run automatically in start.sh at container boot (alembic upgrade head).
+        # For manual migration runs: DATABASE_URL=... bash backend/scripts/run_migrations.sh
         run: |
           doctl apps create-deployment ${{ secrets.DO_APP_ID }} --wait --verbose
 
