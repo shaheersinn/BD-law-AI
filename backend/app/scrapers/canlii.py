@@ -17,6 +17,7 @@ CANLII_API = "https://api.canlii.org/v1"
 
 
 class CanLIIScraper(BaseScraper):
+    source_id = "legal_canlii"
     source_name = "CANLII"
     request_delay_seconds = 1.5
 

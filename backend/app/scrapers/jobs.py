@@ -47,6 +47,7 @@ LEGAL_JOB_SIGNALS: list[tuple[str, str, str, int, float]] = [
 
 
 class JobsScraper(BaseScraper):
+    source_id = "jobs_indeed"
     source_name = "JOBS"
     request_delay_seconds = 2.0
 

@@ -67,32 +67,286 @@ def scrape_sedar(self: Task) -> dict:  # type: ignore[type-arg]
     return {"status": "stub", "source": "sedar"}
 
 
-@celery_app.task(bind=True, max_retries=3, name="app.tasks._impl.scrape_edgar")
+@celery_app.task(
+    bind=True,
+    max_retries=3,
+    name="app.tasks._impl.scrape_edgar",
+    soft_time_limit=3600,
+    time_limit=3900,
+)
 def scrape_edgar(self: Task) -> dict:  # type: ignore[type-arg]
-    """Scrape SEC EDGAR for 10-K/10-Q financials, 8-K events, SC 13D."""
-    log.info("scrape_edgar invoked (stub — implement in Phase 1)")
-    return {"status": "stub", "source": "edgar"}
+    """
+    Scrape SEC EDGAR for 10-K/10-Q financials, 8-K events, SC 13D.
+    Runs hourly. Free REST API.
+    """
+
+    async def _impl() -> dict[str, Any]:
+        from datetime import UTC, datetime
+
+        from app.database import AsyncSessionLocal
+        from app.models.trigger import Trigger
+        from app.scrapers.edgar import EdgarScraper
+
+        scraper = EdgarScraper()
+        signals = await scraper.fetch_new(days_back=2)
+
+        if not signals:
+            return {"status": "ok", "signals_saved": 0}
+
+        async with AsyncSessionLocal() as db:
+            now = datetime.now(UTC)
+            for sig in signals:
+                # EDGAR signals tie to `raw_company_name` via the Trigger.company_name
+                db.add(
+                    Trigger(
+                        source=getattr(sig, "source", "EDGAR"),
+                        trigger_type=getattr(sig, "trigger_type", "filing"),
+                        company_name=getattr(sig, "raw_company_name", getattr(sig, "company_name", "Unknown")),
+                        title=getattr(sig, "title", "SEC Filing"),
+                        description=getattr(sig, "description", None),
+                        url=getattr(sig, "url", None),
+                        urgency=getattr(sig, "urgency", 70),
+                        practice_area=getattr(sig, "practice_area", "Corporate / M&A"),
+                        practice_confidence=75,
+                        filed_at=getattr(sig, "filed_at", now),
+                        detected_at=now,
+                        actioned=False,
+                    )
+                )
+            await db.commit()
+
+        return {"status": "ok", "signals_saved": len(signals)}
+
+    log.info("scrape_edgar starting")
+    try:
+        result = _run_async(_impl())
+        log.info("scrape_edgar complete", **result)
+        return result
+    except Exception as exc:  # noqa: BLE001
+        log.error("scrape_edgar failed", error=str(exc))
+        raise self.retry(exc=exc, countdown=2 ** self.request.retries) from exc
 
 
-@celery_app.task(bind=True, max_retries=3, name="app.tasks._impl.scrape_regulatory_feeds")
+@celery_app.task(
+    bind=True,
+    max_retries=3,
+    name="app.tasks._impl.scrape_regulatory_feeds",
+    soft_time_limit=270,
+    time_limit=300,
+)
 def scrape_regulatory_feeds(self: Task) -> dict:  # type: ignore[type-arg]
-    """Scrape OSC, OSFI, Competition Bureau, FINTRAC, OPC, ECCC RSS feeds."""
-    log.info("scrape_regulatory_feeds invoked (stub — implement in Phase 1)")
-    return {"status": "stub", "source": "regulatory"}
+    """
+    Scrape OSC, Competition Bureau, and FINTRAC RSS enforcement feeds.
+    Runs every 4 hours on weekdays. Free — no API key required.
+    """
+
+    async def _impl() -> dict[str, Any]:
+        from app.database import AsyncSessionLocal
+        from app.models.company import SignalRecord
+        from app.scrapers.regulatory.competition_bureau import CompetitionBureauScraper
+        from app.scrapers.regulatory.fintrac import FintracScraper
+        from app.scrapers.regulatory.osc import OSCScraper
+
+        scraper_classes = [OSCScraper, CompetitionBureauScraper, FintracScraper]
+        total = 0
+        errors: list[str] = []
+
+        for ScraperClass in scraper_classes:
+            scraper = ScraperClass()
+            try:
+                signals = await scraper.run()
+                if signals:
+                    async with AsyncSessionLocal() as db:
+                        for sig in signals:
+                            db.add(
+                                SignalRecord(
+                                    source_id=sig.source_id,
+                                    signal_type=sig.signal_type,
+                                    signal_text=sig.signal_text or "",
+                                    source_url=sig.source_url,
+                                    confidence_score=sig.confidence_score,
+                                    published_at=sig.published_at,
+                                    practice_area_hints=sig.practice_area_hints[0]
+                                    if sig.practice_area_hints
+                                    else None,
+                                    signal_value=sig.signal_value or {},
+                                )
+                            )
+                        await db.commit()
+                        total += len(signals)
+                log.info(
+                    "regulatory_scraper_complete",
+                    source=scraper.source_id,
+                    saved=len(signals),
+                )
+            except Exception as exc:  # noqa: BLE001
+                errors.append(f"{scraper.source_id}: {exc}")
+                log.warning("regulatory_scraper_failed", source=scraper.source_id, error=str(exc))
+
+        return {"status": "ok", "signals_saved": total, "errors": errors}
+
+    log.info("scrape_regulatory_feeds starting")
+    try:
+        result = _run_async(_impl())
+        log.info("scrape_regulatory_feeds complete", saved=result.get("signals_saved", 0))
+        return result
+    except Exception as exc:  # noqa: BLE001
+        log.error("scrape_regulatory_feeds failed", error=str(exc))
+        raise self.retry(exc=exc, countdown=2 ** self.request.retries) from exc
 
 
-@celery_app.task(bind=True, max_retries=3, name="app.tasks._impl.scrape_jobs")
+@celery_app.task(
+    bind=True,
+    max_retries=3,
+    name="app.tasks._impl.scrape_jobs",
+    soft_time_limit=3600,
+    time_limit=3900,
+)
 def scrape_jobs(self: Task) -> dict:  # type: ignore[type-arg]
-    """Scrape Indeed, LinkedIn, Job Bank for GC/CCO/CISO/litigation counsel postings."""
-    log.info("scrape_jobs invoked (stub — implement in Phase 1)")
-    return {"status": "stub", "source": "jobs"}
+    """
+    Scrape Indeed, LinkedIn, Job Bank for GC/CCO/CISO/litigation counsel postings.
+    Runs daily.
+    """
+
+    async def _impl() -> dict[str, Any]:
+        from datetime import UTC, datetime
+
+        from sqlalchemy import text
+
+        from app.database import AsyncSessionLocal
+        from app.models.trigger import Trigger
+        from app.scrapers.jobs import JobsScraper
+
+        async with AsyncSessionLocal() as db:
+            result = await db.execute(
+                text(
+                    "SELECT name FROM companies WHERE is_active = true "
+                    "ORDER BY priority_tier LIMIT 100"
+                )
+            )
+            company_names = [row[0] for row in result.fetchall()]
+
+        total = 0
+        scraper = JobsScraper()
+
+        for company_name in company_names:
+            try:
+                signals = await scraper.fetch_for_company(company_name)
+                if signals:
+                    async with AsyncSessionLocal() as db:
+                        now = datetime.now(UTC)
+                        for sig in signals:
+                            db.add(
+                                Trigger(
+                                    source=getattr(sig, "source", "JOBS"),
+                                    trigger_type=getattr(sig, "trigger_type", "job_posting"),
+                                    company_name=company_name,
+                                    title=getattr(sig, "title", f"Job Posting: {company_name}"),
+                                    description=getattr(sig, "description", None),
+                                    url=getattr(sig, "url", None),
+                                    urgency=getattr(sig, "urgency", 70),
+                                    practice_area=getattr(sig, "practice_area", "Employment"),
+                                    practice_confidence=75,
+                                    filed_at=getattr(sig, "filed_at", now),
+                                    detected_at=now,
+                                    actioned=False,
+                                )
+                            )
+                        await db.commit()
+                        total += len(signals)
+            except Exception as exc:  # noqa: BLE001
+                log.debug("jobs_company_failed", company=company_name, error=str(exc))
+
+        return {"status": "ok", "companies_searched": len(company_names), "triggers_saved": total}
+
+    log.info("scrape_jobs starting")
+    try:
+        result = _run_async(_impl())
+        log.info("scrape_jobs complete", **result)
+        return result
+    except Exception as exc:  # noqa: BLE001
+        log.error("scrape_jobs failed", error=str(exc))
+        raise self.retry(exc=exc, countdown=2 ** self.request.retries) from exc
 
 
-@celery_app.task(bind=True, max_retries=3, name="app.tasks._impl.scrape_canlii")
+@celery_app.task(
+    bind=True,
+    max_retries=3,
+    name="app.tasks._impl.scrape_canlii",
+    soft_time_limit=3600,
+    time_limit=3900,
+)
 def scrape_canlii(self: Task) -> dict:  # type: ignore[type-arg]
-    """Scrape CanLII API for new litigation by watchlist companies."""
-    log.info("scrape_canlii invoked (stub — implement in Phase 1)")
-    return {"status": "stub", "source": "canlii"}
+    """
+    Search CanLII for new litigation naming watchlist companies.
+    Requires CANLII_API_KEY env var — skips gracefully if absent.
+    Runs daily at 7am.
+    """
+    import os
+
+    if not os.getenv("CANLII_API_KEY"):
+        log.warning("scrape_canlii skipped — CANLII_API_KEY not set")
+        return {"status": "skipped", "reason": "CANLII_API_KEY not set"}
+
+    async def _impl() -> dict[str, Any]:
+        from datetime import UTC, datetime
+
+        from sqlalchemy import text
+
+        from app.database import AsyncSessionLocal
+        from app.models.trigger import Trigger
+        from app.scrapers.canlii import CanLIIScraper
+
+        async with AsyncSessionLocal() as db:
+            result = await db.execute(
+                text(
+                    "SELECT name FROM companies WHERE is_active = true "
+                    "ORDER BY priority_tier LIMIT 100"
+                )
+            )
+            company_names = [row[0] for row in result.fetchall()]
+
+        total = 0
+        scraper = CanLIIScraper()
+
+        for company_name in company_names:
+            try:
+                signals = await scraper.search_company(company_name, days_back=7)
+                if signals:
+                    async with AsyncSessionLocal() as db:
+                        now = datetime.now(UTC)
+                        for sig in signals:
+                            db.add(
+                                Trigger(
+                                    source=getattr(sig, "source", "CANLII"),
+                                    trigger_type=getattr(sig, "trigger_type", "litigation"),
+                                    company_name=company_name,
+                                    title=getattr(sig, "title", f"CanLII: {company_name}"),
+                                    description=getattr(sig, "description", None),
+                                    url=getattr(sig, "url", None),
+                                    urgency=getattr(sig, "urgency", 70),
+                                    practice_area=getattr(sig, "practice_area", "Litigation"),
+                                    practice_confidence=75,
+                                    filed_at=getattr(sig, "filed_at", now),
+                                    detected_at=now,
+                                    actioned=False,
+                                )
+                            )
+                        await db.commit()
+                        total += len(signals)
+            except Exception as exc:  # noqa: BLE001
+                log.debug("canlii_company_failed", company=company_name, error=str(exc))
+
+        return {"status": "ok", "companies_searched": len(company_names), "triggers_saved": total}
+
+    log.info("scrape_canlii starting")
+    try:
+        result = _run_async(_impl())
+        log.info("scrape_canlii complete", **result)
+        return result
+    except Exception as exc:  # noqa: BLE001
+        log.error("scrape_canlii failed", error=str(exc))
+        raise self.retry(exc=exc, countdown=2 ** self.request.retries) from exc
 
 
 @celery_app.task(bind=True, max_retries=3, name="app.tasks._impl.scrape_jets")
@@ -109,25 +363,172 @@ def scrape_social(self: Task) -> dict:  # type: ignore[type-arg]
     return {"status": "stub", "source": "social"}
 
 
-@celery_app.task(bind=True, max_retries=3, name="app.tasks._impl.scrape_law_firm_blogs")
+@celery_app.task(
+    bind=True,
+    max_retries=3,
+    name="app.tasks._impl.scrape_law_firm_blogs",
+    soft_time_limit=1800,
+    time_limit=2100,
+)
 def scrape_law_firm_blogs(self: Task) -> dict:  # type: ignore[type-arg]
-    """Scrape 27 Canadian law firm blogs for legal intelligence."""
-    log.info("scrape_law_firm_blogs invoked (stub — implement in Phase 1)")
-    return {"status": "stub", "source": "law_firm_blogs"}
+    """
+    Scrape RSS feeds from Bay Street Tier 1 and Tier 2 law firm blogs.
+    Used for competitor intelligence and NLP training corpus.
+    Runs weekly. No API key required.
+    """
+
+    async def _impl() -> dict[str, Any]:
+        from app.database import AsyncSessionLocal
+        from app.models.company import SignalRecord
+        from app.scrapers.law_blogs.firm_blogs import ALL_FIRMS, LawFirmBlogScraper
+
+        total = 0
+        errors: list[str] = []
+
+        for firm in ALL_FIRMS:
+            scraper = LawFirmBlogScraper(firm)
+            try:
+                signals = await scraper.run()
+                if signals:
+                    async with AsyncSessionLocal() as db:
+                        for sig in signals:
+                            db.add(
+                                SignalRecord(
+                                    source_id=sig.source_id,
+                                    signal_type=sig.signal_type,
+                                    signal_text=sig.signal_text or "",
+                                    source_url=sig.source_url,
+                                    confidence_score=sig.confidence_score,
+                                    published_at=sig.published_at,
+                                    practice_area_hints=sig.practice_area_hints[0]
+                                    if sig.practice_area_hints
+                                    else None,
+                                    signal_value=sig.signal_value or {},
+                                )
+                            )
+                        await db.commit()
+                        total += len(signals)
+            except Exception as exc:  # noqa: BLE001
+                errors.append(f"{firm.firm_name}: {exc}")
+                log.debug("firm_blog_failed", firm=firm.firm_name, error=str(exc))
+
+        return {"status": "ok", "signals_saved": total, "firms_scraped": len(ALL_FIRMS), "errors": len(errors)}
+
+    log.info("scrape_law_firm_blogs starting")
+    try:
+        result = _run_async(_impl())
+        log.info("scrape_law_firm_blogs complete", **result)
+        return result
+    except Exception as exc:  # noqa: BLE001
+        log.error("scrape_law_firm_blogs failed", error=str(exc))
+        raise self.retry(exc=exc, countdown=2 ** self.request.retries) from exc
 
 
-@celery_app.task(bind=True, max_retries=3, name="app.tasks._impl.scrape_osb_insolvency")
+@celery_app.task(
+    bind=True,
+    max_retries=3,
+    name="app.tasks._impl.scrape_osb_insolvency",
+    soft_time_limit=300,
+    time_limit=360,
+)
 def scrape_osb_insolvency(self: Task) -> dict:  # type: ignore[type-arg]
-    """Download OSB insolvency Excel files and build FSA stress index."""
-    log.info("scrape_osb_insolvency invoked (stub — implement in Phase 1)")
-    return {"status": "stub", "source": "osb"}
+    """
+    Scrape OSB insolvency statistics. Free, no API key. Runs weekly.
+    """
+
+    async def _impl() -> dict[str, Any]:
+        from app.database import AsyncSessionLocal
+        from app.models.company import SignalRecord
+        from app.scrapers.legal.osb_insolvency import OsbInsolvencyScraper
+
+        scraper = OsbInsolvencyScraper()
+        signals = await scraper.run()
+
+        if not signals:
+            return {"status": "ok", "signals_saved": 0}
+
+        async with AsyncSessionLocal() as db:
+            for sig in signals:
+                db.add(
+                    SignalRecord(
+                        source_id=sig.source_id,
+                        signal_type=sig.signal_type,
+                        signal_text=sig.signal_text or "",
+                        source_url=sig.source_url,
+                        confidence_score=sig.confidence_score,
+                        published_at=sig.published_at,
+                        practice_area_hints=sig.practice_area_hints[0]
+                        if sig.practice_area_hints
+                        else None,
+                        signal_value=sig.signal_value or {},
+                    )
+                )
+            await db.commit()
+
+        return {"status": "ok", "signals_saved": len(signals)}
+
+    log.info("scrape_osb_insolvency starting")
+    try:
+        result = _run_async(_impl())
+        log.info("scrape_osb_insolvency complete", saved=result.get("signals_saved", 0))
+        return result
+    except Exception as exc:  # noqa: BLE001
+        log.error("scrape_osb_insolvency failed", error=str(exc))
+        raise self.retry(exc=exc, countdown=2 ** self.request.retries) from exc
 
 
-@celery_app.task(bind=True, max_retries=3, name="app.tasks._impl.scrape_google_trends")
+@celery_app.task(
+    bind=True,
+    max_retries=3,
+    name="app.tasks._impl.scrape_google_trends",
+    soft_time_limit=300,
+    time_limit=360,
+)
 def scrape_google_trends(self: Task) -> dict:  # type: ignore[type-arg]
-    """Scrape Google Trends via Pytrends for legal search term spikes."""
-    log.info("scrape_google_trends invoked (stub — implement in Phase 1)")
-    return {"status": "stub", "source": "google_trends"}
+    """
+    Scrape Google Trends via Pytrends for legal search term spikes.
+    Runs weekly. No API key.
+    """
+
+    async def _impl() -> dict[str, Any]:
+        from app.database import AsyncSessionLocal
+        from app.models.company import SignalRecord
+        from app.scrapers.geo.google_trends import GoogleTrendsScraper
+
+        scraper = GoogleTrendsScraper()
+        signals = await scraper.run()
+
+        if not signals:
+            return {"status": "ok", "signals_saved": 0}
+
+        async with AsyncSessionLocal() as db:
+            for sig in signals:
+                db.add(
+                    SignalRecord(
+                        source_id=sig.source_id,
+                        signal_type=sig.signal_type,
+                        signal_text=sig.signal_text or "",
+                        source_url=sig.source_url,
+                        confidence_score=sig.confidence_score,
+                        published_at=sig.published_at,
+                        practice_area_hints=sig.practice_area_hints[0]
+                        if sig.practice_area_hints
+                        else None,
+                        signal_value=sig.signal_value or {},
+                    )
+                )
+            await db.commit()
+
+        return {"status": "ok", "signals_saved": len(signals)}
+
+    log.info("scrape_google_trends starting")
+    try:
+        result = _run_async(_impl())
+        log.info("scrape_google_trends complete", saved=result.get("signals_saved", 0))
+        return result
+    except Exception as exc:  # noqa: BLE001
+        log.error("scrape_google_trends failed", error=str(exc))
+        raise self.retry(exc=exc, countdown=2 ** self.request.retries) from exc
 
 
 # ── Feature Engineering Tasks (Phase 2) ───────────────────────────────────────

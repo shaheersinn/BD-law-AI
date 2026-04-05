@@ -23,6 +23,7 @@ EDGAR_TRIGGERS: dict[str, tuple[str, int, float]] = {
 
 
 class EdgarScraper(BaseScraper):
+    source_id = "filings_edgar"
     source_name = "EDGAR"
     request_delay_seconds = 0.5  # SEC allows reasonable crawling
 
