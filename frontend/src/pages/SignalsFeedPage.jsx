@@ -116,7 +116,7 @@ export default function SignalsFeedPage() {
               <button
                 key={n}
                 onClick={() => { setLimit(n); load(n) }}
-                className={\`sig-limit-btn \${limit === n ? 'active' : 'inactive'}\`}
+                className={`sig-limit-btn ${limit === n ? 'active' : 'inactive'}`}
               >
                 {n}
               </button>

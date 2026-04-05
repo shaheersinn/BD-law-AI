@@ -459,7 +459,7 @@ function AccuracyTable() {
                     </span>
                   </td>
                   <td className="fb-td fb-td-mono" style={{ textAlign: 'center', color: 'var(--color-on-surface-variant)' }}>
-                    {r.avg_lead_days != null ? \`\${r.avg_lead_days}d\` : '—'}
+                    {r.avg_lead_days != null ? `${r.avg_lead_days}d` : '—'}
                   </td>
                 </tr>
               ))}
@@ -515,7 +515,7 @@ function DriftAlerts() {
                   <div className="fb-drift-title">{PA_LABEL(a.practice_area)}</div>
                   <div className="fb-drift-meta">
                     Detected {a.detected_at ? new Date(a.detected_at).toLocaleDateString() : '—'}
-                    {a.ks_pvalue != null && \` · KS p-value: \${a.ks_pvalue.toFixed(3)}\`}
+                    {a.ks_pvalue != null && ` · KS p-value: ${a.ks_pvalue.toFixed(3)}`}
                   </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>

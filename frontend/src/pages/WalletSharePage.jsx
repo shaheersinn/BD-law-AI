@@ -151,22 +151,22 @@ function formatCurrency(val, short = true) {
   if (val == null || isNaN(val)) return '—'
   const n = Number(val)
   if (short) {
-    if (n >= 1_000_000) return \`$\${(n / 1_000_000).toFixed(1)}M\`
-    if (n >= 1_000) return \`$\${(n / 1_000).toFixed(0)}K\`
+    if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`
+    if (n >= 1_000) return `$${(n / 1_000).toFixed(0)}K`
   }
-  return \`$\${n.toLocaleString()}\`
+  return `$${n.toLocaleString()}`
 }
 
 function formatPct(val) {
   if (val == null || isNaN(val)) return '—'
-  return \`\${Math.round(Number(val))}%\`
+  return `${Math.round(Number(val))}%`
 }
 
 function formatYoY(val) {
   if (val == null || isNaN(val)) return '—'
   const n = Number(val)
   const sign = n >= 0 ? '+' : ''
-  return \`\${sign}\${n.toFixed(1)}%\`
+  return `${sign}${n.toFixed(1)}%`
 }
 
 function yoyColor(val) {
@@ -246,7 +246,7 @@ export default function WalletSharePage() {
               />
               <MetricCard
                 label="Avg Wallet Share"
-                value={\`\${stats.avgWalletShare}%\`}
+                value={`${stats.avgWalletShare}%`}
                 sub="of total legal spend"
                 accent="blue"
               />
@@ -311,7 +311,7 @@ export default function WalletSharePage() {
                               <div
                                 className="ws-bar-inner"
                                 style={{
-                                  width: \`\${Math.min(100, sharePct)}%\`,
+                                  width: `${Math.min(100, sharePct)}%`,
                                   background: walletShareColor(sharePct),
                                 }}
                               />

@@ -240,14 +240,14 @@ export default function ChurnPredictorPage() {
                     const hasBrief = briefResults[id]
                     return (
                       <tr key={id} className="cp-tr">
-                        <td className="cp-td cp-td-name">{client.client_name || client.name || \`Client \${id}\`}</td>
+                        <td className="cp-td cp-td-name">{client.client_name || client.name || `Client ${id}`}</td>
                         <td className="cp-td cp-td-date">
                           {client.last_matter
                             ? new Date(client.last_matter).toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric' })
                             : '—'}
                         </td>
                         <td className="cp-td cp-td-mono">
-                          {client.wallet_share != null ? \`\${(client.wallet_share * 100).toFixed(1)}%\` : '—'}
+                          {client.wallet_share != null ? `${(client.wallet_share * 100).toFixed(1)}%` : '—'}
                         </td>
                         <td className="cp-td cp-td-mono">
                           {client.engagement_score != null ? client.engagement_score.toFixed(2) : '—'}
@@ -262,7 +262,7 @@ export default function ChurnPredictorPage() {
                             <button
                               onClick={() => handleGenerateBrief(id)}
                               disabled={isBriefing}
-                              className={\`cp-btn-brief \${isBriefing ? 'cp-btn-brief-loading' : 'cp-btn-brief-active'}\`}
+                              className={`cp-btn-brief ${isBriefing ? 'cp-btn-brief-loading' : 'cp-btn-brief-active'}`}
                             >
                               {isBriefing && <Loader size={12} style={{ animation: 'spin 1s linear infinite' }} />}
                               {isBriefing ? 'Generating...' : 'Generate Brief'}

@@ -189,7 +189,7 @@ function scoreColor(val) {
 
 function scoreLabel(val) {
   if (val == null) return '—'
-  return \`\${Math.round(val * 100)}%\`
+  return `${Math.round(val * 100)}%`
 }
 
 function getBestPracticeArea(company) {
@@ -285,7 +285,7 @@ export default function MandatePreFormationPage() {
             <button
               key={h}
               onClick={() => setHorizon(h)}
-              className={\`pre-horizon-btn \${horizon === h ? 'active' : 'inactive'}\`}
+              className={`pre-horizon-btn ${horizon === h ? 'active' : 'inactive'}`}
             >
               {h}
             </button>
@@ -355,10 +355,10 @@ export default function MandatePreFormationPage() {
                             </td>
                           ))}
                           <td className="pre-td pre-td-score" style={{ color: scoreColor(vel) }}>
-                            {vel != null ? \`\${Math.round(vel * 100)}%\` : '—'}
+                            {vel != null ? `${Math.round(vel * 100)}%` : '—'}
                           </td>
                           <td className="pre-td">
-                            <button className="pre-obtn" onClick={() => navigate(\`/companies/\${company.company_id}\`)}>
+                            <button className="pre-obtn" onClick={() => navigate(`/companies/${company.company_id}`)}>
                               View Details
                             </button>
                           </td>
@@ -393,7 +393,7 @@ export default function MandatePreFormationPage() {
                         <span className="pre-pa-val">{pa.count_7d ?? 0}</span>
                       </div>
                       <div className="pre-pa-track">
-                        <div className="pre-pa-fill" style={{ width: \`\${pct}%\` }} />
+                        <div className="pre-pa-fill" style={{ width: `${pct}%` }} />
                       </div>
                     </div>
                   )

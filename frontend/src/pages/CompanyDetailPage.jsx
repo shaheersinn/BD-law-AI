@@ -205,7 +205,7 @@ function TabButton({ label, active, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={\`cd-tab-btn \${active ? 'active' : 'inactive'}\`}
+      className={`cd-tab-btn ${active ? 'active' : 'inactive'}`}
     >
       {label}
     </button>
@@ -261,9 +261,9 @@ export default function CompanyDetailPage() {
               <button className="cd-back-btn" onClick={() => navigate(-1)}>← Back</button>
               <div className="cd-title-row">
                 <div>
-                  <h1 className="cd-title">{company?.name || \`Company \${id}\`}</h1>
+                  <h1 className="cd-title">{company?.name || `Company ${id}`}</h1>
                   <p className="cd-subtitle">
-                    {[company?.ticker && \`\${company.ticker} (\${company.exchange})\`, company?.sector, company?.province]
+                    {[company?.ticker && `${company.ticker} (${company.exchange})`, company?.sector, company?.province]
                       .filter(Boolean).join(' · ')}
                   </p>
                 </div>
@@ -282,11 +282,11 @@ export default function CompanyDetailPage() {
             {company && (
               <div className="cd-card" style={{ padding: '1.25rem 1.5rem' }}>
                 <div className="cd-stats-grid">
-                  <StatBlock label="Exchange" value={company.ticker ? \`\${company.ticker} · \${company.exchange}\` : null} />
+                  <StatBlock label="Exchange" value={company.ticker ? `${company.ticker} · ${company.exchange}` : null} />
                   <StatBlock label="Sector"   value={company.sector} />
                   <StatBlock label="Province" value={company.province} />
                   <StatBlock label="Employees" value={company.employee_count?.toLocaleString('en-CA')} />
-                  <StatBlock label="Market Cap" value={company.market_cap_cad ? \`$\${(company.market_cap_cad / 1e9).toFixed(1)}B\` : null} />
+                  <StatBlock label="Market Cap" value={company.market_cap_cad ? `$${(company.market_cap_cad / 1e9).toFixed(1)}B` : null} />
                   <StatBlock label="Signals" value={company.signal_count} />
                 </div>
               </div>
@@ -299,7 +299,7 @@ export default function CompanyDetailPage() {
               {score && (
                 <button
                   className="cd-tab-link"
-                  onClick={() => navigate(\`/companies/\${id}/explain\`)}
+                  onClick={() => navigate(`/companies/${id}/explain`)}
                 >
                   SHAP Explanations →
                 </button>

@@ -177,7 +177,7 @@ export default function RegulatoryRipplePage() {
                       <div className="osc-card-company">{item.company || item.company_name || '—'}</div>
                       {item.urgency != null && (
                         <Tag
-                          label={\`\${item.urgency}\`}
+                          label={`${item.urgency}`}
                           color={item.urgency > 80 ? 'red' : item.urgency > 60 ? 'gold' : 'green'}
                         />
                       )}

@@ -166,15 +166,15 @@ function StatusDot({ isHealthy, failures }) {
     <span style={{
       display: 'inline-block', width: 8, height: 8,
       borderRadius: '50%', background: color, marginRight: 8,
-      boxShadow: \`0 0 4px \${color}\`,
+      boxShadow: `0 0 4px ${color}`,
     }} />
   )
 }
 
 function formatDuration(seconds) {
   if (seconds == null) return '—'
-  if (seconds < 60) return \`\${seconds.toFixed(1)}s\`
-  return \`\${(seconds / 60).toFixed(1)}m\`
+  if (seconds < 60) return `${seconds.toFixed(1)}s`
+  return `${(seconds / 60).toFixed(1)}m`
 }
 
 function formatDate(iso) {
@@ -192,9 +192,9 @@ export function ScrapersAdminPage() {
   const loadScrapers = async () => {
     try {
       const res = await fetch('/api/scrapers/health', {
-        headers: { Authorization: \`Bearer \${sessionStorage.getItem('bdforlaw_token')}\` },
+        headers: { Authorization: `Bearer ${sessionStorage.getItem('bdforlaw_token')}` },
       })
-      if (!res.ok) throw new Error(\`\${res.status}\`)
+      if (!res.ok) throw new Error(`${res.status}`)
       const data = await res.json()
       setScrapers(Array.isArray(data) ? data : data.scrapers || [])
       setLastRefresh(new Date())
@@ -289,7 +289,7 @@ export function ScrapersAdminPage() {
                       <td className="sadm-td sadm-td-mono" style={{ textAlign: 'right', color: 'var(--color-on-surface)' }}>{s.avg_records_per_run?.toFixed(0) ?? '—'}</td>
                       <td className="sadm-td sadm-td-mono" style={{ textAlign: 'right', color: 'var(--color-on-surface)' }}>{formatDuration(s.avg_duration_seconds)}</td>
                       <td className="sadm-td sadm-td-mono" style={{ textAlign: 'right', color: s.reliability_score >= 0.8 ? 'var(--color-success)' : s.reliability_score >= 0.5 ? 'var(--color-warning)' : 'var(--color-error)' }}>
-                        {s.reliability_score != null ? \`\${(s.reliability_score * 100).toFixed(0)}%\` : '—'}
+                        {s.reliability_score != null ? `${(s.reliability_score * 100).toFixed(0)}%` : '—'}
                       </td>
                       <td className="sadm-td sadm-td-mono" style={{ textAlign: 'center', color: s.circuit_breaker_state === 'open' ? 'var(--color-error)' : 'var(--color-on-surface-variant)' }}>
                         {s.circuit_breaker_state || 'closed'}

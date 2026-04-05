@@ -157,7 +157,7 @@ export default function MADarkSignalsPage() {
                   {jet.date && <div className="mads-card-meta">{jet.date}</div>}
                   {jet.urgency != null && (
                     <div className="mads-tags-row">
-                      <Tag label={\`Confidence \${jet.urgency}%\`} color={jet.urgency > 75 ? 'red' : 'gold'} />
+                      <Tag label={`Confidence ${jet.urgency}%`} color={jet.urgency > 75 ? 'red' : 'gold'} />
                     </div>
                   )}
                 </div>
@@ -180,7 +180,7 @@ export default function MADarkSignalsPage() {
                   {s.change_type && <div className="mads-card-meta">{s.change_type}</div>}
                   {s.confidence != null && (
                     <div className="mads-tags-row">
-                      <Tag label={\`\${s.confidence}% conf\`} color={s.confidence > 75 ? 'gold' : 'default'} />
+                      <Tag label={`${s.confidence}% conf`} color={s.confidence > 75 ? 'gold' : 'default'} />
                     </div>
                   )}
                 </div>
@@ -206,7 +206,7 @@ export default function MADarkSignalsPage() {
                     {sig.source && <span className="mads-card-meta" style={{ margin: 0, marginRight: 4 }}>{sig.source}</span>}
                     {sig.confidence != null && (
                       <Tag
-                        label={\`\${Math.round(sig.confidence * 100)}%\`}
+                        label={`${Math.round(sig.confidence * 100)}%`}
                         color={sig.confidence > 0.7 ? 'green' : sig.confidence > 0.5 ? 'gold' : 'default'}
                       />
                     )}

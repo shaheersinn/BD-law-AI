@@ -328,10 +328,10 @@ export default function ConstructLexDashboardPage() {
                         onClick={() => item.company_id && navigate(`/companies/${item.company_id}`)}
                       >
                         <td className="db-vel-td db-vel-rank">{String(i + 1).padStart(2, '0')}</td>
-                        <td className="db-vel-td db-vel-company">{item.company_name || item.name || \`Company \${item.company_id}\`}</td>
+                        <td className="db-vel-td db-vel-company">{item.company_name || item.name || `Company ${item.company_id}`}</td>
                         <td className="db-vel-td db-vel-score">
                           {item.top_score_30d != null || item.composite_score != null
-                            ? \`\${((item.top_score_30d ?? item.composite_score) * 100).toFixed(1)}%\`
+                            ? `${((item.top_score_30d ?? item.composite_score) * 100).toFixed(1)}%`
                             : '—'}
                         </td>
                         <td className="db-vel-td">
@@ -365,8 +365,8 @@ export default function ConstructLexDashboardPage() {
             ) : (
               <div>
                 {top10PA.map((pa, i) => (
-                  <div key={pa.practice_area || i} className={\`db-pa-item \${i === 0 ? 'featured' : ''}\`}>
-                    <span className="db-pa-label">{pa.practice_area || pa.name || \`Area \${i + 1}\`}</span>
+                  <div key={pa.practice_area || i} className={`db-pa-item ${i === 0 ? 'featured' : ''}`}>
+                    <span className="db-pa-label">{pa.practice_area || pa.name || `Area ${i + 1}`}</span>
                     <span className="db-pa-count">{pa.count_7d ?? 0}</span>
                   </div>
                 ))}

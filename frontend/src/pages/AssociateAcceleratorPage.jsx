@@ -239,12 +239,12 @@ export default function AssociateAcceleratorPage() {
             <>
               <MetricCard label="Active Associates" value={stats.total} sub="in programme" accent="teal" />
               <MetricCard label="Activities This Month" value={stats.activitiesThisMonth} sub="total BD activities" accent="blue" />
-              <MetricCard label="Avg Engagement" value={\`\${stats.avgEngagement}%\`} sub="across all associates" accent="gold" />
+              <MetricCard label="Avg Engagement" value={`${stats.avgEngagement}%`} sub="across all associates" accent="gold" />
             </>
           )}
         </div>
 
-        <div className={\`asc-grid \${recommendations.length > 0 ? '' : 'asc-grid-single'}\`}>
+        <div className={`asc-grid ${recommendations.length > 0 ? '' : 'asc-grid-single'}`}>
           {/* Associate Activity Table */}
           <Panel title="Associate Activity">
             {loading ? (
@@ -281,7 +281,7 @@ export default function AssociateAcceleratorPage() {
                           <td className="asc-td asc-td-num">{assoc.content_drafted ?? assoc.content ?? '—'}</td>
                           <td className="asc-td" style={{ textAlign: 'center' }}>
                             <span className="asc-badge" style={{ background: engagementBg(score), color: engagementColor(score) }}>
-                              {score > 0 ? \`\${score}%\` : '—'}
+                              {score > 0 ? `${score}%` : '—'}
                             </span>
                           </td>
                           <td className="asc-td" style={{ textAlign: 'center' }}>

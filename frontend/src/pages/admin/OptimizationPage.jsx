@@ -160,9 +160,9 @@ function UsageReport() {
         <>
           <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', marginBottom: 20 }}>
             <Stat label="Week of" value={data.week_start} />
-            <Stat label="Overall p95" value={data.p95_ms != null ? \`\${data.p95_ms.toFixed(0)}ms\` : 'N/A'} alert={data.p95_ms > 300} />
-            <Stat label="Overall p50" value={data.p50_ms != null ? \`\${data.p50_ms.toFixed(0)}ms\` : 'N/A'} />
-            <Stat label="Cache Hit Rate" value={data.cache_hit_rate != null ? \`\${(data.cache_hit_rate * 100).toFixed(1)}%\` : 'N/A'} />
+            <Stat label="Overall p95" value={data.p95_ms != null ? `${data.p95_ms.toFixed(0)}ms` : 'N/A'} alert={data.p95_ms > 300} />
+            <Stat label="Overall p50" value={data.p50_ms != null ? `${data.p50_ms.toFixed(0)}ms` : 'N/A'} />
+            <Stat label="Cache Hit Rate" value={data.cache_hit_rate != null ? `${(data.cache_hit_rate * 100).toFixed(1)}%` : 'N/A'} />
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)', gap: 20 }}>

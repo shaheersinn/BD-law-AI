@@ -312,7 +312,7 @@ export default function LiveTriggersPage() {
           />
           <MetricCard
             label="Avg Confidence"
-            value={statsLoading ? <Skeleton width={48} height={24} /> : (stats?.avg_confidence != null ? \`\${stats.avg_confidence}%\` : '--')}
+            value={statsLoading ? <Skeleton width={48} height={24} /> : (stats?.avg_confidence != null ? `${stats.avg_confidence}%` : '--')}
             accent="blue"
           />
           <MetricCard
@@ -328,7 +328,7 @@ export default function LiveTriggersPage() {
             <button
               key={src}
               onClick={() => setActiveTab(src)}
-              className={\`lt-tab \${activeTab === src ? 'active' : 'inactive'}\`}
+              className={`lt-tab ${activeTab === src ? 'active' : 'inactive'}`}
             >
               {src}
             </button>
@@ -342,7 +342,7 @@ export default function LiveTriggersPage() {
             <button
               key={opt.label}
               onClick={() => setUrgencyFilter(opt.value)}
-              className={\`lt-filter-btn \${urgencyFilter === opt.value ? 'active' : 'inactive'}\`}
+              className={`lt-filter-btn ${urgencyFilter === opt.value ? 'active' : 'inactive'}`}
             >
               {opt.label}
             </button>
@@ -408,7 +408,7 @@ export default function LiveTriggersPage() {
                       <button
                         onClick={() => handleBrief(id)}
                         disabled={isBriefing}
-                        className={\`lt-btn-brief \${isBriefing ? 'lt-btn-brief-loading' : 'lt-btn-brief-active'}\`}
+                        className={`lt-btn-brief ${isBriefing ? 'lt-btn-brief-loading' : 'lt-btn-brief-active'}`}
                       >
                         {isBriefing && <Loader size={12} style={{ animation: 'spin 1s linear infinite' }} />}
                         {isBriefing ? 'Generating...' : 'Generate Brief'}

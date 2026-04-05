@@ -187,9 +187,9 @@ function outcomeColor(outcome) {
 function formatCurrency(val) {
   if (val == null || isNaN(val)) return '—'
   const n = Number(val)
-  if (n >= 1_000_000) return \`$\${(n / 1_000_000).toFixed(1)}M\`
-  if (n >= 1_000) return \`$\${(n / 1_000).toFixed(0)}K\`
-  return \`$\${n.toLocaleString()}\`
+  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`
+  if (n >= 1_000) return `$${(n / 1_000).toFixed(0)}K`
+  return `$${n.toLocaleString()}`
 }
 
 function formatDate(dateStr) {
@@ -278,7 +278,7 @@ export default function PitchAutopsyPage() {
             Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} height={100} radius={12} />)
           ) : (
             <>
-              <MetricCard label="Win Rate" value={\`\${stats.winRate}%\`} sub="of closed pitches" accent="teal" />
+              <MetricCard label="Win Rate" value={`${stats.winRate}%`} sub="of closed pitches" accent="teal" />
               <MetricCard label="Total Pitches" value={stats.total} sub="all time" accent="blue" />
               <MetricCard label="Avg Deal Size" value={formatCurrency(stats.avgDeal)} sub="per pitch" accent="gold" />
               <MetricCard label="Lost Revenue" value={formatCurrency(stats.lostRevenue)} sub="closed-lost total" accent="red" />
@@ -296,7 +296,7 @@ export default function PitchAutopsyPage() {
                   <button
                     key={f}
                     onClick={() => setFilter(f)}
-                    className={\`pa-filter-btn \${filter === f ? 'active' : 'inactive'}\`}
+                    className={`pa-filter-btn ${filter === f ? 'active' : 'inactive'}`}
                   >
                     {f}
                   </button>
@@ -314,7 +314,7 @@ export default function PitchAutopsyPage() {
               <EmptyState
                 icon={<TrendingUp size={32} />}
                 title="No pitches found"
-                message={filter === 'ALL' ? 'Pitch history will appear once BD data is available' : \`No \${filter.toLowerCase()} pitches recorded\`}
+                message={filter === 'ALL' ? 'Pitch history will appear once BD data is available' : `No ${filter.toLowerCase()} pitches recorded`}
               />
             ) : (
               <div style={{ overflowX: 'auto' }}>
@@ -382,7 +382,7 @@ export default function PitchAutopsyPage() {
                         <div
                           className="pa-wr-fill"
                           style={{
-                            width: \`\${rate}%\`,
+                            width: `${rate}%`,
                             background: rColor,
                           }}
                         />

@@ -169,7 +169,7 @@ function ShapBar({ value, maxAbs }) {
         overflow: 'hidden',
       }}>
         <div style={{
-          width: \`\${pct}%\`, height: '100%', borderRadius: 3,
+          width: `${pct}%`, height: '100%', borderRadius: 3,
           background: colorToken,
           transition: 'width 0.3s ease',
         }} />
@@ -205,7 +205,7 @@ export default function ExplainPage() {
   return (
     <AppShell>
       <div className="exp-root">
-        <button className="exp-back-btn" onClick={() => navigate(\`/companies/\${id}\`)}>
+        <button className="exp-back-btn" onClick={() => navigate(`/companies/${id}`)}>
           ← Company Detail
         </button>
 
@@ -237,7 +237,7 @@ export default function ExplainPage() {
                 <div className="exp-card-score">{(exp.score * 100).toFixed(1)}%</div>
               </div>
               <div className="exp-card-meta">
-                {exp.horizon}d horizon{exp.base_value != null ? \` · base \${(exp.base_value * 100).toFixed(1)}%\` : ''}
+                {exp.horizon}d horizon{exp.base_value != null ? ` · base ${(exp.base_value * 100).toFixed(1)}%` : ''}
               </div>
 
               {exp.top_shap_features?.length > 0 && (

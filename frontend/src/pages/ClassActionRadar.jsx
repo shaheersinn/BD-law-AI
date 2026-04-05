@@ -201,7 +201,7 @@ function injectCSS() {
 }
 
 function pct(value) {
-  return \`\${((value || 0) * 100).toFixed(1)}%\`
+  return `${((value || 0) * 100).toFixed(1)}%`
 }
 
 function TypeBadge({ type }) {
@@ -299,11 +299,11 @@ export default function ClassActionRadar() {
                     <tr
                       key={row.company_id}
                       onClick={() => setSelectedCompanyId(row.company_id)}
-                      className={\`car-tr \${selectedCompanyId === row.company_id ? 'selected' : ''}\`}
+                      className={`car-tr ${selectedCompanyId === row.company_id ? 'selected' : ''}`}
                     >
                       <td className="car-td">{row.company_name}</td>
                       <td className="car-td"><TypeBadge type={row.predicted_type} /></td>
-                      <td className="car-td">{row.time_horizon_days ? \`\${row.time_horizon_days}d\` : '—'}</td>
+                      <td className="car-td">{row.time_horizon_days ? `${row.time_horizon_days}d` : '—'}</td>
                       <td className="car-td car-td-strong">{pct(row.class_action_probability)}</td>
                     </tr>
                   ))}
@@ -317,7 +317,7 @@ export default function ClassActionRadar() {
             <div className="car-section-title">Signal Timeline</div>
             <div style={{ maxHeight: '400px', overflowY: 'auto', paddingRight: 4 }}>
               {(timeline || []).slice(0, 8).map((sig, idx) => (
-                <div key={\`\${sig.signal_type}-\${idx}\`} className="car-item">
+                <div key={`${sig.signal_type}-${idx}`} className="car-item">
                   <div className="car-item-title">{sig.signal_type}</div>
                   <div className="car-item-sub">
                     weight:{' '}

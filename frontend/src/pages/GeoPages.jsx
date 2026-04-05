@@ -9,7 +9,7 @@ import * as apiClient from "../api/client.js";
 import AppShell from '../components/layout/AppShell';
 
 /* ── CSS Injection ────────────────────────────────────────────────────────── */
-const GEO_CSS = \`
+const GEO_CSS = `
 .geo-tag { background:rgba(106,137,180,.1); border:1px solid rgba(106,137,180,.25); color:var(--color-on-surface-variant); font-size:9px; font-family:var(--font-mono); letter-spacing:.07em; padding:2px 8px; border-radius:2px; white-space:nowrap; }
 .geo-tag.red { background:rgba(224,82,82,.1); border-color:rgba(224,82,82,.3); color:var(--color-error); }
 .geo-tag.gold { background:rgba(212,168,67,.1); border-color:rgba(212,168,67,.3); color:var(--color-secondary); }
@@ -60,7 +60,7 @@ const GEO_CSS = \`
 
 .geo-brief-box { font-size:13px; line-height:1.75; color:var(--color-on-surface-variant); border-left:2px solid var(--color-secondary); padding-left:14px; font-family:var(--font-data); }
 .geo-brief-empty { font-size:11px; color:var(--color-on-surface-variant); font-style:italic; font-family:var(--font-data); }
-\`;
+`;
 
 function injectCSS() {
   if (typeof document !== 'undefined' && !document.getElementById('geo-styles')) {
@@ -73,7 +73,7 @@ function injectCSS() {
 
 /* ── Shared Primitives ────────────────────────────────────────────────────── */
 const Tag = ({ label, color = "default" }) => (
-  <span className={\`geo-tag \${color}\`}>{label}</span>
+  <span className={`geo-tag ${color}`}>{label}</span>
 );
 
 const SBar = ({ s, color }) => {
@@ -81,7 +81,7 @@ const SBar = ({ s, color }) => {
   return (
     <div className="geo-sbar">
       <div className="geo-sbar-track">
-        <div className="geo-sbar-fill" style={{ width: \`\${s}%\`, background: c }} />
+        <div className="geo-sbar-fill" style={{ width: `${s}%`, background: c }} />
       </div>
       <span className="geo-sbar-val" style={{ color: c }}>{s}</span>
     </div>
@@ -122,7 +122,7 @@ const PageHeader = ({ tag, title, sub }) => (
 )
 
 const OBtn = ({ children, onClick, disabled, small }) => (
-  <button onClick={onClick} disabled={disabled} className={\`geo-obtn \${small ? 'small' : ''}\`}>
+  <button onClick={onClick} disabled={disabled} className={`geo-obtn ${small ? 'small' : ''}`}>
     {children}
   </button>
 )
@@ -190,11 +190,11 @@ export const GeoMap = () => {
     setLoading(true); setBrief("");
     try {
       const token = sessionStorage.getItem('bdforlaw_token')
-      const r = await fetch(\`/api/v1/signals?limit=10&category=geo\`, { headers: { Authorization: \`Bearer \${token}\` } })
-      if (!r.ok) throw new Error(\`\${r.status}\`)
+      const r = await fetch(`/api/v1/signals?limit=10&category=geo`, { headers: { Authorization: `Bearer ${token}` } })
+      if (!r.ok) throw new Error(`${r.status}`)
       const data = await r.json()
       const list = Array.isArray(data) ? data : []
-      setBrief(list.length > 0 ? \`\${list.length} geo signals active.\\n\` + list.slice(0, 5).map(s => \`• \${s.signal_type || 'signal'}: \${s.raw_company_name || s.signal_text?.slice(0, 60) || 'event'}\`).join('\\n') : 'No geo signals yet — scrapers accumulate data over 24–72 hours.')
+      setBrief(list.length > 0 ? `${list.length} geo signals active.\\n` + list.slice(0, 5).map(s => `• ${s.signal_type || 'signal'}: ${s.raw_company_name || s.signal_text?.slice(0, 60) || 'event'}`).join('\\n') : 'No geo signals yet — scrapers accumulate data over 24–72 hours.')
     } catch (e) { setBrief("API error.") }
     setLoading(false);
   }
@@ -223,7 +223,7 @@ export const GeoMap = () => {
               const isSelected = sel.id === g.id;
               return (
                 <g key={g.id} onClick={() => { setSel(g); setBrief(""); }} style={{ cursor: "pointer" }}>
-                  <circle cx={g.x} cy={g.y} r={isSelected ? 22 : 16} fill={\`\${c}18\`} stroke={\`\${c}40\`} strokeWidth="1">
+                  <circle cx={g.x} cy={g.y} r={isSelected ? 22 : 16} fill={`${c}18`} stroke={`${c}40`} strokeWidth="1">
                     {isSelected && <animate attributeName="r" values="16;22;16" dur="2s" repeatCount="indefinite"/>}
                   </circle>
                   <circle cx={g.x} cy={g.y} r={isSelected ? 9 : 7} fill={c} opacity={isSelected ? 1 : 0.85}/>
@@ -236,7 +236,7 @@ export const GeoMap = () => {
         </div>
       </Panel>
       <div className="geo-grid-2">
-        <Panel title={\`\${sel.label} — Jurisdiction Intelligence\`}>
+        <Panel title={`${sel.label} — Jurisdiction Intelligence`}>
           <div style={{ padding: "14px 16px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
               <div>
@@ -276,11 +276,11 @@ export const JetTracker = () => {
     setLoading(true); setBrief("");
     try {
       const token = sessionStorage.getItem('bdforlaw_token')
-      const r = await fetch(\`/api/v1/signals?signal_type=geo_flight_corporate_jet&limit=10\`, { headers: { Authorization: \`Bearer \${token}\` } })
-      if (!r.ok) throw new Error(\`\${r.status}\`)
+      const r = await fetch(`/api/v1/signals?signal_type=geo_flight_corporate_jet&limit=10`, { headers: { Authorization: `Bearer ${token}` } })
+      if (!r.ok) throw new Error(`${r.status}`)
       const data = await r.json()
       const list = Array.isArray(data) ? data : []
-      setBrief(list.length > 0 ? list.slice(0, 5).map(s => \`• \${s.raw_company_name || 'Unknown'}: \${s.signal_text?.slice(0, 80) || 'Jet movement detected'}\`).join('\\n') : 'No corporate jet signals yet.')
+      setBrief(list.length > 0 ? list.slice(0, 5).map(s => `• ${s.raw_company_name || 'Unknown'}: ${s.signal_text?.slice(0, 80) || 'Jet movement detected'}`).join('\\n') : 'No corporate jet signals yet.')
     } catch (e) { setBrief("API error.") }
     setLoading(false);
   }
@@ -298,7 +298,7 @@ export const JetTracker = () => {
         <Panel>
           <div className="geo-list-header">SORTED BY CONFIDENCE</div>
           {JETS.sort((a, b) => b.conf - a.conf).map((j, i) => (
-            <div key={i} onClick={() => { setSel(j); setBrief(""); }} className={\`geo-list-item \${sel.co === j.co ? 'active' : ''}\`}>
+            <div key={i} onClick={() => { setSel(j); setBrief(""); }} className={`geo-list-item ${sel.co === j.co ? 'active' : ''}`}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
                 <div className="geo-item-title">{j.co}</div>
                 <div style={{ fontFamily: "var(--font-mono)", fontSize: 17, fontWeight: 700, color: sc(j.conf) }}>{j.conf}%</div>
@@ -329,7 +329,7 @@ export const JetTracker = () => {
                 </div>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, padding: "12px 0", borderTop: "1px solid var(--color-outline-variant)" }}>
-                {[["Route", \`\${sel.from} → \${sel.to}\`], ["Detected", sel.date], ["Relationship", \`\${sel.warmth}/100\`]].map(([l, v]) => (
+                {[["Route", `${sel.from} → ${sel.to}`], ["Detected", sel.date], ["Relationship", `${sel.warmth}/100`]].map(([l, v]) => (
                   <div key={l}>
                     <div style={{ fontSize: 9, color: "var(--color-on-surface-variant)", fontFamily: "var(--font-mono)", marginBottom: 3 }}>{l}</div>
                     <div style={{ fontSize: 12, color: "var(--color-on-surface)", fontFamily: "var(--font-data)", fontWeight: 500 }}>{v}</div>
@@ -360,11 +360,11 @@ export const FootTraffic = () => {
     setLoading(true); setResp("");
     try {
       const token = sessionStorage.getItem('bdforlaw_token')
-      const r = await fetch(\`/api/v1/signals?category=geo&limit=10\`, { headers: { Authorization: \`Bearer \${token}\` } })
-      if (!r.ok) throw new Error(\`\${r.status}\`)
+      const r = await fetch(`/api/v1/signals?category=geo&limit=10`, { headers: { Authorization: `Bearer ${token}` } })
+      if (!r.ok) throw new Error(`${r.status}`)
       const data = await r.json()
       const list = Array.isArray(data) ? data : []
-      setResp(list.length > 0 ? list.slice(0, 5).map(s => \`• \${s.raw_company_name || 'Company'}: \${s.signal_text?.slice(0, 80) || 'Activity detected'}\`).join('\\n') : 'No foot traffic signals yet.')
+      setResp(list.length > 0 ? list.slice(0, 5).map(s => `• ${s.raw_company_name || 'Company'}: ${s.signal_text?.slice(0, 80) || 'Activity detected'}`).join('\\n') : 'No foot traffic signals yet.')
     } catch (e) { setResp("API error.") }
     setLoading(false);
   }
@@ -384,10 +384,10 @@ export const FootTraffic = () => {
             const c = sc(f.sev);
             const isSelected = sel.target === f.target;
             return (
-              <div key={i} onClick={() => { setSel(f); setResp(""); }} style={{ background: isSelected ? \`\${c}08\` : "var(--color-surface-container-lowest)", border: \`1px solid \${isSelected ? \`\${c}35\` : "var(--color-surface-container-high)"}\`, borderLeft: \`3px solid \${c}\`, borderRadius: 4, padding: "14px 16px", cursor: "pointer" }}>
+              <div key={i} onClick={() => { setSel(f); setResp(""); }} style={{ background: isSelected ? `${c}08` : "var(--color-surface-container-lowest)", border: `1px solid ${isSelected ? `${c}35` : "var(--color-surface-container-high)"}`, borderLeft: `3px solid ${c}`, borderRadius: 4, padding: "14px 16px", cursor: "pointer" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
                   <div style={{ fontWeight: 600, fontSize: 14, color: "var(--color-on-surface)", fontFamily: "var(--font-data)" }}>{f.target}</div>
-                  <span style={{ fontSize: 8, fontFamily: "var(--font-mono)", background: \`\${c}18\`, border: \`1px solid \${c}35\`, color: c, padding: "2px 7px", borderRadius: 2 }}>{f.sev.toUpperCase()}</span>
+                  <span style={{ fontSize: 8, fontFamily: "var(--font-mono)", background: `${c}18`, border: `1px solid ${c}35`, color: c, padding: "2px 7px", borderRadius: 2 }}>{f.sev.toUpperCase()}</span>
                 </div>
                 <div style={{ fontSize: 11, color: c, fontFamily: "var(--font-mono)", marginBottom: 6 }}>📍 {f.loc}</div>
                 <div style={{ display: "flex", gap: 10, marginBottom: 8 }}>
@@ -425,11 +425,11 @@ export const Satellite = () => {
     setLoading(true); setAnalysis("");
     try {
       const token = sessionStorage.getItem('bdforlaw_token')
-      const r = await fetch(\`/api/v1/signals?category=geo&limit=10\`, { headers: { Authorization: \`Bearer \${token}\` } })
-      if (!r.ok) throw new Error(\`\${r.status}\`)
+      const r = await fetch(`/api/v1/signals?category=geo&limit=10`, { headers: { Authorization: `Bearer ${token}` } })
+      if (!r.ok) throw new Error(`${r.status}`)
       const data = await r.json()
       const list = Array.isArray(data) ? data : []
-      setAnalysis(list.length > 0 ? list.slice(0, 5).map(s => \`• \${s.raw_company_name || 'Company'}: \${s.signal_type || 'signal'}\`).join('\\n') : 'No satellite signals yet.')
+      setAnalysis(list.length > 0 ? list.slice(0, 5).map(s => `• ${s.raw_company_name || 'Company'}: ${s.signal_type || 'signal'}`).join('\\n') : 'No satellite signals yet.')
     } catch (e) { setAnalysis("API error.") }
     setLoading(false);
   }
@@ -440,7 +440,7 @@ export const Satellite = () => {
       <div className="geo-grid-4">
         <Metric label="Active Signals" val={SAT.length} accent="blue"/>
         <Metric label="High Urgency" val={SAT.filter(s => s.urg === "high").length} accent="red"/>
-        <Metric label="Avg Confidence" val={\`\${Math.round(SAT.reduce((s, i) => s + i.conf, 0) / SAT.length)}%\`} accent="gold"/>
+        <Metric label="Avg Confidence" val={`${Math.round(SAT.reduce((s, i) => s + i.conf, 0) / SAT.length)}%`} accent="gold"/>
         <Metric label="Est. Pipeline" val="$960K" accent="green"/>
       </div>
       <div className="geo-grid-sidebar" style={{ gridTemplateColumns: '320px 1fr' }}>
@@ -448,14 +448,14 @@ export const Satellite = () => {
           {SAT.map((s, i) => {
             const c = uc(s.urg);
             return (
-              <div key={i} onClick={() => { setSel(s); setAnalysis(""); }} className={\`geo-list-item \${sel.co === s.co ? 'active' : ''}\`}>
+              <div key={i} onClick={() => { setSel(s); setAnalysis(""); }} className={`geo-list-item ${sel.co === s.co ? 'active' : ''}`}>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
                   <div className="geo-item-title">{s.co}</div>
                   <Tag label={s.type} color={tc[s.type] || "default"}/>
                 </div>
                 <div className="geo-item-meta">📍 {s.loc}</div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: 8, fontFamily: "var(--font-mono)", color: c, background: \`\${c}15\`, border: \`1px solid \${c}30\`, padding: "2px 6px", borderRadius: 2 }}>{s.urg.toUpperCase()}</span>
+                  <span style={{ fontSize: 8, fontFamily: "var(--font-mono)", color: c, background: `${c}15`, border: `1px solid ${c}30`, padding: "2px 6px", borderRadius: 2 }}>{s.urg.toUpperCase()}</span>
                   <span style={{ fontFamily: "var(--font-mono)", fontSize: 13, fontWeight: 700, color: c }}>{s.conf}%</span>
                 </div>
               </div>
@@ -495,11 +495,11 @@ export const PermitRadar = () => {
     setLoading(true); setBrief("");
     try {
       const token = sessionStorage.getItem('bdforlaw_token')
-      const r = await fetch(\`/api/v1/signals?signal_type=geo_municipal_permit_issued&limit=10\`, { headers: { Authorization: \`Bearer \${token}\` } })
-      if (!r.ok) throw new Error(\`\${r.status}\`)
+      const r = await fetch(`/api/v1/signals?signal_type=geo_municipal_permit_issued&limit=10`, { headers: { Authorization: `Bearer ${token}` } })
+      if (!r.ok) throw new Error(`${r.status}`)
       const data = await r.json()
       const list = Array.isArray(data) ? data : []
-      setBrief(list.length > 0 ? list.slice(0, 5).map(s => \`• \${s.raw_company_name || 'Applicant'}: \${s.signal_text?.slice(0, 100) || 'Permit filed'}\`).join('\\n') : 'No permit signals yet.')
+      setBrief(list.length > 0 ? list.slice(0, 5).map(s => `• ${s.raw_company_name || 'Applicant'}: ${s.signal_text?.slice(0, 100) || 'Permit filed'}`).join('\\n') : 'No permit signals yet.')
     } catch (e) { setBrief("API error.") }
     setLoading(false);
   }
@@ -510,17 +510,17 @@ export const PermitRadar = () => {
       <div className="geo-grid-4">
         <Metric label="Active Permits" val={PERMITS.length} accent="blue"/>
         <Metric label="High Urgency" val={PERMITS.filter(p => p.urg === "high").length} accent="red"/>
-        <Metric label="Est. Fee Value" val={\`$\${(PERMITS.reduce((s, p) => s + parseInt(p.rev.replace(/\\$|K/g, "")), 0))}K\`} accent="gold"/>
+        <Metric label="Est. Fee Value" val={`$${(PERMITS.reduce((s, p) => s + parseInt(p.rev.replace(/\\$|K/g, "")), 0))}K`} accent="gold"/>
         <Metric label="Unmatched Prospects" val={PERMITS.filter(p => !p.lead).length} accent="green"/>
       </div>
       <div className="geo-grid-sidebar" style={{ gridTemplateColumns: '320px 1fr' }}>
         <Panel>
           <div className="geo-list-header">SORTED BY URGENCY</div>
           {PERMITS.sort((a, b) => a.urg === "high" ? -1 : 1).map((p, i) => (
-            <div key={i} onClick={() => { setSel(p); setBrief(""); }} className={\`geo-list-item \${sel.co === p.co ? 'active' : ''}\`}>
+            <div key={i} onClick={() => { setSel(p); setBrief(""); }} className={`geo-list-item ${sel.co === p.co ? 'active' : ''}`}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
                 <div className="geo-item-title">{p.co}</div>
-                <span style={{ fontSize: 8, background: \`\${uc(p.urg)}18\`, color: uc(p.urg), padding: "2px 6px", borderRadius: 2, fontFamily: "var(--font-mono)" }}>{p.urg.toUpperCase()}</span>
+                <span style={{ fontSize: 8, background: `${uc(p.urg)}18`, color: uc(p.urg), padding: "2px 6px", borderRadius: 2, fontFamily: "var(--font-mono)" }}>{p.urg.toUpperCase()}</span>
               </div>
               <div className="geo-item-meta">{p.permit}</div>
             </div>

@@ -263,18 +263,18 @@ const fmtTs = (ts) => {
   const diffMs = now - d;
   const diffMin = Math.floor(diffMs / 60000);
   if (diffMin < 1) return "just now";
-  if (diffMin < 60) return \`\${diffMin}m ago\`;
-  if (diffMin < 1440) return \`\${Math.floor(diffMin / 60)}h ago\`;
-  return \`\${Math.floor(diffMin / 1440)}d ago\`;
+  if (diffMin < 60) return `${diffMin}m ago`;
+  if (diffMin < 1440) return `${Math.floor(diffMin / 60)}h ago`;
+  return `${Math.floor(diffMin / 1440)}d ago`;
 };
 
 const fmtDur = (ms) => {
   if (ms == null) return "—";
-  if (ms < 1000) return \`\${Math.round(ms)}ms\`;
-  return \`\${(ms / 1000).toFixed(1)}s\`;
+  if (ms < 1000) return `${Math.round(ms)}ms`;
+  return `${(ms / 1000).toFixed(1)}s`;
 };
 
-const fmtPct = (f) => (f == null ? "—" : \`\${(f * 100).toFixed(0)}%\`);
+const fmtPct = (f) => (f == null ? "—" : `${(f * 100).toFixed(0)}%`);
 
 const STATUS_PRIORITY = { failing: 0, degraded: 1, disabled: 2, healthy: 3 };
 
@@ -291,7 +291,7 @@ export default function ScraperDashboard() {
   const fetchData = useCallback(async () => {
     try {
       const token = sessionStorage.getItem('bdforlaw_token')
-      const authHeaders = token ? { Authorization: \`Bearer \${token}\` } : {}
+      const authHeaders = token ? { Authorization: `Bearer ${token}` } : {}
       const [sumRes, healthRes] = await Promise.all([
         fetch("/api/scrapers/summary", { headers: authHeaders }),
         fetch("/api/scrapers/health?limit=200", { headers: authHeaders }),
@@ -340,7 +340,7 @@ export default function ScraperDashboard() {
             <h1 className="scrap-title">Scraper Health</h1>
             <div className="scrap-subtitle">
               {summary?.registry_count ?? "?"} registered sources
-              {lastRefresh && \` · refreshed \${fmtTs(lastRefresh.toISOString())}\`}
+              {lastRefresh && ` · refreshed ${fmtTs(lastRefresh.toISOString())}`}
             </div>
           </div>
           <button className="scrap-btn-refresh" onClick={fetchData}>REFRESH</button>
@@ -351,7 +351,7 @@ export default function ScraperDashboard() {
         {/* Summary Metrics */}
         {summary && (
           <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
-            <MetricCard label="Total Scrapers" value={summary.total} color="var(--color-primary)" sub={\`\${summary.registry_count} in registry\`} />
+            <MetricCard label="Total Scrapers" value={summary.total} color="var(--color-primary)" sub={`${summary.registry_count} in registry`} />
             <MetricCard label="Healthy" value={summary.healthy} color="var(--color-success)" />
             <MetricCard label="Degraded" value={summary.degraded} color="var(--color-warning)" />
             <MetricCard label="Failing" value={summary.failing} color="var(--color-error)" />
@@ -388,7 +388,7 @@ export default function ScraperDashboard() {
         </div>
 
         {/* Health Table */}
-        <Panel title={\`Scraper Health (\${filtered.length})\`}>
+        <Panel title={`Scraper Health (${filtered.length})`}>
           <div style={{ overflowX: "auto" }}>
             <table className="scrap-table">
               <thead>

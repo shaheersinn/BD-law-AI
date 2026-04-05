@@ -158,7 +158,7 @@ function formatDate(dateStr) {
 function avgTenure(data) {
   const vals = data.map(d => Number(d.tenure_years ?? d.tenure ?? 0)).filter(v => !isNaN(v) && v > 0)
   if (!vals.length) return '—'
-  return \`\${(vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1)}y\`
+  return `${(vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1)}y`
 }
 
 export default function GCProfilerPage() {
@@ -255,7 +255,7 @@ export default function GCProfilerPage() {
             <EmptyState
               icon={<Users size={32} />}
               title={query ? 'No matches found' : 'No GC profiles available'}
-              message={query ? \`No results for "\${query}"\` : 'GC/CLO profiles will populate as client data is collected'}
+              message={query ? `No results for "${query}"` : 'GC/CLO profiles will populate as client data is collected'}
             />
           ) : (
             <div style={{ overflowX: 'auto' }}>
@@ -273,7 +273,7 @@ export default function GCProfilerPage() {
                       <td className="gc-td gc-td-name">{gc.name ?? gc.contact_name ?? '—'}</td>
                       <td className="gc-td gc-td-meta">{gc.company_name ?? gc.company ?? '—'}</td>
                       <td className="gc-td gc-td-meta">{gc.title ?? gc.role ?? 'General Counsel'}</td>
-                      <td className="gc-td gc-td-mono">{gc.tenure_years != null ? \`\${gc.tenure_years}y\` : gc.tenure ?? '—'}</td>
+                      <td className="gc-td gc-td-mono">{gc.tenure_years != null ? `${gc.tenure_years}y` : gc.tenure ?? '—'}</td>
                       <td className="gc-td gc-td-meta">{formatDate(gc.last_contact ?? gc.last_contact_date)}</td>
                       <td className="gc-td">
                         <Tag
@@ -283,7 +283,7 @@ export default function GCProfilerPage() {
                       </td>
                       <td className="gc-td">
                         <button
-                          onClick={() => gc.company_id && navigate(\`/companies/\${gc.company_id}\`)}
+                          onClick={() => gc.company_id && navigate(`/companies/${gc.company_id}`)}
                           disabled={!gc.company_id}
                           className="gc-btn-view"
                         >

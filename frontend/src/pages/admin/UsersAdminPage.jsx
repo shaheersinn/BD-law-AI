@@ -128,9 +128,9 @@ export default function UsersAdminPage() {
 
   useEffect(() => {
     fetch('/api/auth/users', {
-      headers: { Authorization: \`Bearer \${sessionStorage.getItem('bdforlaw_token')}\` },
+      headers: { Authorization: `Bearer ${sessionStorage.getItem('bdforlaw_token')}` },
     })
-      .then(r => { if (!r.ok) throw new Error(\`\${r.status}\`); return r.json() })
+      .then(r => { if (!r.ok) throw new Error(`${r.status}`); return r.json() })
       .then(d => setUsers(Array.isArray(d) ? d : d.users || []))
       .catch(err => setError(err.message))
       .finally(() => setLoading(false))
