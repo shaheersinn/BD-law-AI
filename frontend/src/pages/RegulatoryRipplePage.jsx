@@ -1,6 +1,8 @@
 /**
- * pages/RegulatoryRipplePage.jsx — OSC enforcement actions and regulatory signals.
- * Route: /regulatory-ripple
+ * pages/RegulatoryRipplePage.jsx — P21 Redesign
+ * 
+ * OSC enforcement actions and regulatory signals.
+ * Restyled with injected CSS and strict typography (DM Sans / DM Serif).
  * Data: triggers.live({ source: 'OSC' }), signals.list()
  */
 
@@ -10,7 +12,103 @@ import { Skeleton } from '../components/Skeleton'
 import { PageHeader, MetricCard, Panel, Tag, EmptyState, ErrorState } from '../components/ui/Primitives'
 import { triggers, signals } from '../api/client'
 
+const OSC_CSS = `
+.osc-root {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2.5rem 2rem 4rem;
+}
+.osc-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+.osc-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+/* Actions List */
+.osc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.osc-card {
+  padding: 0.875rem;
+  background: var(--color-surface-container-low);
+  border-radius: var(--radius-md);
+  transition: transform var(--transition-fast);
+}
+.osc-card:hover {
+  transform: translateX(2px);
+}
+.osc-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.375rem;
+}
+.osc-card-company {
+  font-family: var(--font-data);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+.osc-card-type {
+  font-family: var(--font-data);
+  font-size: 0.6875rem;
+  color: var(--color-on-surface-variant);
+  margin-bottom: 0.375rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.osc-card-desc {
+  font-family: var(--font-data);
+  font-size: 0.8125rem;
+  color: var(--color-on-surface-variant);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Regulatory Signal */
+.reg-sig-headline {
+  font-family: var(--font-data);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  margin-bottom: 0.375rem;
+  line-height: 1.4;
+}
+.reg-sig-meta {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+.reg-sig-meta-text {
+  font-family: var(--font-data);
+  font-size: 0.6875rem;
+  color: var(--color-on-surface-variant);
+}
+
+@media (max-width: 768px) {
+  .osc-grid { grid-template-columns: 1fr; }
+}
+`
+
+function injectCSS() {
+  if (typeof document !== 'undefined' && !document.getElementById('osc-styles')) {
+    const el = document.createElement('style')
+    el.id = 'osc-styles'
+    el.textContent = OSC_CSS
+    document.head.appendChild(el)
+  }
+}
+
 export default function RegulatoryRipplePage() {
+  injectCSS()
   const [loading, setLoading] = useState(true)
   const [oscTriggers, setOscTriggers] = useState([])
   const [regSignals, setRegSignals] = useState([])
@@ -45,7 +143,7 @@ export default function RegulatoryRipplePage() {
 
   return (
     <AppShell>
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '2rem 2rem 3rem' }}>
+      <div className="osc-root">
         <PageHeader
           tag="Regulatory Intelligence"
           title="Regulatory Ripple Tracker"
@@ -53,19 +151,14 @@ export default function RegulatoryRipplePage() {
         />
 
         {/* Metric cards */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-          gap: '1.25rem',
-          marginBottom: '2rem',
-        }}>
+        <div className="osc-metrics">
           <MetricCard label="Active Proceedings" value={loading ? '—' : oscTriggers.length} accent="red" />
-          <MetricCard label="High Impact"         value={loading ? '—' : highImpact}        accent="gold" />
-          <MetricCard label="Avg Lead Time"       value="14 days"                            accent="blue" sub="Historical average" />
+          <MetricCard label="High Impact" value={loading ? '—' : highImpact} accent="gold" />
+          <MetricCard label="Avg Lead Time" value="14 days" accent="blue" sub="Historical average" />
         </div>
 
         {/* Two-panel layout */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+        <div className="osc-grid">
           {/* OSC Enforcement Actions */}
           <Panel title="OSC Enforcement Actions">
             {loading ? (
@@ -77,48 +170,23 @@ export default function RegulatoryRipplePage() {
             ) : oscTriggers.length === 0 ? (
               <EmptyState title="No OSC actions" message="No OSC enforcement proceedings found" />
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <div className="osc-list">
                 {oscTriggers.map((item, i) => (
-                  <div key={i} style={{
-                    padding: '0.75rem',
-                    background: 'var(--color-surface-container-low)',
-                    borderRadius: 'var(--radius-md)',
-                  }}>
-                    <div style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'flex-start',
-                      marginBottom: '0.375rem',
-                    }}>
-                      <div style={{
-                        fontFamily: 'var(--font-data)',
-                        fontSize: '0.875rem',
-                        fontWeight: 600,
-                        color: 'var(--color-primary)',
-                      }}>{item.company || item.company_name || '—'}</div>
+                  <div key={i} className="osc-card">
+                    <div className="osc-card-header">
+                      <div className="osc-card-company">{item.company || item.company_name || '—'}</div>
                       {item.urgency != null && (
                         <Tag
-                          label={`${item.urgency}`}
+                          label={\`\${item.urgency}\`}
                           color={item.urgency > 80 ? 'red' : item.urgency > 60 ? 'gold' : 'green'}
                         />
                       )}
                     </div>
                     {item.type && (
-                      <div style={{
-                        fontFamily: 'var(--font-data)',
-                        fontSize: '0.6875rem',
-                        color: 'var(--color-on-surface-variant)',
-                        marginBottom: '0.25rem',
-                      }}>{item.type}</div>
+                      <div className="osc-card-type">{item.type}</div>
                     )}
                     {item.desc && (
-                      <p style={{
-                        fontFamily: 'var(--font-data)',
-                        fontSize: '0.8125rem',
-                        color: 'var(--color-on-surface-variant)',
-                        lineHeight: 1.5,
-                        margin: 0,
-                      }}>{item.desc}</p>
+                      <p className="osc-card-desc">{item.desc}</p>
                     )}
                   </div>
                 ))}
@@ -137,41 +205,18 @@ export default function RegulatoryRipplePage() {
             ) : regSignals.length === 0 ? (
               <EmptyState title="No signals" message="No regulatory signals in the last 90 days" />
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <div className="osc-list">
                 {regSignals.map((sig, i) => (
-                  <div key={i} style={{
-                    padding: '0.75rem',
-                    background: 'var(--color-surface-container-low)',
-                    borderRadius: 'var(--radius-md)',
-                  }}>
-                    <div style={{
-                      fontFamily: 'var(--font-data)',
-                      fontSize: '0.8125rem',
-                      fontWeight: 600,
-                      color: 'var(--color-primary)',
-                      marginBottom: '0.25rem',
-                      lineHeight: 1.4,
-                    }}>
+                  <div key={i} className="osc-card">
+                    <div className="reg-sig-headline">
                       {sig.headline || sig.text?.slice(0, 100) || 'Signal detected'}
                     </div>
-                    <div style={{
-                      display: 'flex',
-                      gap: '0.5rem',
-                      alignItems: 'center',
-                    }}>
+                    <div className="reg-sig-meta">
                       {sig.source && (
-                        <span style={{
-                          fontFamily: 'var(--font-data)',
-                          fontSize: '0.6875rem',
-                          color: 'var(--color-on-surface-variant)',
-                        }}>{sig.source}</span>
+                        <span className="reg-sig-meta-text">{sig.source}</span>
                       )}
                       {sig.published_at && (
-                        <span style={{
-                          fontFamily: 'var(--font-data)',
-                          fontSize: '0.6875rem',
-                          color: 'var(--color-on-surface-variant)',
-                        }}>· {new Date(sig.published_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}</span>
+                        <span className="reg-sig-meta-text">· {new Date(sig.published_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}</span>
                       )}
                     </div>
                   </div>
