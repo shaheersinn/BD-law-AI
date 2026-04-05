@@ -271,6 +271,137 @@ async def _seed_demo_dashboard(db: object) -> None:
     log.info("Demo dashboard data seeded (%d companies, signals, scores, triggers)", len(demos))
 
 
+async def _seed_demo_clients(db: object) -> None:
+    """Seed demo clients for ChurnPredictor. Idempotent — skips if any clients exist."""
+    from sqlalchemy import func, select
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+    assert isinstance(db, AsyncSession)
+
+    from app.models.client import Client, RiskLevel
+
+    existing = (
+        await db.execute(select(func.count()).select_from(Client))
+    ).scalar_one()
+    if int(existing) > 0:
+        log.info("Clients already present (%d) — skipping demo client seed", existing)
+        return
+
+    demo_clients = [
+        {
+            "name": "Meridian Energy Partners Inc.",
+            "industry": "Energy",
+            "region": "AB",
+            "partner_name": "J. MacPherson",
+            "practice_groups": ["Environmental", "Regulatory", "M&A"],
+            "churn_score": 78,
+            "risk_level": RiskLevel.high,
+            "days_since_last_contact": 47,
+            "days_since_last_matter": 62,
+            "annual_revenue": 420000000.0,
+            "wallet_share_pct": 22,
+        },
+        {
+            "name": "Northbrook Financial Group",
+            "industry": "Banking",
+            "region": "ON",
+            "partner_name": "S. Okonkwo",
+            "practice_groups": ["Banking & Finance", "Securities", "Regulatory"],
+            "churn_score": 61,
+            "risk_level": RiskLevel.medium,
+            "days_since_last_contact": 18,
+            "days_since_last_matter": 24,
+            "annual_revenue": 280000000.0,
+            "wallet_share_pct": 38,
+        },
+        {
+            "name": "Cascade Retail Holdings Ltd.",
+            "industry": "Retail",
+            "region": "BC",
+            "partner_name": "A. Bergstrom",
+            "practice_groups": ["Employment", "Real Estate", "Competition"],
+            "churn_score": 42,
+            "risk_level": RiskLevel.medium,
+            "days_since_last_contact": 9,
+            "days_since_last_matter": 15,
+            "annual_revenue": 195000000.0,
+            "wallet_share_pct": 55,
+        },
+        {
+            "name": "Laurentian Tech Solutions Inc.",
+            "industry": "Technology",
+            "region": "QC",
+            "partner_name": "M. Tremblay",
+            "practice_groups": ["Privacy", "IP", "M&A"],
+            "churn_score": 19,
+            "risk_level": RiskLevel.low,
+            "days_since_last_contact": 3,
+            "days_since_last_matter": 8,
+            "annual_revenue": 88000000.0,
+            "wallet_share_pct": 71,
+        },
+        {
+            "name": "Arctic Infrastructure Corp.",
+            "industry": "Construction",
+            "region": "ON",
+            "partner_name": "J. MacPherson",
+            "practice_groups": ["Construction", "Environmental", "Indigenous"],
+            "churn_score": 84,
+            "risk_level": RiskLevel.critical,
+            "days_since_last_contact": 93,
+            "days_since_last_matter": 110,
+            "annual_revenue": 340000000.0,
+            "wallet_share_pct": 14,
+        },
+        {
+            "name": "Pemberton Capital Markets Ltd.",
+            "industry": "Finance",
+            "region": "ON",
+            "partner_name": "S. Okonkwo",
+            "practice_groups": ["Securities", "M&A", "Tax"],
+            "churn_score": 35,
+            "risk_level": RiskLevel.low,
+            "days_since_last_contact": 6,
+            "days_since_last_matter": 11,
+            "annual_revenue": 510000000.0,
+            "wallet_share_pct": 29,
+        },
+        {
+            "name": "Westgate Pharma Holdings",
+            "industry": "Healthcare",
+            "region": "ON",
+            "partner_name": "A. Bergstrom",
+            "practice_groups": ["Regulatory", "IP", "Employment"],
+            "churn_score": 57,
+            "risk_level": RiskLevel.medium,
+            "days_since_last_contact": 31,
+            "days_since_last_matter": 44,
+            "annual_revenue": 175000000.0,
+            "wallet_share_pct": 41,
+        },
+    ]
+
+    for row in demo_clients:
+        client = Client(
+            name=row["name"],
+            industry=row["industry"],
+            region=row["region"],
+            partner_name=row.get("partner_name"),
+            practice_groups=row.get("practice_groups", []),
+            churn_score=row["churn_score"],
+            risk_level=row["risk_level"],
+            days_since_last_contact=row["days_since_last_contact"],
+            days_since_last_matter=row["days_since_last_matter"],
+            annual_revenue=row.get("annual_revenue"),
+            wallet_share_pct=row.get("wallet_share_pct"),
+            is_active=True,
+        )
+        db.add(client)
+
+    await db.commit()
+    log.info("Seeded %d demo clients", len(demo_clients))
+
+
 async def seed(skip_if_seeded: bool = False) -> None:
     from sqlalchemy.future import select
 
@@ -318,6 +449,11 @@ async def seed(skip_if_seeded: bool = False) -> None:
             await seed_companies(db)
         except Exception:
             log.exception("Canonical company seed failed (non-fatal)")
+
+        try:
+            await _seed_demo_clients(db)
+        except Exception:
+            log.exception("Demo client seed failed (non-fatal)")
 
         if settings.is_development or os.getenv("SEED_DEMO_DASHBOARD", "").lower() in ("1", "true", "yes"):
             try:

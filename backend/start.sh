@@ -15,8 +15,8 @@ echo "Migrations complete."
 echo "Step 2/3: Seeding database (idempotent — skips if already seeded)..."
 # --skip-if-seeded exits cleanly if users already exist.
 # SEED_DEMO_DASHBOARD=1 controls whether demo companies/scores/triggers are created.
-python -m scripts.seed_db --skip-if-seeded || {
-  echo "WARNING: Seed script failed (non-fatal — continuing startup)"
+python -m scripts.seed_db --skip-if-seeded 2>&1 || {
+  echo "ERROR: Seed script failed — see output above for cause. Continuing startup."
 }
 echo "Seed complete."
 

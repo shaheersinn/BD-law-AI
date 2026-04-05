@@ -53,7 +53,9 @@ class Client(Base):
     # ML scores (updated nightly)
     churn_score: Mapped[int] = mapped_column(Integer, default=0)  # 0-100
     churn_score_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    risk_level: Mapped[RiskLevel] = mapped_column(Enum(RiskLevel), default=RiskLevel.low)
+    risk_level: Mapped[RiskLevel] = mapped_column(
+        Enum(RiskLevel, native_enum=False, length=20), default=RiskLevel.low
+    )
 
     # Financial
     estimated_annual_spend: Mapped[Decimal | None] = mapped_column(Numeric(15, 2))
