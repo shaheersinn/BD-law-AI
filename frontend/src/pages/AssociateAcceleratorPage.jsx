@@ -1,6 +1,8 @@
 /**
- * pages/AssociateAcceleratorPage.jsx — route /associate-accelerator
+ * pages/AssociateAcceleratorPage.jsx — P16 Redesign
+ * 
  * Associate BD activity tracking, coaching recommendations, and skill development.
+ * Uses injected CSS to adhere to Phase 1 styling paradigms without inline styles.
  */
 
 import { useEffect, useState, useMemo } from 'react'
@@ -10,6 +12,138 @@ import AppShell from '../components/layout/AppShell'
 import { Skeleton } from '../components/Skeleton'
 import { PageHeader, MetricCard, Panel, EmptyState, ErrorState } from '../components/ui/Primitives'
 import { bd } from '../api/client'
+
+const ASSOC_CSS = `
+.asc-root {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2.5rem 2rem 4rem;
+}
+.asc-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+  margin-bottom: 2.5rem;
+}
+
+.asc-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+.asc-grid-single {
+  grid-template-columns: 1fr;
+}
+
+/* Table */
+.asc-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.asc-th {
+  padding: 9px 12px;
+  text-align: left;
+  font-family: var(--font-data);
+  font-weight: 700;
+  font-size: 0.625rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-on-surface-variant);
+  background: var(--color-surface-container-low);
+  white-space: nowrap;
+}
+.asc-tr {
+  transition: background var(--transition-fast);
+}
+.asc-tr:nth-child(even) { background: var(--color-surface-container-low); }
+.asc-tr:hover { background: var(--color-surface-container-high) !important; }
+
+.asc-td {
+  padding: 13px 12px;
+  white-space: nowrap;
+}
+.asc-td-name {
+  font-family: var(--font-data);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+.asc-td-group {
+  font-family: var(--font-data);
+  font-size: 0.8125rem;
+  color: var(--color-on-surface-variant);
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.asc-td-num {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  color: var(--color-on-surface);
+  text-align: center;
+}
+
+.asc-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: var(--radius-full);
+  font-family: var(--font-data);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Recommendations */
+.asc-rec-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.asc-rec-item {
+  padding: 0.875rem 1rem;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-container-low);
+  border-left: 3px solid var(--color-secondary);
+}
+.asc-rec-name {
+  font-family: var(--font-data);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--color-secondary);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 0.25rem;
+}
+.asc-rec-text {
+  font-family: var(--font-data);
+  font-size: 0.8125rem;
+  color: var(--color-on-surface);
+  line-height: 1.5;
+}
+.asc-rec-priority {
+  margin-top: 0.375rem;
+  font-family: var(--font-data);
+  font-size: 0.625rem;
+  color: var(--color-on-surface-variant);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+@media (max-width: 980px) {
+  .asc-grid { grid-template-columns: 1fr; }
+  .asc-metrics { grid-template-columns: 1fr; }
+}
+`
+
+function injectCSS() {
+  if (typeof document !== 'undefined' && !document.getElementById('asc-styles')) {
+    const el = document.createElement('style')
+    el.id = 'asc-styles'
+    el.textContent = ASSOC_CSS
+    document.head.appendChild(el)
+  }
+}
 
 function engagementColor(score) {
   if (score == null) return 'var(--color-on-surface-variant)'
@@ -38,11 +172,11 @@ function TrendIcon({ trend }) {
 }
 
 export default function AssociateAcceleratorPage() {
+  injectCSS()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState([])
   const [error, setError] = useState(null)
-  const [hoveredRow, setHoveredRow] = useState(null)
 
   useEffect(() => {
     bd.associateActivity()
@@ -61,7 +195,6 @@ export default function AssociateAcceleratorPage() {
   }
 
   const associates = useMemo(() => {
-    // Support both array of associates or object with associates key
     if (Array.isArray(data)) return data
     return data.associates ?? data.items ?? []
   }, [data])
@@ -91,7 +224,7 @@ export default function AssociateAcceleratorPage() {
 
   return (
     <AppShell>
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '2rem 2rem 3rem' }}>
+      <div className="asc-root">
         <PageHeader
           tag="Training & Development"
           title="Associate Accelerator"
@@ -99,19 +232,19 @@ export default function AssociateAcceleratorPage() {
         />
 
         {/* Metric cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
+        <div className="asc-metrics">
           {loading ? (
             Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} height={100} radius={12} />)
           ) : (
             <>
               <MetricCard label="Active Associates" value={stats.total} sub="in programme" accent="teal" />
               <MetricCard label="Activities This Month" value={stats.activitiesThisMonth} sub="total BD activities" accent="blue" />
-              <MetricCard label="Avg Engagement" value={`${stats.avgEngagement}%`} sub="across all associates" accent="gold" />
+              <MetricCard label="Avg Engagement" value={\`\${stats.avgEngagement}%\`} sub="across all associates" accent="gold" />
             </>
           )}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: recommendations.length > 0 ? '2fr 1fr' : '1fr', gap: '1.5rem', alignItems: 'start' }}>
+        <div className={\`asc-grid \${recommendations.length > 0 ? '' : 'asc-grid-single'}\`}>
           {/* Associate Activity Table */}
           <Panel title="Associate Activity">
             {loading ? (
@@ -128,20 +261,11 @@ export default function AssociateAcceleratorPage() {
               />
             ) : (
               <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-data)', fontSize: '0.8125rem' }}>
+                <table className="asc-table">
                   <thead>
-                    <tr style={{ borderBottom: '1px solid var(--color-surface-container-high)' }}>
+                    <tr>
                       {['Associate', 'Practice Group', 'Activities', 'Pitches', 'Content', 'Engagement', 'Trend'].map(h => (
-                        <th key={h} style={{
-                          padding: '0.5rem 0.75rem',
-                          textAlign: 'left',
-                          fontWeight: 700,
-                          fontSize: '0.625rem',
-                          letterSpacing: '0.05em',
-                          textTransform: 'uppercase',
-                          color: 'var(--color-on-surface-variant)',
-                          whiteSpace: 'nowrap',
-                        }}>{h}</th>
+                        <th key={h} className="asc-th">{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -149,48 +273,18 @@ export default function AssociateAcceleratorPage() {
                     {associates.map((assoc, i) => {
                       const score = Number(assoc.engagement_score ?? assoc.engagement ?? 0)
                       return (
-                        <tr
-                          key={assoc.id ?? assoc.associate_id ?? i}
-                          onMouseEnter={() => setHoveredRow(i)}
-                          onMouseLeave={() => setHoveredRow(null)}
-                          style={{
-                            borderBottom: '1px solid var(--color-surface-container-high)',
-                            background: hoveredRow === i ? 'var(--color-surface-container-low)' : 'transparent',
-                            transition: 'background 0.12s',
-                            cursor: 'default',
-                          }}
-                        >
-                          <td style={{ padding: '0.625rem 0.75rem', fontWeight: 600, color: 'var(--color-on-surface)', whiteSpace: 'nowrap' }}>
-                            {assoc.name ?? assoc.associate_name ?? '—'}
-                          </td>
-                          <td style={{ padding: '0.625rem 0.75rem', color: 'var(--color-on-surface-variant)', maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {assoc.practice_group ?? assoc.practice_area ?? '—'}
-                          </td>
-                          <td style={{ padding: '0.625rem 0.75rem', color: 'var(--color-on-surface)', textAlign: 'center' }}>
-                            {assoc.activity_count ?? assoc.activities_month ?? '—'}
-                          </td>
-                          <td style={{ padding: '0.625rem 0.75rem', color: 'var(--color-on-surface)', textAlign: 'center' }}>
-                            {assoc.pitches_supported ?? assoc.pitches ?? '—'}
-                          </td>
-                          <td style={{ padding: '0.625rem 0.75rem', color: 'var(--color-on-surface)', textAlign: 'center' }}>
-                            {assoc.content_drafted ?? assoc.content ?? '—'}
-                          </td>
-                          <td style={{ padding: '0.625rem 0.75rem' }}>
-                            <span style={{
-                              display: 'inline-block',
-                              padding: '2px 10px',
-                              borderRadius: 'var(--radius-full)',
-                              fontFamily: 'var(--font-data)',
-                              fontSize: '0.6875rem',
-                              fontWeight: 700,
-                              background: engagementBg(score),
-                              color: engagementColor(score),
-                              whiteSpace: 'nowrap',
-                            }}>
-                              {score > 0 ? `${score}%` : '—'}
+                        <tr key={assoc.id ?? assoc.associate_id ?? i} className="asc-tr">
+                          <td className="asc-td asc-td-name">{assoc.name ?? assoc.associate_name ?? '—'}</td>
+                          <td className="asc-td asc-td-group">{assoc.practice_group ?? assoc.practice_area ?? '—'}</td>
+                          <td className="asc-td asc-td-num">{assoc.activity_count ?? assoc.activities_month ?? '—'}</td>
+                          <td className="asc-td asc-td-num">{assoc.pitches_supported ?? assoc.pitches ?? '—'}</td>
+                          <td className="asc-td asc-td-num">{assoc.content_drafted ?? assoc.content ?? '—'}</td>
+                          <td className="asc-td" style={{ textAlign: 'center' }}>
+                            <span className="asc-badge" style={{ background: engagementBg(score), color: engagementColor(score) }}>
+                              {score > 0 ? \`\${score}%\` : '—'}
                             </span>
                           </td>
-                          <td style={{ padding: '0.625rem 0.75rem' }}>
+                          <td className="asc-td" style={{ textAlign: 'center' }}>
                             <TrendIcon trend={assoc.trend} />
                           </td>
                         </tr>
@@ -202,59 +296,22 @@ export default function AssociateAcceleratorPage() {
             )}
           </Panel>
 
-          {/* Recommended Actions — only shown when recommendations exist */}
+          {/* Recommended Actions */}
           {!loading && recommendations.length > 0 && (
             <Panel title="Recommended Actions">
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <div className="asc-rec-list">
                 {recommendations.map((rec, i) => (
-                  <div
-                    key={rec.id ?? i}
-                    style={{
-                      padding: '0.875rem 1rem',
-                      borderRadius: 'var(--radius-md)',
-                      background: 'var(--color-surface-container-low)',
-                      borderLeft: '3px solid var(--color-secondary)',
-                    }}
-                  >
-                    {rec.associate_name && (
-                      <div style={{
-                        fontFamily: 'var(--font-data)',
-                        fontSize: '0.6875rem',
-                        fontWeight: 700,
-                        color: 'var(--color-secondary)',
-                        letterSpacing: '0.04em',
-                        textTransform: 'uppercase',
-                        marginBottom: '0.25rem',
-                      }}>
-                        {rec.associate_name}
-                      </div>
-                    )}
-                    <div style={{
-                      fontFamily: 'var(--font-data)',
-                      fontSize: '0.8125rem',
-                      color: 'var(--color-on-surface)',
-                      lineHeight: 1.5,
-                    }}>
-                      {rec.action ?? rec.recommendation ?? rec.text ?? '—'}
-                    </div>
-                    {rec.priority && (
-                      <div style={{
-                        marginTop: '0.375rem',
-                        fontFamily: 'var(--font-data)',
-                        fontSize: '0.625rem',
-                        color: 'var(--color-on-surface-variant)',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.04em',
-                      }}>
-                        Priority: {rec.priority}
-                      </div>
-                    )}
+                  <div key={rec.id ?? i} className="asc-rec-item">
+                    {rec.associate_name && <div className="asc-rec-name">{rec.associate_name}</div>}
+                    <div className="asc-rec-text">{rec.action ?? rec.recommendation ?? rec.text ?? '—'}</div>
+                    {rec.priority && <div className="asc-rec-priority">Priority: {rec.priority}</div>}
                   </div>
                 ))}
               </div>
             </Panel>
           )}
         </div>
+
       </div>
     </AppShell>
   )

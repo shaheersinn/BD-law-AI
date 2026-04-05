@@ -1,6 +1,8 @@
 /**
- * pages/WalletSharePage.jsx — route /wallet-share
+ * pages/WalletSharePage.jsx — P15 Redesign
+ * 
  * Legal spend penetration and revenue growth opportunities across client portfolio.
+ * Removed inline styles. Uses injected CSS and standard design metrics.
  */
 
 import { useEffect, useState, useMemo } from 'react'
@@ -10,6 +12,125 @@ import AppShell from '../components/layout/AppShell'
 import { Skeleton } from '../components/Skeleton'
 import { PageHeader, MetricCard, Panel, Tag, EmptyState, ErrorState } from '../components/ui/Primitives'
 import { clients } from '../api/client'
+
+const WALL_CSS = `
+.ws-root {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2.5rem 2rem 4rem;
+}
+.ws-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+  margin-bottom: 2.5rem;
+}
+
+/* Table */
+.ws-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.ws-th {
+  padding: 9px 12px;
+  text-align: left;
+  font-family: var(--font-data);
+  font-weight: 700;
+  font-size: 0.625rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-on-surface-variant);
+  background: var(--color-surface-container-low);
+  white-space: nowrap;
+}
+.ws-tr {
+  transition: background var(--transition-fast);
+}
+.ws-tr:nth-child(even) { background: var(--color-surface-container-low); }
+.ws-tr:hover { background: var(--color-surface-container-high) !important; }
+
+.ws-td {
+  padding: 13px 12px;
+  white-space: nowrap;
+}
+.ws-td-primary {
+  font-family: var(--font-editorial);
+  font-size: 1.05rem;
+  font-weight: 400;
+  color: var(--color-primary);
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ws-td-amount {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-on-surface);
+}
+.ws-td-mono {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--color-on-surface-variant);
+}
+.ws-yoy {
+  font-family: var(--font-data);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.ws-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ws-bar-outer {
+  flex: 1;
+  height: 6px;
+  background: var(--color-surface-container-high);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  min-width: 60px;
+}
+.ws-bar-inner {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.3s ease;
+}
+.ws-bar-label {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.ws-tags-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.ws-tags-extra {
+  font-family: var(--font-data);
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: var(--color-on-surface-variant);
+}
+
+@media (max-width: 980px) {
+  .ws-metrics { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 640px) {
+  .ws-metrics { grid-template-columns: 1fr; }
+}
+`
+
+function injectCSS() {
+  if (typeof document !== 'undefined' && !document.getElementById('ws-styles')) {
+    const el = document.createElement('style')
+    el.id = 'ws-styles'
+    el.textContent = WALL_CSS
+    document.head.appendChild(el)
+  }
+}
 
 function walletShareColor(pct) {
   if (pct == null) return 'var(--color-surface-container-high)'
@@ -30,22 +151,22 @@ function formatCurrency(val, short = true) {
   if (val == null || isNaN(val)) return '—'
   const n = Number(val)
   if (short) {
-    if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`
-    if (n >= 1_000) return `$${(n / 1_000).toFixed(0)}K`
+    if (n >= 1_000_000) return \`$\${(n / 1_000_000).toFixed(1)}M\`
+    if (n >= 1_000) return \`$\${(n / 1_000).toFixed(0)}K\`
   }
-  return `$${n.toLocaleString()}`
+  return \`$\${n.toLocaleString()}\`
 }
 
 function formatPct(val) {
   if (val == null || isNaN(val)) return '—'
-  return `${Math.round(Number(val))}%`
+  return \`\${Math.round(Number(val))}%\`
 }
 
 function formatYoY(val) {
   if (val == null || isNaN(val)) return '—'
   const n = Number(val)
   const sign = n >= 0 ? '+' : ''
-  return `${sign}${n.toFixed(1)}%`
+  return \`\${sign}\${n.toFixed(1)}%\`
 }
 
 function yoyColor(val) {
@@ -54,11 +175,11 @@ function yoyColor(val) {
 }
 
 export default function WalletSharePage() {
+  injectCSS()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState([])
   const [error, setError] = useState(null)
-  const [hoveredRow, setHoveredRow] = useState(null)
 
   useEffect(() => {
     clients.walletShare()
@@ -104,7 +225,7 @@ export default function WalletSharePage() {
 
   return (
     <AppShell>
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '2rem 2rem 3rem' }}>
+      <div className="ws-root">
         <PageHeader
           tag="Revenue Intelligence"
           title="Wallet Share Analysis"
@@ -112,7 +233,7 @@ export default function WalletSharePage() {
         />
 
         {/* Metric cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
+        <div className="ws-metrics">
           {loading ? (
             Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} height={100} radius={12} />)
           ) : (
@@ -125,14 +246,14 @@ export default function WalletSharePage() {
               />
               <MetricCard
                 label="Avg Wallet Share"
-                value={`${stats.avgWalletShare}%`}
+                value={\`\${stats.avgWalletShare}%\`}
                 sub="of total legal spend"
                 accent="blue"
               />
               <MetricCard
                 label="Growth Opportunities"
                 value={stats.growthOpportunities}
-                sub="clients below 30% share"
+                sub="below 30% share"
                 accent="gold"
               />
               <MetricCard
@@ -161,20 +282,11 @@ export default function WalletSharePage() {
             />
           ) : (
             <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-data)', fontSize: '0.8125rem' }}>
+              <table className="ws-table">
                 <thead>
-                  <tr style={{ borderBottom: '1px solid var(--color-surface-container-high)' }}>
+                  <tr>
                     {['Client', 'Total Billing', 'Our Share', 'Competitor Est.', 'YoY Growth', 'Practice Groups', 'Opportunity'].map(h => (
-                      <th key={h} style={{
-                        padding: '0.5rem 0.75rem',
-                        textAlign: 'left',
-                        fontWeight: 700,
-                        fontSize: '0.625rem',
-                        letterSpacing: '0.05em',
-                        textTransform: 'uppercase',
-                        color: 'var(--color-on-surface-variant)',
-                        whiteSpace: 'nowrap',
-                      }}>{h}</th>
+                      <th key={h} className="ws-th">{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -186,61 +298,49 @@ export default function WalletSharePage() {
                     const yoy = client.yoy_growth ?? client.growth_rate
 
                     return (
-                      <tr
-                        key={client.id ?? client.client_id ?? i}
-                        onMouseEnter={() => setHoveredRow(i)}
-                        onMouseLeave={() => setHoveredRow(null)}
-                        style={{
-                          borderBottom: '1px solid var(--color-surface-container-high)',
-                          background: hoveredRow === i ? 'var(--color-surface-container-low)' : 'transparent',
-                          transition: 'background 0.12s',
-                          cursor: 'default',
-                        }}
-                      >
-                        <td style={{ padding: '0.625rem 0.75rem', fontWeight: 600, color: 'var(--color-on-surface)', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <tr key={client.id ?? client.client_id ?? i} className="ws-tr">
+                        <td className="ws-td ws-td-primary">
                           {client.name ?? client.company_name ?? client.client_name ?? '—'}
                         </td>
-                        <td style={{ padding: '0.625rem 0.75rem', fontWeight: 600, color: 'var(--color-on-surface)', whiteSpace: 'nowrap' }}>
+                        <td className="ws-td ws-td-amount">
                           {formatCurrency(client.total_billing ?? client.billed)}
                         </td>
-                        <td style={{ padding: '0.625rem 0.75rem', minWidth: 120 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <div style={{ flex: 1, height: 6, background: 'var(--color-surface-container-high)', borderRadius: 'var(--radius-full)', overflow: 'hidden', minWidth: 60 }}>
-                              <div style={{
-                                height: '100%',
-                                width: `${Math.min(100, sharePct)}%`,
-                                background: walletShareColor(sharePct),
-                                borderRadius: 'var(--radius-full)',
-                                transition: 'width 0.3s ease',
-                              }} />
+                        <td className="ws-td" style={{ minWidth: 120 }}>
+                          <div className="ws-bar-wrap">
+                            <div className="ws-bar-outer">
+                              <div
+                                className="ws-bar-inner"
+                                style={{
+                                  width: \`\${Math.min(100, sharePct)}%\`,
+                                  background: walletShareColor(sharePct),
+                                }}
+                              />
                             </div>
-                            <span style={{ fontFamily: 'var(--font-data)', fontSize: '0.75rem', fontWeight: 700, color: walletShareColor(sharePct), whiteSpace: 'nowrap' }}>
+                            <span className="ws-bar-label" style={{ color: walletShareColor(sharePct) }}>
                               {formatPct(sharePct)}
                             </span>
                           </div>
                         </td>
-                        <td style={{ padding: '0.625rem 0.75rem', color: 'var(--color-on-surface-variant)', whiteSpace: 'nowrap' }}>
+                        <td className="ws-td ws-td-mono">
                           {competitorEst != null ? formatCurrency(competitorEst) : '—'}
                         </td>
-                        <td style={{ padding: '0.625rem 0.75rem', fontWeight: 600, color: yoyColor(yoy), whiteSpace: 'nowrap' }}>
+                        <td className="ws-td ws-yoy" style={{ color: yoyColor(yoy) }}>
                           {formatYoY(yoy)}
                         </td>
-                        <td style={{ padding: '0.625rem 0.75rem', maxWidth: 160 }}>
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
+                        <td className="ws-td" style={{ maxWidth: 160 }}>
+                          <div className="ws-tags-grid">
                             {practiceGroups.slice(0, 2).map((pg, idx) => (
                               <Tag key={idx} label={pg} color="navy" />
                             ))}
                             {practiceGroups.length > 2 && (
-                              <span style={{ fontFamily: 'var(--font-data)', fontSize: '0.625rem', fontWeight: 700, color: 'var(--color-on-surface-variant)' }}>
-                                +{practiceGroups.length - 2}
-                              </span>
+                              <span className="ws-tags-extra">+{practiceGroups.length - 2}</span>
                             )}
                             {practiceGroups.length === 0 && (
-                              <span style={{ fontFamily: 'var(--font-data)', fontSize: '0.75rem', color: 'var(--color-on-surface-variant)' }}>—</span>
+                              <span className="ws-tags-extra">—</span>
                             )}
                           </div>
                         </td>
-                        <td style={{ padding: '0.625rem 0.75rem' }}>
+                        <td className="ws-td">
                           <Tag
                             label={client.opportunity ?? client.opportunity_level ?? 'Low'}
                             color={opportunityColor(client.opportunity ?? client.opportunity_level)}
