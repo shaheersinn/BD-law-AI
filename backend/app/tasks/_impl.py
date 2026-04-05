@@ -147,7 +147,7 @@ def extract_features_all(self: Task) -> dict:  # type: ignore[type-arg]
     Result stored in company_features table.
     """
 
-    async def _run() -> dict:
+    async def _run() -> dict[str, Any]:
         from app.database import AsyncSessionLocal, get_mongo_client
         from app.features.runner import FeatureRunner
 
@@ -185,7 +185,7 @@ def extract_features_all(self: Task) -> dict:  # type: ignore[type-arg]
 def rebuild_feature_vectors(self: Task) -> dict:  # type: ignore[type-arg]
     """Rebuild all feature vectors from raw signals (full recompute)."""
 
-    async def _run() -> dict:
+    async def _run() -> dict[str, Any]:
         from app.database import AsyncSessionLocal, get_mongo_client
         from app.features.runner import FeatureRunner
 
@@ -227,11 +227,21 @@ def rebuild_feature_vectors(self: Task) -> dict:  # type: ignore[type-arg]
 def run_scoring_all_companies(self: Task) -> dict:  # type: ignore[type-arg]
     """
     Score all active watchlist companies across 34 practice areas × 3 horizons.
-    MandateOrchestrator selects the best model per practice area.
+
+    Flow per company:
+      1. Load feature rows from company_features table
+      2. Build flat features dict {feature_name: value}
+      3. Pass to orchestrator.score_company(features) — synchronous, no await
+      4. Write scores to scoring_results table
+
     Runs nightly after extract_features_all completes.
+    BayesianEngine models must be loaded — falls back to zero scores if absent.
     """
 
-    async def _run() -> dict:
+    async def _run() -> dict[str, Any]:
+        import json
+        from datetime import UTC, datetime
+
         from sqlalchemy import text
 
         from app.database import AsyncSessionLocal
@@ -241,22 +251,81 @@ def run_scoring_all_companies(self: Task) -> dict:  # type: ignore[type-arg]
         if not orchestrator._loaded:
             orchestrator.load()
 
-        async with AsyncSessionLocal() as db:
-            result = await db.execute(text("SELECT id FROM companies WHERE is_active = true"))
-            company_ids = [row[0] for row in result.fetchall()]
-
         scored = 0
         errors = 0
+
+        async with AsyncSessionLocal() as db:
+            # Get all active companies
+            result = await db.execute(
+                text("SELECT id FROM companies WHERE is_active = true ORDER BY id")
+            )
+            company_ids = [row[0] for row in result.fetchall()]
+
         for company_id in company_ids:
             try:
+                async with AsyncSessionLocal() as db:
+                    # Load features for this company (most recent value per feature_name)
+                    feat_result = await db.execute(
+                        text("""
+                            SELECT DISTINCT ON (feature_name)
+                                feature_name, value
+                            FROM company_features
+                            WHERE company_id = :company_id
+                              AND is_null = false
+                            ORDER BY feature_name, horizon_days ASC
+                        """),
+                        {"company_id": company_id},
+                    )
+                    rows = feat_result.fetchall()
+
+                features: dict[str, float] = {
+                    row[0]: float(row[1]) for row in rows if row[1] is not None
+                }
+
+                if not features:
+                    # No features yet — skip silently, will score after first feature run
+                    continue
+
                 # score_company is synchronous — no await
-                # Per Step 0c findings: score_company expects features: dict, not just an ID as provided in snippet
-                # But to follow the rigid snippet template, we use the literal provided by prompt C2:
-                orchestrator.score_company(company_id)
+                pa_scores = orchestrator.score_company(features)
+
+                # Persist to scoring_results
+                scores_json: dict[str, dict[str, float]] = {}
+                for pa, horizon_scores in pa_scores.items():
+                    scores_json[pa] = {
+                        "30d": round(horizon_scores.score_30d, 6),
+                        "60d": round(horizon_scores.score_60d, 6),
+                        "90d": round(horizon_scores.score_90d, 6),
+                    }
+
+                now = datetime.now(UTC)
+                async with AsyncSessionLocal() as db:
+                    await db.execute(
+                        text("""
+                            INSERT INTO scoring_results
+                                (company_id, scored_at, scores, velocity_score,
+                                 anomaly_score, confidence_low, confidence_high,
+                                 model_versions, top_signals)
+                            VALUES
+                                (:company_id, :scored_at, CAST(:scores AS jsonb),
+                                 0.0, 0.0, 0.4, 0.95,
+                                 CAST(:mv AS jsonb), CAST(:ts AS jsonb))
+                        """),
+                        {
+                            "company_id": company_id,
+                            "scored_at": now,
+                            "scores": json.dumps(scores_json),
+                            "mv": json.dumps({}),
+                            "ts": json.dumps([]),
+                        },
+                    )
+                    await db.commit()
+
                 scored += 1
+
             except Exception as exc:  # noqa: BLE001
                 log.warning(
-                    "score_company_failed",
+                    "run_scoring_company_failed",
                     company_id=company_id,
                     error=str(exc),
                 )
@@ -278,11 +347,109 @@ def run_scoring_all_companies(self: Task) -> dict:  # type: ignore[type-arg]
         raise self.retry(exc=exc, countdown=600) from exc
 
 
-@celery_app.task(bind=True, max_retries=3, name="app.tasks._impl.score_company")
-def score_company(self: Task, company_id: str) -> dict:  # type: ignore[type-arg]
-    """Run 34-engine scoring for a single company (on-demand)."""
-    log.info("score_company invoked (stub — implement in Phase 6)", company_id=company_id)  # type: ignore[call-arg]
-    return {"status": "stub", "company_id": company_id}
+@celery_app.task(
+    bind=True,
+    max_retries=3,
+    name="app.tasks._impl.score_company",
+    soft_time_limit=300,
+    time_limit=330,
+)
+def score_company(self: Task, company_id: int) -> dict:  # type: ignore[type-arg]
+    """
+    Run 34-engine scoring for a single company (on-demand).
+    Synchronously extracts features, then passes dict to orchestrator.
+    """
+
+    async def _run() -> dict[str, Any]:
+        import json
+        from datetime import UTC, datetime
+
+        from sqlalchemy import text
+
+        from app.database import AsyncSessionLocal, get_mongo_client
+        from app.features.runner import FeatureRunner
+        from app.ml.orchestrator import get_orchestrator
+
+        # Step 1: Force re-extract features for this company
+        async with AsyncSessionLocal() as db:
+            try:
+                mongo_db = get_mongo_client()["oracle"]
+            except Exception:
+                mongo_db = None
+            runner = FeatureRunner(db=db, mongo_db=mongo_db)
+            await runner.run_for_company(company_id=company_id)
+
+        # Step 2: Load features
+        async with AsyncSessionLocal() as db:
+            feat_result = await db.execute(
+                text("""
+                    SELECT DISTINCT ON (feature_name)
+                        feature_name, value
+                    FROM company_features
+                    WHERE company_id = :company_id
+                      AND is_null = false
+                    ORDER BY feature_name, horizon_days ASC
+                """),
+                {"company_id": company_id},
+            )
+            rows = feat_result.fetchall()
+
+        features: dict[str, float] = {
+            row[0]: float(row[1]) for row in rows if row[1] is not None
+        }
+
+        if not features:
+            return {"status": "skipped", "reason": "no_features", "company_id": company_id}
+
+        # Step 3: score — synchronous, no await
+        orchestrator = get_orchestrator()
+        if not orchestrator._loaded:
+            orchestrator.load()
+
+        pa_scores = orchestrator.score_company(features)
+
+        # Step 4: persist
+        scores_json: dict[str, dict[str, float]] = {}
+        for pa, horizon_scores in pa_scores.items():
+            scores_json[pa] = {
+                "30d": round(horizon_scores.score_30d, 6),
+                "60d": round(horizon_scores.score_60d, 6),
+                "90d": round(horizon_scores.score_90d, 6),
+            }
+
+        now = datetime.now(UTC)
+        async with AsyncSessionLocal() as db:
+            await db.execute(
+                text("""
+                    INSERT INTO scoring_results
+                        (company_id, scored_at, scores, velocity_score,
+                         anomaly_score, confidence_low, confidence_high,
+                         model_versions, top_signals)
+                    VALUES
+                        (:company_id, :scored_at, CAST(:scores AS jsonb),
+                         0.0, 0.0, 0.4, 0.95,
+                         CAST(:mv AS jsonb), CAST(:ts AS jsonb))
+                """),
+                {
+                    "company_id": company_id,
+                    "scored_at": now,
+                    "scores": json.dumps(scores_json),
+                    "mv": json.dumps({}),
+                    "ts": json.dumps([]),
+                },
+            )
+            await db.commit()
+
+        return {"status": "ok", "company_id": company_id, "practice_areas_scored": len(pa_scores)}
+
+    log.info("score_company starting", company_id=company_id)
+    try:
+        result = _run_async(_run())
+        log.info("score_company complete", company_id=company_id, **result)
+        return result
+    except Exception as exc:  # noqa: BLE001
+        log.error("score_company failed", company_id=company_id, error=str(exc))
+        raise self.retry(exc=exc, countdown=2 ** self.request.retries) from exc
 
 
 @celery_app.task(
@@ -308,7 +475,7 @@ def retrain_all_models(self: Task) -> dict:  # type: ignore[type-arg]
     training_dir = Path(settings.data_dir) / "training"
     churn_csv = training_dir / "churn_training_data.csv"
     urgency_csv = training_dir / "urgency_training_data.csv"
-    results = {}
+    results: dict[str, Any] = {}
 
     if churn_csv.exists():
         try:
