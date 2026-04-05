@@ -1,11 +1,12 @@
 /**
- * pages/LandingPage.jsx - Public marketing landing
+ * pages/LandingPage.jsx — P2 Redesign
  *
- * Updated to match the attached "The BigLaw Ledger" design (hero + mockup,
- * Core Intelligence Engine, The Ledger OS, competitive banner, and apply form).
+ * Public marketing page. Sticky glass nav, hero split, How It Works,
+ * 22 Intelligence Modules grid, competitive banner, access form, footer.
+ * No API calls. DM Serif Display + DM Sans. Responsive below 980px.
  */
 
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './LandingPage.css'
 
@@ -13,179 +14,154 @@ function scrollToId(id) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
+const MODULES = [
+  { n: '01', title: 'Command Center',        desc: 'Live mandate signals, velocity rankings, and KPIs in one executive view.' },
+  { n: '02', title: 'Live Triggers',          desc: 'Real-time regulatory, litigation, and enforcement events as they happen.' },
+  { n: '03', title: 'Mandate Pre-Formation',  desc: 'Bayesian convergence engine scoring 34 practice areas on 3 horizons.' },
+  { n: '04', title: 'Pre-Crime Engine',       desc: 'Legal Urgency Index — prospects ranked by how urgently they need counsel.' },
+  { n: '05', title: 'Churn Predictor',        desc: 'XGBoost + SHAP flags silent client attrition before it becomes visible.' },
+  { n: '06', title: 'M&A Dark Signals',       desc: 'Triple convergence: options anomaly + jet tracks + SEDAR confidentiality.' },
+  { n: '07', title: 'Class Action Radar',     desc: 'Multi-jurisdiction class action tracking with watchlist company matching.' },
+  { n: '08', title: 'Regulatory Ripple',      desc: 'Enforcement actions mapped to same-sector clients for proactive outreach.' },
+  { n: '09', title: 'GC Profiler',            desc: 'Psychographic profiles of General Counsels with relationship intelligence.' },
+  { n: '10', title: 'Wallet Share',           desc: 'Client legal spend capture rate against Total Addressable Market.' },
+  { n: '11', title: 'Competitive Intel',      desc: 'Lateral hires, practice expansions, and conflict arbitrage monitoring.' },
+  { n: '12', title: 'Pitch Autopsy',          desc: 'Win/loss analysis with AI debrief and follow-up campaign tracking.' },
+]
+
+const HOW_IT_WORKS = [
+  {
+    n: '01',
+    title: 'Signal Ingestion',
+    body: 'ORACLE monitors 28 signal types across regulatory filings, court records, executive movements, satellite data, and market feeds — normalized into one intelligence layer.',
+  },
+  {
+    n: '02',
+    title: 'Bayesian Convergence',
+    body: 'When signals from multiple categories align, a convergence multiplier amplifies the mandate probability score — separating noise from genuine pre-formation activity.',
+  },
+  {
+    n: '03',
+    title: 'Partner-Ready Evidence',
+    body: 'SHAP-driven explanations and counterfactual features turn each prediction into a defensible brief — so partners have something to say before they call.',
+  },
+]
+
 export default function LandingPage() {
   const navigate = useNavigate()
+  const [form, setForm] = useState({ fullName: '', workEmail: '', firm: '', practice: '' })
 
-  const coreCards = useMemo(() => ([
-    {
-      title: 'Signal Engine',
-      body: 'Ingests regulatory filings, court events, market data, and executive movement-then normalizes into one signal layer.',
-    },
-    {
-      title: 'Mandate Scoring',
-      body: 'Calibrated models produce probability across 34 practice areas and 30/60/90-day horizons.',
-    },
-    {
-      title: 'Executive Context',
-      body: 'Profiles entity risk with network effects so your partners understand the "why" behind each score.',
-    },
-    {
-      title: 'Actionable Evidence',
-      body: 'SHAP-driven explanations and counterfactual features turn prediction into defensible outreach.',
-    },
-    {
-      title: 'Velocity Monitor',
-      body: 'Detects accelerating signal velocity so teams act before the market consensus catches up.',
-    },
-    {
-      title: 'Priority Routing',
-      body: 'Auto-routes mandates to the right queues-so BD time goes to the highest-leverage opportunities.',
-    },
-    {
-      title: 'Ledger Feedback Loop',
-      body: 'Captures confirmed mandates and improves lead-time accuracy through ongoing validation.',
-    },
-    {
-      title: 'Drift Detection',
-      body: 'Flags practice areas where accuracy degrades-prompting model re-evaluation and calibration.',
-    },
-  ]), [])
-
-  const ledgerItems = useMemo(() => ([
-    { title: '01. Strategic Dashboards', sub: 'A clean view of what is changing, where, and why-built for partner review.' },
-    { title: '02. Cross Product Signals', sub: 'Unifies scrapers, features, and evidence into one decision surface.' },
-    { title: '03. Client Predictive Landscape', sub: 'Maps near-term mandate likelihood across time horizons for outreach timing.' },
-    { title: '04. Litigation Routing', sub: 'Prioritizes disputes and enforcement actions with early leading indicators.' },
-    { title: '05. OS Layer Memory', sub: 'The ledger stores confirmations and adapts to outcomes over time.' },
-    { title: '06. Lighting Intelligence', sub: 'Explains drivers and counterfactuals so BD asks better questions.' },
-  ]), [])
-
-  const [form, setForm] = useState({
-    fullName: '',
-    workEmail: '',
-    firm: '',
-    practice: '',
-  })
-
-  const submit = (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault()
-    // No backend endpoint exists yet for access requests; send users to sign-in.
     navigate('/login')
   }
 
   return (
     <div className="lp-root">
-      {/* ---- Nav --------------------------------------------- */}
-      <div className="lp-nav">
+
+      {/* ── Nav ── */}
+      <nav className="lp-nav">
         <div className="lp-container lp-nav-inner">
           <div className="lp-nav-left">
-            <div className="lp-logo-mark" aria-hidden="true">
-              <span className="lp-logo-letter">O</span>
-            </div>
-            <div className="lp-nav-brand">
-              <span className="lp-nav-brand-top">The BigLaw Ledger</span>
-              <span className="lp-nav-brand-name">ORACLE</span>
-            </div>
+            <div className="lp-logo-mark"><span className="lp-logo-letter">O</span></div>
+            <span className="lp-nav-wordmark">Oracle Intelligence</span>
           </div>
-
           <div className="lp-nav-links">
-            <div className="lp-nav-link" onClick={() => scrollToId('core-engine')}>How the platform works</div>
-            <div className="lp-nav-link" onClick={() => scrollToId('ledger-os')}>The Ledger OS</div>
+            <button type="button" className="lp-nav-link" onClick={() => scrollToId('how-it-works')}>Platform</button>
+            <button type="button" className="lp-nav-link" onClick={() => scrollToId('how-it-works')}>Intelligence</button>
+            <button type="button" className="lp-nav-link" onClick={() => scrollToId('modules')}>Modules</button>
           </div>
-
-          <button
-            className="cl-btn-primary"
-            type="button"
-            onClick={() => navigate('/login')}
-            style={{ padding: '9px 18px', fontSize: '0.875rem' }}
-          >
-            Start free trial
+          <button type="button" className="lp-nav-cta" onClick={() => navigate('/login')}>
+            Request access
           </button>
         </div>
-      </div>
+      </nav>
 
-      {/* ---- Hero -------------------------------------------- */}
+      {/* ── Hero ── */}
       <section className="lp-hero">
         <div className="lp-container">
           <div className="lp-hero-grid">
-            <div>
+
+            {/* Left 55% */}
+            <div className="lp-hero-copy">
               <div className="lp-hero-kicker">
                 <span className="lp-hero-dot" />
-                <span className="lp-hero-kicker-text">The BigLaw Ledger</span>
+                <span>BD Intelligence Platform</span>
               </div>
-
-              <h1 className="lp-hero-title">The Future of BigLaw Business Development</h1>
-
+              <h1 className="lp-hero-title">
+                Predict who needs a lawyer{' '}
+                <em>before they call</em>
+              </h1>
               <p className="lp-hero-sub">
-                Predict mandates before firms act. ORACLE unifies signals, scores probability
-                across practice areas, and delivers evidence so partners can move with confidence.
+                ORACLE monitors 28 signal types across regulatory filings, court records,
+                executive movements, and market data — then scores mandate probability
+                across 34 practice areas at 30, 60, and 90-day horizons.
               </p>
-
               <div className="lp-hero-actions">
-                <button
-                  type="button"
-                  className="cl-btn-primary"
-                  onClick={() => navigate('/login')}
-                >
+                <button type="button" className="lp-btn-primary" onClick={() => navigate('/login')}>
                   Start the demo
                 </button>
-                <button
-                  type="button"
-                  className="cl-btn-secondary"
-                  onClick={() => scrollToId('apply-access')}
-                >
-                  See how it works
+                <button type="button" className="lp-btn-secondary" onClick={() => scrollToId('how-it-works')}>
+                  How it works
                 </button>
+              </div>
+              <div className="lp-hero-stats">
+                {[
+                  { val: '28', label: 'Signal Types'    },
+                  { val: '34', label: 'Practice Areas'  },
+                  { val: '100+', label: 'Data Sources'  },
+                  { val: '3',   label: 'Time Horizons'  },
+                ].map(s => (
+                  <div key={s.label} className="lp-hero-stat">
+                    <div className="lp-hero-stat-val">{s.val}</div>
+                    <div className="lp-hero-stat-label">{s.label}</div>
+                  </div>
+                ))}
               </div>
             </div>
 
-            <div className="lp-hero-mock-wrap">
-              <div className="lp-hero-mock" aria-hidden="true">
-                <div className="lp-mock-topbar">
-                  <span className="lp-mock-pill">Priority Lead</span>
-                  <span className="lp-mock-pill" style={{ background: 'var(--color-secondary-container)' }}>Live</span>
+            {/* Right 45% — Mock dashboard card */}
+            <div className="lp-hero-mock-wrap" aria-hidden="true">
+              <div className="lp-hero-mock">
+                <div className="lp-mock-header">
+                  <span className="lp-mock-tag">Mandate Score — Laurier Software Group</span>
+                  <span className="lp-mock-live">● LIVE</span>
                 </div>
 
-                <div className="lp-mock-cards">
-                  <div className="lp-mock-surface">
-                    <div className="lp-mock-row">
-                      <div className="lp-mock-chart">
-                        <svg viewBox="0 0 220 120" preserveAspectRatio="none">
-                          <defs>
-                            <linearGradient id="lpArea" x1="0" x2="0" y1="0" y2="1">
-                              <stop offset="0%" stopColor="var(--color-secondary)" stopOpacity="0.55" />
-                              <stop offset="100%" stopColor="var(--color-secondary)" stopOpacity="0.02" />
-                            </linearGradient>
-                          </defs>
-                          <path
-                            d="M0,95 C20,92 35,75 55,70 C75,65 90,50 110,45 C130,40 150,52 165,52 C180,52 195,40 220,30 L220,120 L0,120 Z"
-                            fill="url(#lpArea)"
-                          />
-                          <path
-                            d="M0,95 C20,92 35,75 55,70 C75,65 90,50 110,45 C130,40 150,52 165,52 C180,52 195,40 220,30"
-                            stroke="var(--color-secondary)"
-                            strokeWidth="3"
-                            fill="none"
-                            strokeLinecap="round"
-                          />
-                        </svg>
+                {/* 30/60/90 horizon bars */}
+                <div className="lp-mock-horizons">
+                  {[
+                    { label: '30 DAY', pct: 87, color: 'var(--color-secondary)' },
+                    { label: '60 DAY', pct: 72, color: '#3b6eb5' },
+                    { label: '90 DAY', pct: 54, color: 'var(--color-on-surface-variant)' },
+                  ].map(h => (
+                    <div key={h.label} className="lp-mock-horizon-row">
+                      <span className="lp-mock-horizon-label">{h.label}</span>
+                      <div className="lp-mock-horizon-track">
+                        <div className="lp-mock-horizon-fill" style={{ width: `${h.pct}%`, background: h.color }} />
                       </div>
-
-                      <div className="lp-mock-table">
-                        <div className="lp-mock-line" style={{ width: '72%' }} />
-                        <div className="lp-mock-line dim" style={{ width: '88%' }} />
-                        <div className="lp-mock-line" style={{ width: '64%' }} />
-                        <div className="lp-mock-line dim" style={{ width: '80%' }} />
-                      </div>
+                      <span className="lp-mock-horizon-val" style={{ color: h.color }}>{h.pct}%</span>
                     </div>
+                  ))}
+                </div>
 
-                    <div className="lp-mock-callout">
-                      <div className="lp-mock-callout-title">Bayesian Lead Timeline</div>
-                      <div className="lp-mock-callout-sub">
-                        When velocity increases, ORACLE routes the mandate to the correct queue with evidence-ready explanations.
-                      </div>
-                    </div>
-                  </div>
+                {/* Mini area chart */}
+                <div className="lp-mock-chart">
+                  <svg viewBox="0 0 280 80" preserveAspectRatio="none">
+                    <defs>
+                      <linearGradient id="lpGrad" x1="0" x2="0" y1="0" y2="1">
+                        <stop offset="0%" stopColor="#2a7d5f" stopOpacity="0.4" />
+                        <stop offset="100%" stopColor="#2a7d5f" stopOpacity="0.02" />
+                      </linearGradient>
+                    </defs>
+                    <path d="M0,65 C40,60 70,48 100,42 C130,36 160,44 190,40 C220,36 250,22 280,14 L280,80 L0,80 Z" fill="url(#lpGrad)" />
+                    <path d="M0,65 C40,60 70,48 100,42 C130,36 160,44 190,40 C220,36 250,22 280,14" stroke="#2a7d5f" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+                  </svg>
+                </div>
+
+                <div className="lp-mock-callout">
+                  <span className="lp-mock-callout-dot">◆</span>
+                  Bayesian convergence: 4 signal categories active
                 </div>
               </div>
             </div>
@@ -193,47 +169,58 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ---- Core Intelligence Engine ------------------------- */}
-      <section id="core-engine" className="lp-section">
+      {/* ── How it works ── */}
+      <section id="how-it-works" className="lp-section">
         <div className="lp-container">
           <div className="lp-section-head">
-            <div className="lp-section-kicker">Core Intelligence Engine</div>
-            <div className="lp-section-title">One Score. Partner-Ready Evidence.</div>
+            <div className="lp-section-kicker">How it works</div>
+            <div className="lp-section-title">From raw signal to partner brief in minutes</div>
           </div>
-
-          <div className="lp-core-grid">
-            {coreCards.map((c) => (
-              <div key={c.title} className="lp-core-card">
-                <div className="lp-core-card-title">{c.title}</div>
-                <div className="lp-core-card-body">{c.body}</div>
+          <div className="lp-how-grid">
+            {HOW_IT_WORKS.map(s => (
+              <div key={s.n} className="lp-how-card">
+                <div className="lp-how-num">{s.n}</div>
+                <div className="lp-how-title">{s.title}</div>
+                <p className="lp-how-body">{s.body}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ---- Ledger OS ----------------------------------------- */}
-      <section id="ledger-os" className="lp-section" style={{ paddingTop: '1rem' }}>
+      {/* ── 22 Intelligence Modules ── */}
+      <section id="modules" className="lp-section lp-section-alt">
         <div className="lp-container">
-          <div className="lp-section-head" style={{ marginBottom: '1.75rem' }}>
-            <div className="lp-section-kicker">The Ledger OS</div>
-            <div className="lp-section-title">A system of dashboards, evidence, and feedback.</div>
+          <div className="lp-section-head">
+            <div className="lp-section-kicker">Intelligence Modules</div>
+            <div className="lp-section-title">22 intelligence modules. One platform.</div>
           </div>
+          <div className="lp-modules-grid">
+            {MODULES.map((m, i) => (
+              <div key={m.n} className={`lp-module-card${i === 0 ? ' lp-module-featured' : ''}`}>
+                <div className="lp-module-num">{m.n}</div>
+                <div className="lp-module-title">{m.title}</div>
+                <p className="lp-module-desc">{m.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-          <div className="lp-ledger-grid">
-            <div className="lp-ledger-left">
-              <h3>The Ledger OS</h3>
-              <p>
-                Every signal becomes a ledger entry. Every entry feeds the models. Every prediction learns from confirmation,
-                so your BD team builds momentum with each cycle--not with guesswork.
-              </p>
-            </div>
-
-            <div className="lp-ledger-right">
-              {ledgerItems.map((it) => (
-                <div key={it.title} className="lp-ledger-item">
-                  <div className="lp-ledger-item-title">{it.title}</div>
-                  <div className="lp-ledger-item-sub">{it.sub}</div>
+      {/* ── Competitive banner ── */}
+      <section className="lp-banner-section">
+        <div className="lp-container">
+          <div className="lp-banner">
+            <div className="lp-banner-headline">4.2× lead-time acceleration</div>
+            <div className="lp-banner-stats">
+              {[
+                { val: '1,402', label: 'Mandates Scored' },
+                { val: '18/25', label: 'Evidence Rate'   },
+                { val: '22',    label: 'Intel Modules'   },
+              ].map(s => (
+                <div key={s.label} className="lp-banner-stat">
+                  <div className="lp-banner-stat-val">{s.val}</div>
+                  <div className="lp-banner-stat-label">{s.label}</div>
                 </div>
               ))}
             </div>
@@ -241,118 +228,58 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ---- Competitive banner ------------------------------ */}
-      <section className="lp-section" style={{ paddingTop: 0 }}>
-        <div className="lp-container">
-          <div className="lp-banner">
-            <div className="lp-banner-grid">
-              <div>
-                <div className="lp-banner-label">Mandates Captured (30/60/90)</div>
-                <div className="lp-banner-number">1,402</div>
-                <div className="lp-banner-text">
-                  Signal-to-score coverage designed for partner-led outreach at BigLaw speed.
-                </div>
-              </div>
-              <div>
-                <div className="lp-banner-label">The Competitive Advantages</div>
-                <div className="lp-banner-text" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
-                  <div>
-                    <div style={{ fontFamily: 'var(--font-editorial)', fontSize: '1.9rem', color: 'var(--color-on-primary)' }}>
-                      4.2x
-                    </div>
-                    <div style={{ color: 'rgba(255, 255, 255, 0.78)' }}>Lead-time acceleration</div>
-                  </div>
-                  <div>
-                    <div style={{ fontFamily: 'var(--font-editorial)', fontSize: '1.9rem', color: 'var(--color-on-primary)' }}>
-                      18/25
-                    </div>
-                    <div style={{ color: 'rgba(255, 255, 255, 0.78)' }}>Partner-ready evidence rate</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ---- Apply for Access ------------------------------- */}
-      <section id="apply-access" className="lp-apply">
+      {/* ── Apply for access ── */}
+      <section id="apply-access" className="lp-section">
         <div className="lp-container">
           <div className="lp-apply-head">
-            <div className="lp-section-kicker" style={{ marginBottom: 12 }}>Apply for Access</div>
-            <div className="lp-apply-title">Request your firm's onboarding slot</div>
-            <div className="lp-apply-sub">
-              Submit your details and we'll route you to the right workflow.
-            </div>
+            <div className="lp-section-kicker">Apply for access</div>
+            <div className="lp-section-title">Request your firm's onboarding slot</div>
           </div>
-
           <div className="lp-apply-card">
-            <form onSubmit={submit}>
+            <form onSubmit={handleSubmit}>
               <div className="lp-form-grid">
                 <div>
-                  <label className="lp-form-label">Full name</label>
-                  <input
-                    className="cl-input"
-                    value={form.fullName}
-                    onChange={(e) => setForm((s) => ({ ...s, fullName: e.target.value }))}
-                    placeholder="Jane Smith"
-                    required
-                  />
+                  <label className="lp-form-label" htmlFor="ap-name">Full Name</label>
+                  <input id="ap-name" className="lp-form-input" value={form.fullName}
+                    onChange={e => setForm(s => ({ ...s, fullName: e.target.value }))}
+                    placeholder="Jane Smith" required />
                 </div>
                 <div>
-                  <label className="lp-form-label">Work email</label>
-                  <input
-                    className="cl-input"
-                    value={form.workEmail}
-                    onChange={(e) => setForm((s) => ({ ...s, workEmail: e.target.value }))}
-                    placeholder="jane@firm.com"
-                    type="email"
-                    required
-                  />
+                  <label className="lp-form-label" htmlFor="ap-email">Work Email</label>
+                  <input id="ap-email" className="lp-form-input" type="email" value={form.workEmail}
+                    onChange={e => setForm(s => ({ ...s, workEmail: e.target.value }))}
+                    placeholder="jane@firm.com" required />
                 </div>
                 <div className="lp-span-2">
-                  <label className="lp-form-label">Firm</label>
-                  <input
-                    className="cl-input"
-                    value={form.firm}
-                    onChange={(e) => setForm((s) => ({ ...s, firm: e.target.value }))}
-                    placeholder="Halcyon Legal"
-                    required
-                  />
+                  <label className="lp-form-label" htmlFor="ap-firm">Firm</label>
+                  <input id="ap-firm" className="lp-form-input" value={form.firm}
+                    onChange={e => setForm(s => ({ ...s, firm: e.target.value }))}
+                    placeholder="Halcyon Legal" required />
                 </div>
                 <div className="lp-span-2">
-                  <label className="lp-form-label">Area of practice</label>
-                  <input
-                    className="cl-input"
-                    value={form.practice}
-                    onChange={(e) => setForm((s) => ({ ...s, practice: e.target.value }))}
-                    placeholder="M&A / Litigation / Regulatory..."
-                    required
-                  />
+                  <label className="lp-form-label" htmlFor="ap-practice">Practice Area</label>
+                  <input id="ap-practice" className="lp-form-input" value={form.practice}
+                    onChange={e => setForm(s => ({ ...s, practice: e.target.value }))}
+                    placeholder="M&A / Litigation / Regulatory..." required />
                 </div>
               </div>
-
-              <div style={{ display: 'flex', justifyContent: 'center', marginTop: 18 }}>
-                <button className="cl-btn-primary" type="submit" style={{ padding: '11px 26px' }}>
-                  REQUEST ACCESS
-                </button>
-              </div>
-
-              <div className="lp-footer" style={{ paddingBottom: 0 }}>
-                By requesting access, you agree to receive onboarding communications from Halcyon Legal.
+              <div className="lp-apply-submit-row">
+                <button type="submit" className="lp-btn-primary">REQUEST ACCESS</button>
               </div>
             </form>
           </div>
         </div>
       </section>
 
+      {/* ── Footer ── */}
       <footer className="lp-footer">
-        <div className="lp-container" style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
-          <div>(c) 2026 The BigLaw Ledger - ORACLE</div>
-          <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-            <span style={{ cursor: 'pointer' }} onClick={() => scrollToId('core-engine')}>How it works</span>
-            <span style={{ cursor: 'pointer' }} onClick={() => scrollToId('ledger-os')}>Ledger OS</span>
-            <span style={{ cursor: 'pointer' }} onClick={() => scrollToId('apply-access')}>Apply</span>
+        <div className="lp-container lp-footer-inner">
+          <span>© 2026 Oracle Intelligence — ORACLE BD Platform</span>
+          <div className="lp-footer-links">
+            <button type="button" className="lp-footer-link" onClick={() => scrollToId('how-it-works')}>Platform</button>
+            <button type="button" className="lp-footer-link" onClick={() => scrollToId('modules')}>Modules</button>
+            <button type="button" className="lp-footer-link" onClick={() => scrollToId('apply-access')}>Apply</button>
+            <button type="button" className="lp-footer-link" onClick={() => navigate('/login')}>Sign in</button>
           </div>
         </div>
       </footer>
