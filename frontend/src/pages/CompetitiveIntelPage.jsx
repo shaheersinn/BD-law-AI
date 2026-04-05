@@ -1,6 +1,8 @@
 /**
- * pages/CompetitiveIntelPage.jsx — route /competitive-intel
+ * pages/CompetitiveIntelPage.jsx — P18 Redesign
+ * 
  * Real-time tracking of competitor firm movements, lateral hires, and market positioning.
+ * Enforces DM Sans / DM Serif typography without inline styles.
  */
 
 import { useEffect, useState, useMemo } from 'react'
@@ -10,6 +12,138 @@ import AppShell from '../components/layout/AppShell'
 import { Skeleton } from '../components/Skeleton'
 import { PageHeader, MetricCard, Panel, Tag, EmptyState, ErrorState } from '../components/ui/Primitives'
 import { firms } from '../api/client'
+
+const CI_CSS = `
+.ci-root {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2.5rem 2rem 4rem;
+}
+.ci-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+  margin-bottom: 2.5rem;
+}
+.ci-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+/* Table */
+.ci-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.ci-th {
+  padding: 9px 12px;
+  text-align: left;
+  font-family: var(--font-data);
+  font-weight: 700;
+  font-size: 0.625rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-on-surface-variant);
+  background: var(--color-surface-container-low);
+  white-space: nowrap;
+}
+.ci-tr {
+  transition: background var(--transition-fast);
+}
+.ci-tr:nth-child(even) { background: var(--color-surface-container-low); }
+.ci-tr:hover { background: var(--color-surface-container-high) !important; }
+
+.ci-td {
+  padding: 13px 12px;
+  white-space: nowrap;
+}
+.ci-td-name {
+  font-family: var(--font-editorial);
+  font-size: 1.05rem;
+  font-weight: 400;
+  color: var(--color-primary);
+}
+.ci-td-mono {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-on-surface);
+  text-align: center;
+}
+.ci-td-meta {
+  font-family: var(--font-data);
+  font-size: 0.8125rem;
+  color: var(--color-on-surface-variant);
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ci-tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+.ci-tags-extra {
+  font-family: var(--font-data);
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: var(--color-on-surface-variant);
+}
+
+/* Lateral Hire sidebar */
+.ci-lat-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+.ci-lat-item {
+  padding: 0.75rem;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-container-low);
+  border-left: 3px solid var(--color-error-bg);
+  transition: transform var(--transition-fast);
+}
+.ci-lat-item:hover {
+  transform: translateX(2px);
+}
+.ci-lat-name {
+  font-family: var(--font-data);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--color-on-surface);
+  margin-bottom: 2px;
+}
+.ci-lat-org {
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+  color: var(--color-on-surface-variant);
+  margin-bottom: 2px;
+}
+.ci-lat-date {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  color: var(--color-on-surface-variant);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+@media (max-width: 980px) {
+  .ci-grid { grid-template-columns: 1fr; }
+  .ci-metrics { grid-template-columns: 1fr; }
+}
+`
+
+function injectCSS() {
+  if (typeof document !== 'undefined' && !document.getElementById('ci-styles')) {
+    const el = document.createElement('style')
+    el.id = 'ci-styles'
+    el.textContent = CI_CSS
+    document.head.appendChild(el)
+  }
+}
 
 function threatColor(level) {
   if (!level) return 'default'
@@ -30,11 +164,11 @@ function formatDate(dateStr) {
 const MAX_PA_TAGS = 3
 
 export default function CompetitiveIntelPage() {
+  injectCSS()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState([])
   const [error, setError] = useState(null)
-  const [hoveredRow, setHoveredRow] = useState(null)
 
   useEffect(() => {
     firms.competitive()
@@ -90,7 +224,7 @@ export default function CompetitiveIntelPage() {
 
   return (
     <AppShell>
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '2rem 2rem 3rem' }}>
+      <div className="ci-root">
         <PageHeader
           tag="Competitive Intelligence"
           title="Competitive Intel Radar"
@@ -98,7 +232,7 @@ export default function CompetitiveIntelPage() {
         />
 
         {/* Metric cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
+        <div className="ci-metrics">
           {loading ? (
             Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} height={100} radius={12} />)
           ) : (
@@ -110,7 +244,7 @@ export default function CompetitiveIntelPage() {
           )}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem', alignItems: 'start' }}>
+        <div className="ci-grid">
           {/* Firm Intelligence table */}
           <Panel title="Firm Intelligence">
             {loading ? (
@@ -127,20 +261,11 @@ export default function CompetitiveIntelPage() {
               />
             ) : (
               <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-data)', fontSize: '0.8125rem' }}>
+                <table className="ci-table">
                   <thead>
-                    <tr style={{ borderBottom: '1px solid var(--color-surface-container-high)' }}>
+                    <tr>
                       {['Firm Name', 'Headcount', 'Practice Areas', 'Recent Laterals', 'Market Position', 'Threat Level'].map(h => (
-                        <th key={h} style={{
-                          padding: '0.5rem 0.75rem',
-                          textAlign: 'left',
-                          fontWeight: 700,
-                          fontSize: '0.625rem',
-                          letterSpacing: '0.05em',
-                          textTransform: 'uppercase',
-                          color: 'var(--color-on-surface-variant)',
-                          whiteSpace: 'nowrap',
-                        }}>{h}</th>
+                        <th key={h} className="ci-th">{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -150,45 +275,28 @@ export default function CompetitiveIntelPage() {
                       const shownPAs = pas.slice(0, MAX_PA_TAGS)
                       const extraCount = pas.length - MAX_PA_TAGS
                       return (
-                        <tr
-                          key={firm.id ?? firm.firm_id ?? i}
-                          onMouseEnter={() => setHoveredRow(i)}
-                          onMouseLeave={() => setHoveredRow(null)}
-                          style={{
-                            borderBottom: '1px solid var(--color-surface-container-high)',
-                            background: hoveredRow === i ? 'var(--color-surface-container-low)' : 'transparent',
-                            transition: 'background 0.12s',
-                            cursor: 'default',
-                          }}
-                        >
-                          <td style={{ padding: '0.625rem 0.75rem', fontWeight: 600, color: 'var(--color-on-surface)', whiteSpace: 'nowrap' }}>
+                        <tr key={firm.id ?? firm.firm_id ?? i} className="ci-tr">
+                          <td className="ci-td ci-td-name">
                             {firm.name ?? firm.firm_name ?? '—'}
                           </td>
-                          <td style={{ padding: '0.625rem 0.75rem', color: 'var(--color-on-surface)', textAlign: 'center' }}>
+                          <td className="ci-td ci-td-mono">
                             {firm.headcount != null ? Number(firm.headcount).toLocaleString() : '—'}
                           </td>
-                          <td style={{ padding: '0.625rem 0.75rem' }}>
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem', alignItems: 'center' }}>
+                          <td className="ci-td">
+                            <div className="ci-tags-container">
                               {shownPAs.map((pa, idx) => (
                                 <Tag key={idx} label={pa} color="navy" />
                               ))}
-                              {extraCount > 0 && (
-                                <span style={{
-                                  fontFamily: 'var(--font-data)',
-                                  fontSize: '0.625rem',
-                                  fontWeight: 700,
-                                  color: 'var(--color-on-surface-variant)',
-                                }}>+{extraCount}</span>
-                              )}
+                              {extraCount > 0 && <span className="ci-tags-extra">+{extraCount}</span>}
                             </div>
                           </td>
-                          <td style={{ padding: '0.625rem 0.75rem', color: 'var(--color-on-surface)', textAlign: 'center' }}>
+                          <td className="ci-td ci-td-mono">
                             {firm.recent_laterals ?? firm.lateral_count ?? (firm.lateral_hires?.length ?? '—')}
                           </td>
-                          <td style={{ padding: '0.625rem 0.75rem', color: 'var(--color-on-surface-variant)', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <td className="ci-td ci-td-meta">
                             {firm.market_position ?? firm.position ?? '—'}
                           </td>
-                          <td style={{ padding: '0.625rem 0.75rem' }}>
+                          <td className="ci-td">
                             <Tag label={firm.threat_level ?? 'Unknown'} color={threatColor(firm.threat_level)} />
                           </td>
                         </tr>
@@ -215,41 +323,16 @@ export default function CompetitiveIntelPage() {
                 message="Lateral hire tracking will populate as intelligence runs"
               />
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
+              <div className="ci-lat-list">
                 {recentLaterals.map((hire, i) => (
-                  <div
-                    key={hire.id ?? i}
-                    style={{
-                      padding: '0.75rem',
-                      borderRadius: 'var(--radius-md)',
-                      background: 'var(--color-surface-container-low)',
-                      borderLeft: '3px solid var(--color-error-bg)',
-                    }}
-                  >
-                    <div style={{
-                      fontFamily: 'var(--font-data)',
-                      fontSize: '0.8125rem',
-                      fontWeight: 600,
-                      color: 'var(--color-on-surface)',
-                      marginBottom: '0.125rem',
-                    }}>
+                  <div key={hire.id ?? i} className="ci-lat-item">
+                    <div className="ci-lat-name">
                       {hire.name ?? hire.hire_name ?? '—'}
                     </div>
-                    <div style={{
-                      fontFamily: 'var(--font-data)',
-                      fontSize: '0.75rem',
-                      color: 'var(--color-on-surface-variant)',
-                      marginBottom: '0.125rem',
-                    }}>
+                    <div className="ci-lat-org">
                       {hire.firm_name ?? hire.firm ?? '—'} · {hire.practice ?? hire.practice_area ?? '—'}
                     </div>
-                    <div style={{
-                      fontFamily: 'var(--font-data)',
-                      fontSize: '0.625rem',
-                      color: 'var(--color-on-surface-variant)',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.04em',
-                    }}>
+                    <div className="ci-lat-date">
                       {formatDate(hire.date ?? hire.hired_at)}
                     </div>
                   </div>

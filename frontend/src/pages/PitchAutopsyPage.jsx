@@ -1,6 +1,8 @@
 /**
- * pages/PitchAutopsyPage.jsx — route /pitch-autopsy
+ * pages/PitchAutopsyPage.jsx — P19 Redesign
+ * 
  * Win/loss analysis with signal correlation and partner coaching insights.
+ * Uses injected CSS to adhere to DM Sans/Serif type system, removing inline styles.
  */
 
 import { useEffect, useState, useMemo } from 'react'
@@ -10,6 +12,166 @@ import AppShell from '../components/layout/AppShell'
 import { Skeleton } from '../components/Skeleton'
 import { PageHeader, MetricCard, Panel, Tag, EmptyState, ErrorState } from '../components/ui/Primitives'
 import { bd } from '../api/client'
+
+const AUTOPSY_CSS = `
+.pa-root {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2.5rem 2rem 4rem;
+}
+.pa-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+  margin-bottom: 2.5rem;
+}
+.pa-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+/* Filters */
+.pa-filters {
+  display: flex;
+  gap: 6px;
+}
+.pa-filter-btn {
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  font-family: var(--font-data);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: none;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+.pa-filter-btn.active {
+  background: var(--color-primary);
+  color: #fff;
+}
+.pa-filter-btn.inactive {
+  background: var(--color-surface-container-high);
+  color: var(--color-on-surface-variant);
+}
+
+/* Table */
+.pa-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.pa-th {
+  padding: 9px 12px;
+  text-align: left;
+  font-family: var(--font-data);
+  font-weight: 700;
+  font-size: 0.625rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-on-surface-variant);
+  background: var(--color-surface-container-low);
+  white-space: nowrap;
+}
+.pa-tr {
+  transition: background var(--transition-fast);
+}
+.pa-tr:nth-child(even) { background: var(--color-surface-container-low); }
+.pa-tr:hover { background: var(--color-surface-container-high) !important; }
+
+.pa-td {
+  padding: 13px 12px;
+  white-space: nowrap;
+}
+.pa-td-date {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--color-on-surface-variant);
+}
+.pa-td-primary {
+  font-family: var(--font-data);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pa-td-secondary {
+  font-family: var(--font-data);
+  font-size: 0.8125rem;
+  color: var(--color-on-surface-variant);
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pa-td-amount {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-on-surface);
+}
+
+/* Win Rate Bars */
+.pa-wr-item {
+  margin-bottom: 0.75rem;
+}
+.pa-wr-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+.pa-wr-label {
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+  color: var(--color-on-surface);
+  max-width: 75%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pa-wr-pct {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.pa-wr-track {
+  height: 4px;
+  background: var(--color-surface-container-high);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+.pa-wr-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.3s ease;
+}
+.pa-wr-meta {
+  font-family: var(--font-data);
+  font-size: 0.625rem;
+  color: var(--color-on-surface-variant);
+  margin-top: 3px;
+}
+
+@media (max-width: 980px) {
+  .pa-grid { grid-template-columns: 1fr; }
+  .pa-metrics { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 640px) {
+  .pa-metrics { grid-template-columns: 1fr; }
+}
+`
+
+function injectCSS() {
+  if (typeof document !== 'undefined' && !document.getElementById('pa-styles')) {
+    const el = document.createElement('style')
+    el.id = 'pa-styles'
+    el.textContent = AUTOPSY_CSS
+    document.head.appendChild(el)
+  }
+}
 
 const FILTERS = ['ALL', 'WON', 'LOST', 'PENDING']
 
@@ -25,9 +187,9 @@ function outcomeColor(outcome) {
 function formatCurrency(val) {
   if (val == null || isNaN(val)) return '—'
   const n = Number(val)
-  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`
-  if (n >= 1_000) return `$${(n / 1_000).toFixed(0)}K`
-  return `$${n.toLocaleString()}`
+  if (n >= 1_000_000) return \`$\${(n / 1_000_000).toFixed(1)}M\`
+  if (n >= 1_000) return \`$\${(n / 1_000).toFixed(0)}K\`
+  return \`$\${n.toLocaleString()}\`
 }
 
 function formatDate(dateStr) {
@@ -38,12 +200,12 @@ function formatDate(dateStr) {
 }
 
 export default function PitchAutopsyPage() {
+  injectCSS()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState([])
   const [error, setError] = useState(null)
   const [filter, setFilter] = useState('ALL')
-  const [hoveredRow, setHoveredRow] = useState(null)
 
   useEffect(() => {
     bd.pitchHistory()
@@ -103,7 +265,7 @@ export default function PitchAutopsyPage() {
 
   return (
     <AppShell>
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '2rem 2rem 3rem' }}>
+      <div className="pa-root">
         <PageHeader
           tag="BD Performance"
           title="Pitch Autopsy"
@@ -111,12 +273,12 @@ export default function PitchAutopsyPage() {
         />
 
         {/* Metric cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
+        <div className="pa-metrics">
           {loading ? (
             Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} height={100} radius={12} />)
           ) : (
             <>
-              <MetricCard label="Win Rate" value={`${stats.winRate}%`} sub="of closed pitches" accent="teal" />
+              <MetricCard label="Win Rate" value={\`\${stats.winRate}%\`} sub="of closed pitches" accent="teal" />
               <MetricCard label="Total Pitches" value={stats.total} sub="all time" accent="blue" />
               <MetricCard label="Avg Deal Size" value={formatCurrency(stats.avgDeal)} sub="per pitch" accent="gold" />
               <MetricCard label="Lost Revenue" value={formatCurrency(stats.lostRevenue)} sub="closed-lost total" accent="red" />
@@ -124,30 +286,17 @@ export default function PitchAutopsyPage() {
           )}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem', alignItems: 'start' }}>
+        <div className="pa-grid">
           {/* Pitch History */}
           <Panel
             title="Pitch History"
             actions={
-              <div style={{ display: 'flex', gap: '0.375rem' }}>
+              <div className="pa-filters">
                 {FILTERS.map(f => (
                   <button
                     key={f}
                     onClick={() => setFilter(f)}
-                    style={{
-                      padding: '0.25rem 0.625rem',
-                      borderRadius: 'var(--radius-full)',
-                      fontFamily: 'var(--font-data)',
-                      fontSize: '0.625rem',
-                      fontWeight: 700,
-                      letterSpacing: '0.04em',
-                      textTransform: 'uppercase',
-                      border: 'none',
-                      cursor: 'pointer',
-                      background: filter === f ? 'var(--color-primary)' : 'var(--color-surface-container-high)',
-                      color: filter === f ? '#fff' : 'var(--color-on-surface-variant)',
-                      transition: 'background 0.12s, color 0.12s',
-                    }}
+                    className={\`pa-filter-btn \${filter === f ? 'active' : 'inactive'}\`}
                   >
                     {f}
                   </button>
@@ -165,59 +314,40 @@ export default function PitchAutopsyPage() {
               <EmptyState
                 icon={<TrendingUp size={32} />}
                 title="No pitches found"
-                message={filter === 'ALL' ? 'Pitch history will appear once BD data is available' : `No ${filter.toLowerCase()} pitches recorded`}
+                message={filter === 'ALL' ? 'Pitch history will appear once BD data is available' : \`No \${filter.toLowerCase()} pitches recorded\`}
               />
             ) : (
               <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--font-data)', fontSize: '0.8125rem' }}>
+                <table className="pa-table">
                   <thead>
-                    <tr style={{ borderBottom: '1px solid var(--color-surface-container-high)' }}>
+                    <tr>
                       {['Date', 'Company', 'Practice Area', 'Partner', 'Deal Value', 'Outcome', 'Reason'].map(h => (
-                        <th key={h} style={{
-                          padding: '0.5rem 0.75rem',
-                          textAlign: 'left',
-                          fontWeight: 700,
-                          fontSize: '0.625rem',
-                          letterSpacing: '0.05em',
-                          textTransform: 'uppercase',
-                          color: 'var(--color-on-surface-variant)',
-                          whiteSpace: 'nowrap',
-                        }}>{h}</th>
+                        <th key={h} className="pa-th">{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {filtered.map((pitch, i) => (
-                      <tr
-                        key={pitch.id ?? i}
-                        onMouseEnter={() => setHoveredRow(i)}
-                        onMouseLeave={() => setHoveredRow(null)}
-                        style={{
-                          borderBottom: '1px solid var(--color-surface-container-high)',
-                          background: hoveredRow === i ? 'var(--color-surface-container-low)' : 'transparent',
-                          transition: 'background 0.12s',
-                          cursor: 'default',
-                        }}
-                      >
-                        <td style={{ padding: '0.625rem 0.75rem', color: 'var(--color-on-surface-variant)', whiteSpace: 'nowrap' }}>
+                      <tr key={pitch.id ?? i} className="pa-tr">
+                        <td className="pa-td pa-td-date">
                           {formatDate(pitch.date ?? pitch.pitch_date ?? pitch.created_at)}
                         </td>
-                        <td style={{ padding: '0.625rem 0.75rem', fontWeight: 600, color: 'var(--color-on-surface)', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <td className="pa-td pa-td-primary">
                           {pitch.company_name ?? pitch.company ?? '—'}
                         </td>
-                        <td style={{ padding: '0.625rem 0.75rem', color: 'var(--color-on-surface-variant)', maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <td className="pa-td pa-td-secondary">
                           {pitch.practice_area ?? '—'}
                         </td>
-                        <td style={{ padding: '0.625rem 0.75rem', color: 'var(--color-on-surface-variant)', whiteSpace: 'nowrap' }}>
+                        <td className="pa-td pa-td-secondary">
                           {pitch.partner ?? pitch.partner_name ?? '—'}
                         </td>
-                        <td style={{ padding: '0.625rem 0.75rem', fontWeight: 600, color: 'var(--color-on-surface)', whiteSpace: 'nowrap' }}>
+                        <td className="pa-td pa-td-amount">
                           {formatCurrency(pitch.deal_value)}
                         </td>
-                        <td style={{ padding: '0.625rem 0.75rem' }}>
+                        <td className="pa-td">
                           <Tag label={pitch.outcome ?? 'Unknown'} color={outcomeColor(pitch.outcome)} />
                         </td>
-                        <td style={{ padding: '0.625rem 0.75rem', color: 'var(--color-on-surface-variant)', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <td className="pa-td pa-td-secondary" style={{ maxWidth: 160 }}>
                           {pitch.reason ?? pitch.loss_reason ?? '—'}
                         </td>
                       </tr>
@@ -239,40 +369,30 @@ export default function PitchAutopsyPage() {
             ) : winRateByPA.length === 0 ? (
               <EmptyState title="No data" message="Win rate data will appear once pitches are recorded" />
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                {winRateByPA.map(({ pa, rate, total }) => (
-                  <div key={pa}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                      <span style={{
-                        fontFamily: 'var(--font-data)',
-                        fontSize: '0.75rem',
-                        color: 'var(--color-on-surface)',
-                        maxWidth: '75%',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}>{pa}</span>
-                      <span style={{
-                        fontFamily: 'var(--font-data)',
-                        fontSize: '0.6875rem',
-                        fontWeight: 700,
-                        color: rate >= 50 ? 'var(--color-secondary)' : rate >= 25 ? '#d97706' : 'var(--color-error)',
-                      }}>{rate}%</span>
+              <div style={{ padding: '0.5rem 0' }}>
+                {winRateByPA.map(({ pa, rate, total }) => {
+                  const rColor = rate >= 50 ? 'var(--color-secondary)' : rate >= 25 ? '#d97706' : 'var(--color-error)'
+                  return (
+                    <div key={pa} className="pa-wr-item">
+                      <div className="pa-wr-header">
+                        <span className="pa-wr-label">{pa}</span>
+                        <span className="pa-wr-pct" style={{ color: rColor }}>{rate}%</span>
+                      </div>
+                      <div className="pa-wr-track">
+                        <div
+                          className="pa-wr-fill"
+                          style={{
+                            width: \`\${rate}%\`,
+                            background: rColor,
+                          }}
+                        />
+                      </div>
+                      <div className="pa-wr-meta">
+                        {total} pitch{total !== 1 ? 'es' : ''}
+                      </div>
                     </div>
-                    <div style={{ height: 4, background: 'var(--color-surface-container-high)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
-                      <div style={{
-                        height: '100%',
-                        width: `${rate}%`,
-                        background: rate >= 50 ? 'var(--color-secondary)' : rate >= 25 ? '#d97706' : 'var(--color-error)',
-                        borderRadius: 'var(--radius-full)',
-                        transition: 'width 0.3s ease',
-                      }} />
-                    </div>
-                    <div style={{ fontFamily: 'var(--font-data)', fontSize: '0.625rem', color: 'var(--color-on-surface-variant)', marginTop: '0.125rem' }}>
-                      {total} pitch{total !== 1 ? 'es' : ''}
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </Panel>
