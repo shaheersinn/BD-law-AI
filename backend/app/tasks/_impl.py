@@ -101,7 +101,9 @@ def scrape_edgar(self: Task) -> dict:  # type: ignore[type-arg]
                     Trigger(
                         source=getattr(sig, "source", "EDGAR"),
                         trigger_type=getattr(sig, "trigger_type", "filing"),
-                        company_name=getattr(sig, "raw_company_name", getattr(sig, "company_name", "Unknown")),
+                        company_name=getattr(
+                            sig, "raw_company_name", getattr(sig, "company_name", "Unknown")
+                        ),
                         title=getattr(sig, "title", "SEC Filing"),
                         description=getattr(sig, "description", None),
                         url=getattr(sig, "url", None),
@@ -124,7 +126,7 @@ def scrape_edgar(self: Task) -> dict:  # type: ignore[type-arg]
         return result
     except Exception as exc:  # noqa: BLE001
         log.error("scrape_edgar failed", error=str(exc))
-        raise self.retry(exc=exc, countdown=2 ** self.request.retries) from exc
+        raise self.retry(exc=exc, countdown=2**self.request.retries) from exc
 
 
 @celery_app.task(
@@ -192,7 +194,7 @@ def scrape_regulatory_feeds(self: Task) -> dict:  # type: ignore[type-arg]
         return result
     except Exception as exc:  # noqa: BLE001
         log.error("scrape_regulatory_feeds failed", error=str(exc))
-        raise self.retry(exc=exc, countdown=2 ** self.request.retries) from exc
+        raise self.retry(exc=exc, countdown=2**self.request.retries) from exc
 
 
 @celery_app.task(
@@ -266,7 +268,7 @@ def scrape_jobs(self: Task) -> dict:  # type: ignore[type-arg]
         return result
     except Exception as exc:  # noqa: BLE001
         log.error("scrape_jobs failed", error=str(exc))
-        raise self.retry(exc=exc, countdown=2 ** self.request.retries) from exc
+        raise self.retry(exc=exc, countdown=2**self.request.retries) from exc
 
 
 @celery_app.task(
@@ -346,7 +348,7 @@ def scrape_canlii(self: Task) -> dict:  # type: ignore[type-arg]
         return result
     except Exception as exc:  # noqa: BLE001
         log.error("scrape_canlii failed", error=str(exc))
-        raise self.retry(exc=exc, countdown=2 ** self.request.retries) from exc
+        raise self.retry(exc=exc, countdown=2**self.request.retries) from exc
 
 
 @celery_app.task(bind=True, max_retries=3, name="app.tasks._impl.scrape_jets")
@@ -412,7 +414,12 @@ def scrape_law_firm_blogs(self: Task) -> dict:  # type: ignore[type-arg]
                 errors.append(f"{firm.firm_name}: {exc}")
                 log.debug("firm_blog_failed", firm=firm.firm_name, error=str(exc))
 
-        return {"status": "ok", "signals_saved": total, "firms_scraped": len(ALL_FIRMS), "errors": len(errors)}
+        return {
+            "status": "ok",
+            "signals_saved": total,
+            "firms_scraped": len(ALL_FIRMS),
+            "errors": len(errors),
+        }
 
     log.info("scrape_law_firm_blogs starting")
     try:
@@ -421,7 +428,7 @@ def scrape_law_firm_blogs(self: Task) -> dict:  # type: ignore[type-arg]
         return result
     except Exception as exc:  # noqa: BLE001
         log.error("scrape_law_firm_blogs failed", error=str(exc))
-        raise self.retry(exc=exc, countdown=2 ** self.request.retries) from exc
+        raise self.retry(exc=exc, countdown=2**self.request.retries) from exc
 
 
 @celery_app.task(
@@ -474,7 +481,7 @@ def scrape_osb_insolvency(self: Task) -> dict:  # type: ignore[type-arg]
         return result
     except Exception as exc:  # noqa: BLE001
         log.error("scrape_osb_insolvency failed", error=str(exc))
-        raise self.retry(exc=exc, countdown=2 ** self.request.retries) from exc
+        raise self.retry(exc=exc, countdown=2**self.request.retries) from exc
 
 
 @celery_app.task(
@@ -528,7 +535,7 @@ def scrape_google_trends(self: Task) -> dict:  # type: ignore[type-arg]
         return result
     except Exception as exc:  # noqa: BLE001
         log.error("scrape_google_trends failed", error=str(exc))
-        raise self.retry(exc=exc, countdown=2 ** self.request.retries) from exc
+        raise self.retry(exc=exc, countdown=2**self.request.retries) from exc
 
 
 # ── Feature Engineering Tasks (Phase 2) ───────────────────────────────────────
@@ -795,9 +802,7 @@ def score_company(self: Task, company_id: int) -> dict:  # type: ignore[type-arg
             )
             rows = feat_result.fetchall()
 
-        features: dict[str, float] = {
-            row[0]: float(row[1]) for row in rows if row[1] is not None
-        }
+        features: dict[str, float] = {row[0]: float(row[1]) for row in rows if row[1] is not None}
 
         if not features:
             return {"status": "skipped", "reason": "no_features", "company_id": company_id}
@@ -850,7 +855,7 @@ def score_company(self: Task, company_id: int) -> dict:  # type: ignore[type-arg
         return result
     except Exception as exc:  # noqa: BLE001
         log.error("score_company failed", company_id=company_id, error=str(exc))
-        raise self.retry(exc=exc, countdown=2 ** self.request.retries) from exc
+        raise self.retry(exc=exc, countdown=2**self.request.retries) from exc
 
 
 @celery_app.task(
