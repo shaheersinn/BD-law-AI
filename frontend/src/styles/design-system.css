@@ -3,7 +3,7 @@
  * ORACLE BD Intelligence Platform
  *
  * Creative North Star: "The Editorial Brief"
- * Dual-font strategy: Newsreader (editorial) + Manrope (data)
+ * Dual-font strategy: DM Serif Display (editorial) + DM Sans (data)
  * Surface hierarchy: layered tonal canvas, no 1px solid borders
  *
  * Reference: SKILL_design_system.md + Stitch/lexington_estate_ii/DESIGN.md
@@ -19,15 +19,15 @@
   --color-on-primary:                #ffffff;
   --color-on-primary-container:      #8292b0;
 
-  --color-secondary:                 #306d58;
-  --color-secondary-container:       #adedd3;
-  --color-on-secondary-container:    #306d58;
+  --color-secondary:                 #2a7d5f;
+  --color-secondary-container:       #c8f0df;
+  --color-on-secondary-container:    #2a7d5f;
 
-  --color-surface:                   #f7f9fb;
+  --color-surface:                   #f8f7f4;
   --color-surface-container-lowest:  #ffffff;
-  --color-surface-container-low:     #f2f4f6;
-  --color-surface-container-high:    #e8eaed;
-  --color-surface-container-highest: #e0e3e5;
+  --color-surface-container-low:     #f1f0ec;
+  --color-surface-container-high:    #e8e7e3;
+  --color-surface-container-highest: #dfddd8;
 
   --color-on-surface:                #191c1e;
   --color-on-surface-variant:        #44474e;
@@ -50,12 +50,12 @@
   --color-success-bg: #f0fdf4;
 
   /* ── Typography ───────────────────────────────────── */
-  --font-editorial:   'Newsreader', Georgia, serif;
-  --font-data:        'Manrope', system-ui, sans-serif;
+  --font-editorial:   'DM Serif Display', Georgia, serif;
+  --font-data:        'DM Sans', system-ui, sans-serif;
   --font-mono:        'JetBrains Mono', 'Courier New', monospace;
 
   /* ── Layout ───────────────────────────────────────── */
-  --sidebar-width:      80px;
+  --sidebar-width:      220px;
   --sidebar-collapsed:  64px;
 
   /* ── Elevation ────────────────────────────────────── */
@@ -78,7 +78,7 @@
 
 .type-display-lg {
   font-family: var(--font-editorial);
-  font-size: 3.5rem;
+  font-size: 2.8rem;
   font-weight: 400;
   letter-spacing: -0.02em;
   line-height: 1.15;
@@ -86,7 +86,7 @@
 
 .type-headline-sm {
   font-family: var(--font-editorial);
-  font-size: 1.5rem;
+  font-size: 1.6rem;
   font-weight: 500;
   letter-spacing: -0.01em;
   line-height: 1.3;

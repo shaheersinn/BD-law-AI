@@ -25,8 +25,8 @@ export default {
         'heat-4': '#065F5B',
       },
       fontFamily: {
-        editorial: ['Newsreader', 'Georgia', 'serif'],
-        data:      ['Manrope', 'system-ui', 'sans-serif'],
+        editorial: ['DM Serif Display', 'Georgia', 'serif'],
+        data:      ['DM Sans', 'system-ui', 'sans-serif'],
         mono:      ['JetBrains Mono', 'Menlo', 'monospace'],
       },
       boxShadow: {

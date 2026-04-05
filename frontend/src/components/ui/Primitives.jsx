@@ -1,6 +1,7 @@
 /**
  * components/ui/Primitives.jsx — Shared UI building blocks.
  * Design system: Digital Atelier token set (design-system.css)
+ * Updated P25: DM Serif Display metric values, tinted MetricCard backgrounds.
  */
 
 import { AlertTriangle } from 'lucide-react'
@@ -22,8 +23,8 @@ export function PageHeader({ tag, title, subtitle }) {
       )}
       <h1 style={{
         fontFamily: 'var(--font-editorial)',
-        fontSize: '1.5rem',
-        fontWeight: 500,
+        fontSize: '1.6rem',
+        fontWeight: 400,
         letterSpacing: '-0.01em',
         color: 'var(--color-primary)',
         margin: 0,
@@ -42,24 +43,25 @@ export function PageHeader({ tag, title, subtitle }) {
 }
 
 // ── MetricCard ────────────────────────────────────────────────────────────────
-const ACCENT_COLORS = {
-  teal:  '#2b6954',
-  red:   'var(--color-error)',
-  gold:  '#d97706',
-  blue:  '#3b82f6',
-  navy:  'var(--color-primary)',
-  green: 'var(--color-secondary)',
+const ACCENT_CONFIG = {
+  red:     { bar: 'var(--color-error)',      bg: '#fdf0ef' },
+  green:   { bar: 'var(--color-secondary)',  bg: '#c8f0df' },
+  blue:    { bar: '#3b6eb5',                 bg: '#eef3fb' },
+  amber:   { bar: '#d4870e',                 bg: '#fdf8ee' },
+  navy:    { bar: 'var(--color-primary)',     bg: 'var(--color-surface-container-low)' },
+  teal:    { bar: '#2b6954',                 bg: 'var(--color-surface-container-low)' },
+  gold:    { bar: '#d97706',                 bg: 'var(--color-surface-container-low)' },
+  default: { bar: 'var(--color-primary)',     bg: 'var(--color-surface-container-low)' },
 }
 
-export function MetricCard({ label, value, sub, accent = 'teal' }) {
-  const accentColor = ACCENT_COLORS[accent] || ACCENT_COLORS.teal
+export function MetricCard({ label, value, sub, accent = 'default' }) {
+  const cfg = ACCENT_CONFIG[accent] || ACCENT_CONFIG.default
   return (
     <div
       style={{
-        background: 'var(--color-surface-container-lowest)',
+        background: cfg.bg,
         borderRadius: 'var(--radius-xl)',
         padding: '1.25rem',
-        boxShadow: 'var(--shadow-ambient)',
         position: 'relative',
         overflow: 'hidden',
         transition: 'transform var(--transition-card), box-shadow var(--transition-card)',
@@ -71,24 +73,24 @@ export function MetricCard({ label, value, sub, accent = 'teal' }) {
       }}
       onMouseLeave={e => {
         e.currentTarget.style.transform = 'translateY(0)'
-        e.currentTarget.style.boxShadow = 'var(--shadow-ambient)'
+        e.currentTarget.style.boxShadow = 'none'
       }}
     >
       <div style={{
         fontFamily: 'var(--font-data)',
-        fontSize: '0.6875rem',
+        fontSize: '0.58rem',
         fontWeight: 700,
         color: 'var(--color-on-surface-variant)',
-        letterSpacing: '0.05em',
+        letterSpacing: '0.07em',
         textTransform: 'uppercase',
         marginBottom: '0.75rem',
       }}>{label}</div>
       <div style={{
-        fontFamily: 'var(--font-data)',
-        fontSize: '1.5rem',
-        fontWeight: 700,
+        fontFamily: 'var(--font-editorial)',
+        fontSize: '2rem',
+        fontWeight: 400,
         color: 'var(--color-on-surface)',
-        lineHeight: 1.2,
+        lineHeight: 1.15,
       }}>{value}</div>
       {sub && (
         <div style={{
@@ -105,7 +107,7 @@ export function MetricCard({ label, value, sub, accent = 'teal' }) {
         left: 0,
         right: 0,
         height: 2,
-        background: accentColor,
+        background: cfg.bar,
       }} />
     </div>
   )
@@ -155,6 +157,7 @@ const TAG_STYLES = {
   gold:    { bg: '#fffbeb',                             color: '#d97706' },
   blue:    { bg: '#dbeafe',                             color: '#1d4ed8' },
   navy:    { bg: 'var(--color-primary-container)',      color: 'var(--color-on-primary-container)' },
+  amber:   { bg: '#fdf8ee',                             color: '#d4870e' },
 }
 
 export function Tag({ label, color = 'default' }) {
@@ -200,7 +203,7 @@ export function EmptyState({
       <h3 style={{
         fontFamily: 'var(--font-editorial)',
         fontSize: '1.25rem',
-        fontWeight: 500,
+        fontWeight: 400,
         color: 'var(--color-primary)',
         margin: 0,
       }}>{title}</h3>

@@ -1,4 +1,4 @@
-﻿import * as apiClient from "../api/client.js";
+import * as apiClient from "../api/client.js";
 import AppShell from '../components/layout/AppShell';
 // src/pages/GeoPages.jsx
 // Five geospatial intelligence modules:
@@ -74,7 +74,7 @@ const Metric = ({ label, val, sub, accent = "gold" }) => {
 const PageHeader = ({ tag, title, sub }) => (
   <div style={{ marginBottom: 20, paddingBottom: 16, borderBottom: "0 0 0 1px var(--color-outline-variant)" }}>
     {tag && <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, color: "var(--color-secondary)", letterSpacing: ".14em", marginBottom: 6, textTransform: "uppercase" }}>â—ˆ {tag}</div>}
-    <h1 style={{ fontFamily: "'Newsreader',serif", fontWeight: 800, fontSize: 22, letterSpacing: "-.03em", marginBottom: 4, color: "var(--color-on-surface)" }}>{title}</h1>
+    <h1 style={{ fontFamily: "var(--font-editorial)", fontWeight: 800, fontSize: 22, letterSpacing: "-.03em", marginBottom: 4, color: "var(--color-on-surface)" }}>{title}</h1>
     {sub && <p style={{ color: "var(--color-on-surface-variant)", fontSize: 12, lineHeight: 1.6 }}>{sub}</p>}
   </div>
 );
@@ -239,7 +239,7 @@ export const GeoMap = () => {
           <div style={{ padding: "14px 16px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
               <div>
-                <div style={{ fontFamily: "'Newsreader',serif", fontWeight: 800, fontSize: 20, color: "var(--color-on-surface)", marginBottom: 6 }}>{sel.label}</div>
+                <div style={{ fontFamily: "var(--font-editorial)", fontWeight: 800, fontSize: 20, color: "var(--color-on-surface)", marginBottom: 6 }}>{sel.label}</div>
                 <Tag label={sel.practice} color="blue"/>
               </div>
               <div style={{ textAlign: "right" }}>
@@ -348,7 +348,7 @@ export const JetTracker = () => {
             <div style={{ padding: "16px 18px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
                 <div>
-                  <div style={{ fontFamily: "'Newsreader',serif", fontWeight: 800, fontSize: 20, color: "var(--color-on-surface)", marginBottom: 6 }}>{sel.co}</div>
+                  <div style={{ fontFamily: "var(--font-editorial)", fontWeight: 800, fontSize: 20, color: "var(--color-on-surface)", marginBottom: 6 }}>{sel.co}</div>
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                     <Tag label={sel.mandate} color="red"/>
                     <Tag label={sel.tail} color="blue"/>
@@ -475,7 +475,7 @@ export const FootTraffic = () => {
           {/* Action recommendation */}
           <Panel>
             <div style={{ padding: "14px 16px" }}>
-              <div style={{ fontFamily: "'Newsreader',serif", fontWeight: 800, fontSize: 16, color: "var(--color-on-surface)", marginBottom: 4 }}>{sel.target}</div>
+              <div style={{ fontFamily: "var(--font-editorial)", fontWeight: 800, fontSize: 16, color: "var(--color-on-surface)", marginBottom: 4 }}>{sel.target}</div>
               <div style={{ fontSize: 11, color: "var(--color-on-surface-variant)", marginBottom: 12 }}>RECOMMENDED ACTION</div>
               <div style={{ background: "rgba(212,168,67,.05)", border: "1px solid rgba(212,168,67,.2)", borderRadius: 3, padding: "12px 14px", marginBottom: 14 }}>
                 <div style={{ fontSize: 12, color: "var(--color-on-surface-variant)", lineHeight: 1.65 }}>{sel.action}</div>
@@ -585,7 +585,7 @@ export const Satellite = () => {
             <div style={{ padding: "16px 18px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
                 <div>
-                  <div style={{ fontFamily: "'Newsreader',serif", fontWeight: 800, fontSize: 20, color: "var(--color-on-surface)", marginBottom: 6 }}>{sel.co}</div>
+                  <div style={{ fontFamily: "var(--font-editorial)", fontWeight: 800, fontSize: 20, color: "var(--color-on-surface)", marginBottom: 6 }}>{sel.co}</div>
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                     <Tag label={sel.type} color={tc[sel.type] || "default"}/>
                     <Tag label={sel.loc} color="default"/>
@@ -696,7 +696,7 @@ export const PermitRadar = () => {
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <Panel>
             <div style={{ padding: "16px 18px" }}>
-              <div style={{ fontFamily: "'Newsreader',serif", fontWeight: 800, fontSize: 18, color: "var(--color-on-surface)", marginBottom: 4 }}>{sel.co}</div>
+              <div style={{ fontFamily: "var(--font-editorial)", fontWeight: 800, fontSize: 18, color: "var(--color-on-surface)", marginBottom: 4 }}>{sel.co}</div>
               <div style={{ fontSize: 11, color: "var(--color-on-surface-variant)", marginBottom: 12 }}>{sel.loc} Â· Filed {sel.filed}</div>
               <div style={{ background: "var(--color-surface-container-low)", border: "0 0 0 1px var(--color-outline-variant)", borderRadius: 3, padding: "12px 14px", marginBottom: 12 }}>
                 <div style={{ fontSize: 9, color: "var(--color-on-surface-variant)", fontFamily: "var(--font-mono)", marginBottom: 5 }}>PERMIT TYPE</div>

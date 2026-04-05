@@ -114,7 +114,7 @@ const styles = {
     boxShadow: '0 4px 24px rgba(26,40,64,0.08)',
   },
   wordmark: {
-    fontFamily: '"Newsreader", Georgia, serif',
+    fontFamily: 'var(--font-editorial)',
     fontSize: '1.75rem',
     fontWeight: 500,
     letterSpacing: '-0.01em',
@@ -135,7 +135,7 @@ const styles = {
     margin: '1.5rem 0',
   },
   heading: {
-    fontFamily: '"Newsreader", Georgia, serif',
+    fontFamily: 'var(--font-editorial)',
     fontSize: '1.25rem',
     fontWeight: 500,
     color: '#1a2840',

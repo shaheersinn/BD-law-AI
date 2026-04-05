@@ -1,4 +1,4 @@
-﻿import * as apiClient from "../api/client.js";
+import * as apiClient from "../api/client.js";
 import AppShell from '../components/layout/AppShell';
 // src/pages/NewModules.jsx
 // Three modules from the Missing Features guide:
@@ -54,7 +54,7 @@ const Metric = ({ label, val, sub, accent = "gold" }) => {
 const PageHeader = ({ tag, title, sub }) => (
   <div style={{ marginBottom: 20, paddingBottom: 16, borderBottom: "0 0 0 1px var(--color-outline-variant)" }}>
     {tag && <div style={{ fontFamily: "var(--font-mono)", fontSize: 9, color: "var(--color-secondary)", letterSpacing: ".14em", marginBottom: 6, textTransform: "uppercase" }}>â—ˆ {tag}</div>}
-    <h1 style={{ fontFamily: "'Newsreader',serif", fontWeight: 800, fontSize: 22, letterSpacing: "-.03em", marginBottom: 4, color: "var(--color-on-surface)" }}>{title}</h1>
+    <h1 style={{ fontFamily: "var(--font-editorial)", fontWeight: 800, fontSize: 22, letterSpacing: "-.03em", marginBottom: 4, color: "var(--color-on-surface)" }}>{title}</h1>
     {sub && <p style={{ color: "var(--color-on-surface-variant)", fontSize: 12, lineHeight: 1.6 }}>{sub}</p>}
   </div>
 );
@@ -192,7 +192,7 @@ export const LiveTriggers = () => {
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <Panel>
             <div style={{ padding: "14px 16px" }}>
-              <div style={{ fontFamily: "'Newsreader',serif", fontWeight: 800, fontSize: 16, color: "var(--color-on-surface)", marginBottom: 4 }}>{sel.company}</div>
+              <div style={{ fontFamily: "var(--font-editorial)", fontWeight: 800, fontSize: 16, color: "var(--color-on-surface)", marginBottom: 4 }}>{sel.company}</div>
               <div style={{ marginBottom: 10, display: "flex", gap: 5, flexWrap: "wrap" }}>
                 <Tag label={sel.source} color={sc[sel.source] || "default"}/>
                 <Tag label={sel.type} color="gold"/>
