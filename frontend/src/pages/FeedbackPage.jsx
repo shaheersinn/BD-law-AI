@@ -1,18 +1,208 @@
 /**
- * pages/FeedbackPage.jsx — Phase 9: Feedback Loop UI (Digital Atelier)
+ * pages/FeedbackPage.jsx — P23 Redesign
  *
- * Three sections:
- *   1. Confirm a Mandate — partner form to record confirmed outcomes
- *   2. Prediction Accuracy — precision/lead-days table per practice area
- *   3. Drift Alerts — open model degradation warnings from Agent 031
- *
- * Route: /feedback  (require_partner via PrivateRoute)
+ * Feedback Loop UI (Digital Atelier)
+ * Three sections: Confirm a Mandate, Prediction Accuracy, Drift Alerts
+ * Reborn with strict CSS injection and DM typography stack.
  */
 
 import { useEffect, useState } from 'react'
 import { companies as companiesApi, feedback as feedbackApi } from '../api/client'
 import AppShell from '../components/layout/AppShell'
 import { SkeletonTable } from '../components/Skeleton'
+
+const FEEDBACK_CSS = `
+.fb-root {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2.5rem 2rem;
+}
+.fb-title {
+  font-family: var(--font-editorial);
+  font-weight: 500;
+  font-size: 1.75rem;
+  color: var(--color-primary);
+  margin-bottom: 6px;
+  margin-top: 0;
+  letter-spacing: -0.01em;
+}
+.fb-subtitle {
+  color: var(--color-on-surface-variant);
+  font-size: 0.875rem;
+  margin-bottom: 2.5rem;
+  margin-top: 0;
+  font-family: var(--font-data);
+}
+.fb-card {
+  background: var(--color-surface-container-lowest);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-ambient);
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+.fb-card-title {
+  font-family: var(--font-editorial);
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: var(--color-primary);
+  margin-top: 0;
+  margin-bottom: 4px;
+  letter-spacing: -0.01em;
+}
+.fb-card-subtitle {
+  color: var(--color-on-surface-variant);
+  font-size: 0.8125rem;
+  margin-bottom: 1.5rem;
+  margin-top: 0;
+  font-family: var(--font-data);
+}
+
+/* Forms */
+.fb-input {
+  width: 100%;
+  padding: 10px 14px;
+  outline: 1px solid rgba(197, 198, 206, 0.15);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  color: var(--color-on-surface);
+  background: var(--color-surface-container-lowest);
+  font-family: var(--font-data);
+  box-sizing: border-box;
+  margin-top: 4px;
+  border: none;
+  transition: outline-color var(--transition-fast);
+}
+.fb-input:focus {
+  outline: 1px solid rgba(197, 198, 206, 0.40);
+}
+.fb-label {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--color-on-surface-variant);
+  margin-bottom: 2px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-family: var(--font-data);
+}
+.fb-btn-primary {
+  background: linear-gradient(to bottom, var(--color-primary), var(--color-primary-container));
+  color: var(--color-on-primary);
+  border-radius: var(--radius-md);
+  padding: 10px 24px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font-data);
+  border: none;
+}
+.fb-btn-primary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* Alerts */
+.fb-alert-success {
+  background: var(--color-success-bg);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  margin-bottom: 1.25rem;
+  font-size: 0.8125rem;
+  color: var(--color-success);
+  font-family: var(--font-data);
+}
+.fb-alert-error {
+  background: var(--color-error-bg);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  margin-bottom: 1.25rem;
+  font-size: 0.8125rem;
+  color: var(--color-error);
+  font-family: var(--font-data);
+}
+
+/* Table */
+.fb-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.fb-th {
+  text-align: left;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--color-on-surface-variant);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 10px 14px;
+  font-family: var(--font-data);
+  background: var(--color-surface-container-low);
+  white-space: nowrap;
+}
+.fb-td {
+  padding: 13px 14px;
+  font-size: 0.8125rem;
+  color: var(--color-on-surface);
+  vertical-align: middle;
+  font-family: var(--font-data);
+}
+.fb-td-pa {
+  font-family: var(--font-editorial);
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+.fb-td-badge {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  background: var(--color-secondary-container);
+  color: var(--color-on-secondary-container);
+  border-radius: var(--radius-full);
+  padding: 2px 8px;
+}
+.fb-td-mono {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+}
+
+/* Drift Alerts */
+.fb-drift-item {
+  border-left: 4px solid var(--color-on-surface-variant);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+}
+.fb-drift-title {
+  font-family: var(--font-editorial);
+  font-weight: 500;
+  font-size: 1rem;
+  color: var(--color-on-surface);
+  margin-bottom: 4px;
+  letter-spacing: -0.01em;
+}
+.fb-drift-meta {
+  font-size: 0.75rem;
+  color: var(--color-on-surface-variant);
+  font-family: var(--font-data);
+}
+.fb-drift-val {
+  font-family: var(--font-mono);
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+.fb-drift-stat {
+  display: flex;
+  gap: 2rem;
+  margin-top: 0.75rem;
+}
+`
+
+function injectCSS() {
+  if (typeof document !== 'undefined' && !document.getElementById('fb-styles')) {
+    const el = document.createElement('style')
+    el.id = 'fb-styles'
+    el.textContent = FEEDBACK_CSS
+    document.head.appendChild(el)
+  }
+}
 
 const PRACTICE_AREAS = [
   'ma_corporate', 'litigation_dispute_resolution', 'regulatory_compliance',
@@ -29,76 +219,7 @@ const PRACTICE_AREAS = [
   'technology_fintech_regulatory', 'data_privacy_technology',
 ]
 
-const PA_LABEL = (pa) =>
-  pa.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
-
-// ── Shared styles ──────────────────────────────────────────────────────────────
-
-const card = {
-  background: 'var(--color-surface-container-lowest)',
-  borderRadius: 'var(--radius-xl)',
-  boxShadow: 'var(--shadow-ambient)',
-  padding: '2rem',
-  marginBottom: '2rem',
-}
-
-const inputStyle = {
-  width: '100%',
-  padding: '10px 14px',
-  outline: '1px solid rgba(197, 198, 206, 0.15)',
-  borderRadius: 'var(--radius-md)',
-  fontSize: 14,
-  color: 'var(--color-on-surface)',
-  background: 'var(--color-surface-container-lowest)',
-  fontFamily: 'var(--font-data)',
-  boxSizing: 'border-box',
-  marginTop: 4,
-}
-
-const labelStyle = {
-  display: 'block',
-  fontSize: '0.6875rem',
-  fontWeight: 700,
-  color: 'var(--color-on-surface-variant)',
-  marginBottom: 2,
-  letterSpacing: '0.05em',
-  textTransform: 'uppercase',
-  fontFamily: 'var(--font-data)',
-}
-
-const btnPrimary = {
-  background: 'linear-gradient(to bottom, var(--color-primary), var(--color-primary-container))',
-  color: 'var(--color-on-primary)',
-  borderRadius: 'var(--radius-md)',
-  padding: '10px 24px',
-  fontSize: 14,
-  fontWeight: 600,
-  cursor: 'pointer',
-  fontFamily: 'var(--font-data)',
-}
-
-const th = {
-  textAlign: 'left',
-  fontSize: '0.6875rem',
-  fontWeight: 700,
-  color: 'var(--color-on-surface-variant)',
-  textTransform: 'uppercase',
-  letterSpacing: '0.05em',
-  paddingBottom: 10,
-  fontFamily: 'var(--font-data)',
-  background: 'var(--color-surface-container-low)',
-  padding: '10px 14px',
-}
-
-const td = {
-  padding: '10px 14px',
-  fontSize: 13,
-  color: 'var(--color-on-surface)',
-  verticalAlign: 'middle',
-  fontFamily: 'var(--font-data)',
-}
-
-// ── Section 1: Confirm a Mandate ──────────────────────────────────────────────
+const PA_LABEL = (pa) => pa.replace(/_/g, ' ').replace(/\\b\\w/g, (c) => c.toUpperCase())
 
 function ConfirmMandateForm() {
   const [companyQuery, setCompanyQuery]     = useState('')
@@ -156,37 +277,25 @@ function ConfirmMandateForm() {
   }
 
   return (
-    <div style={card}>
-      <h2 style={{ fontFamily: 'var(--font-editorial)', fontSize: '1.5rem', fontWeight: 500, color: 'var(--color-primary)', marginTop: 0, marginBottom: 4, letterSpacing: '-0.01em' }}>
-        Confirm a Mandate
-      </h2>
-      <p style={{ color: 'var(--color-on-surface-variant)', fontSize: 13, marginBottom: '1.5rem', marginTop: 0, fontFamily: 'var(--font-data)' }}>
+    <div className="fb-card">
+      <h2 className="fb-card-title">Confirm a Mandate</h2>
+      <p className="fb-card-subtitle">
         Record a confirmed mandate outcome. ORACLE will compute how many days in advance it predicted this.
       </p>
 
-      {result && (
-        <div style={{ background: 'var(--color-success-bg)', borderRadius: 'var(--radius-md)', padding: '12px 16px', marginBottom: '1.25rem', fontSize: 13, color: 'var(--color-success)', fontFamily: 'var(--font-data)' }}>
-          {result.message}
-        </div>
-      )}
-      {error && (
-        <div style={{ background: 'var(--color-error-bg)', borderRadius: 'var(--radius-md)', padding: '12px 16px', marginBottom: '1.25rem', fontSize: 13, color: 'var(--color-error)', fontFamily: 'var(--font-data)' }}>
-          {error}
-        </div>
-      )}
+      {result && <div className="fb-alert-success">{result.message}</div>}
+      {error && <div className="fb-alert-error">{error}</div>}
 
       <form onSubmit={handleSubmit}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
-
-          {/* Company search */}
           <div style={{ gridColumn: '1 / -1', position: 'relative' }}>
-            <label style={labelStyle}>Company</label>
+            <label className="fb-label">Company</label>
             <input
               value={companyQuery}
               onChange={handleCompanySearch}
               placeholder="Search by name…"
               required
-              style={inputStyle}
+              className="fb-input"
             />
             {companyResults.length > 0 && (
               <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--color-surface-container-lowest)', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-ambient)', zIndex: 10, maxHeight: 200, overflowY: 'auto' }}>
@@ -195,7 +304,7 @@ function ConfirmMandateForm() {
                     key={c.id}
                     type="button"
                     onClick={() => selectCompany(c)}
-                    style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 14px', background: 'none', fontSize: 13, color: 'var(--color-on-surface)', cursor: 'pointer', fontFamily: 'var(--font-data)' }}
+                    style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 14px', background: 'none', border: 'none', fontSize: 13, color: 'var(--color-on-surface)', cursor: 'pointer', fontFamily: 'var(--font-data)' }}
                   >
                     {c.name}
                     {c.sector && <span style={{ color: 'var(--color-on-surface-variant)', marginLeft: 8, fontSize: 11 }}>{c.sector}</span>}
@@ -205,14 +314,13 @@ function ConfirmMandateForm() {
             )}
           </div>
 
-          {/* Practice area */}
           <div>
-            <label style={labelStyle}>Practice Area</label>
+            <label className="fb-label">Practice Area</label>
             <select
               value={practiceArea}
               onChange={(e) => setPracticeArea(e.target.value)}
               required
-              style={{ ...inputStyle, appearance: 'none' }}
+              className="fb-input"
             >
               <option value="">Select…</option>
               {PRACTICE_AREAS.map((pa) => (
@@ -221,56 +329,53 @@ function ConfirmMandateForm() {
             </select>
           </div>
 
-          {/* Date confirmed */}
           <div>
-            <label style={labelStyle}>Date Confirmed</label>
+            <label className="fb-label">Date Confirmed</label>
             <input
               type="date"
               value={confirmedAt}
               onChange={(e) => setConfirmedAt(e.target.value)}
               required
-              style={inputStyle}
+              className="fb-input"
             />
           </div>
 
-          {/* Source */}
           <div>
-            <label style={labelStyle}>Source</label>
+            <label className="fb-label">Source</label>
             <input
               value={source}
               onChange={(e) => setSource(e.target.value)}
               placeholder="e.g. CanLII, Law firm press release…"
               required
-              style={inputStyle}
+              className="fb-input"
             />
           </div>
 
-          {/* Evidence URL */}
           <div>
-            <label style={labelStyle}>Evidence URL (optional)</label>
+            <label className="fb-label">Evidence URL (optional)</label>
             <input
               value={evidenceUrl}
               onChange={(e) => setEvidenceUrl(e.target.value)}
               placeholder="https://…"
-              style={inputStyle}
+              className="fb-input"
             />
           </div>
 
-          {/* Notes */}
           <div style={{ gridColumn: '1 / -1' }}>
-            <label style={labelStyle}>Notes (optional)</label>
+            <label className="fb-label">Notes (optional)</label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
               placeholder="Additional context…"
-              style={{ ...inputStyle, resize: 'vertical' }}
+              className="fb-input"
+              style={{ resize: 'vertical' }}
             />
           </div>
         </div>
 
         <div style={{ marginTop: '1.25rem' }}>
-          <button type="submit" style={btnPrimary} disabled={submitting || !selectedCompany}>
+          <button type="submit" className="fb-btn-primary" disabled={submitting || !selectedCompany}>
             {submitting ? 'Saving…' : 'Confirm Mandate'}
           </button>
         </div>
@@ -278,8 +383,6 @@ function ConfirmMandateForm() {
     </div>
   )
 }
-
-// ── Section 2: Accuracy Table ─────────────────────────────────────────────────
 
 function AccuracyTable() {
   const [rows, setRows]       = useState(null)
@@ -301,20 +404,17 @@ function AccuracyTable() {
   }
 
   return (
-    <div style={card}>
+    <div className="fb-card">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1.25rem' }}>
         <div>
-          <h2 style={{ fontFamily: 'var(--font-editorial)', fontSize: '1.5rem', fontWeight: 500, color: 'var(--color-primary)', margin: 0, letterSpacing: '-0.01em' }}>
-            Prediction Accuracy
-          </h2>
-          <p style={{ color: 'var(--color-on-surface-variant)', fontSize: 13, marginTop: 4, marginBottom: 0, fontFamily: 'var(--font-data)' }}>
-            How often ORACLE's predictions were correct before confirmed mandates
-          </p>
+          <h2 className="fb-card-title">Prediction Accuracy</h2>
+          <p className="fb-card-subtitle">How often ORACLE's predictions were correct before confirmed mandates</p>
         </div>
         <select
           value={days}
           onChange={(e) => setDays(Number(e.target.value))}
-          style={{ ...inputStyle, width: 'auto', marginTop: 0 }}
+          className="fb-input"
+          style={{ width: 'auto', marginTop: 0 }}
         >
           <option value={30}>Last 30 days</option>
           <option value={90}>Last 90 days</option>
@@ -330,50 +430,46 @@ function AccuracyTable() {
           No confirmed mandates in this window yet. Confirm mandates above to start tracking accuracy.
         </p>
       ) : (
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr>
-              <th style={th}>Practice Area</th>
-              <th style={{ ...th, textAlign: 'center' }}>Horizon</th>
-              <th style={{ ...th, textAlign: 'center' }}>Confirmed</th>
-              <th style={{ ...th, textAlign: 'center' }}>Precision</th>
-              <th style={{ ...th, textAlign: 'center' }}>Avg Lead Days</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r, i) => (
-              <tr key={i} style={{ background: i % 2 === 0 ? 'transparent' : 'var(--color-surface-container-low)' }}>
-                <td style={td}>
-                  <span style={{ fontFamily: 'var(--font-editorial)', fontWeight: 500, fontSize: 14 }}>
-                    {PA_LABEL(r.practice_area)}
-                  </span>
-                </td>
-                <td style={{ ...td, textAlign: 'center' }}>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, background: 'var(--color-secondary-container)', color: 'var(--color-on-secondary-container)', borderRadius: 'var(--radius-full)', padding: '2px 8px' }}>
-                    {r.horizon}d
-                  </span>
-                </td>
-                <td style={{ ...td, textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 13 }}>
-                  {r.n_total}
-                </td>
-                <td style={{ ...td, textAlign: 'center' }}>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 600, color: precisionColor(r.precision) }}>
-                    {(r.precision * 100).toFixed(0)}%
-                  </span>
-                </td>
-                <td style={{ ...td, textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--color-on-surface-variant)' }}>
-                  {r.avg_lead_days != null ? `${r.avg_lead_days}d` : '—'}
-                </td>
+        <div style={{ overflowX: 'auto' }}>
+          <table className="fb-table">
+            <thead>
+              <tr>
+                <th className="fb-th">Practice Area</th>
+                <th className="fb-th" style={{ textAlign: 'center' }}>Horizon</th>
+                <th className="fb-th" style={{ textAlign: 'center' }}>Confirmed</th>
+                <th className="fb-th" style={{ textAlign: 'center' }}>Precision</th>
+                <th className="fb-th" style={{ textAlign: 'center' }}>Avg Lead Days</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {rows.map((r, i) => (
+                <tr key={i} style={{ background: i % 2 === 0 ? 'transparent' : 'var(--color-surface-container-low)' }}>
+                  <td className="fb-td">
+                    <span className="fb-td-pa">{PA_LABEL(r.practice_area)}</span>
+                  </td>
+                  <td className="fb-td" style={{ textAlign: 'center' }}>
+                    <span className="fb-td-badge">{r.horizon}d</span>
+                  </td>
+                  <td className="fb-td fb-td-mono" style={{ textAlign: 'center' }}>
+                    {r.n_total}
+                  </td>
+                  <td className="fb-td" style={{ textAlign: 'center' }}>
+                    <span className="fb-td-mono" style={{ fontWeight: 600, color: precisionColor(r.precision) }}>
+                      {(r.precision * 100).toFixed(0)}%
+                    </span>
+                  </td>
+                  <td className="fb-td fb-td-mono" style={{ textAlign: 'center', color: 'var(--color-on-surface-variant)' }}>
+                    {r.avg_lead_days != null ? \`\${r.avg_lead_days}d\` : '—'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   )
 }
-
-// ── Section 3: Drift Alerts ───────────────────────────────────────────────────
 
 function DriftAlerts() {
   const [alerts, setAlerts] = useState(null)
@@ -386,22 +482,21 @@ function DriftAlerts() {
       .finally(() => setLoading(false))
   }, [])
 
-  const deltaColor = (delta) => delta < -0.15 ? 'var(--error)' : 'var(--warning)'
+  const deltaColor = (delta) => delta < -0.15 ? 'var(--color-error)' : 'var(--color-warning)'
+  const deltaBg = (delta) => delta < -0.15 ? 'var(--color-error-bg)' : '#fffbeb' /* warning bg fallback */
 
   return (
-    <div style={card}>
-      <h2 style={{ fontFamily: 'var(--font-editorial)', fontSize: '1.5rem', fontWeight: 500, color: 'var(--color-primary)', marginTop: 0, marginBottom: 4, letterSpacing: '-0.01em' }}>
-        Model Drift Alerts
-      </h2>
-      <p style={{ color: 'var(--color-on-surface-variant)', fontSize: 13, marginBottom: '1.5rem', marginTop: 0, fontFamily: 'var(--font-data)' }}>
+    <div className="fb-card">
+      <h2 className="fb-card-title">Model Drift Alerts</h2>
+      <p className="fb-card-subtitle">
         Practice areas where prediction accuracy has dropped &gt; 10 percentage points (detected by Agent 031 weekly)
       </p>
 
       {loading ? (
         <SkeletonTable rows={3} />
       ) : !alerts || alerts.length === 0 ? (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '1.25rem 1.5rem', background: 'var(--color-success-bg)', borderRadius: 'var(--radius-md)', color: 'var(--color-success)', fontSize: 13, fontFamily: 'var(--font-data)' }}>
-          <span style={{ fontSize: 18 }}>&#10003;</span>
+        <div className="fb-alert-success" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: 18 }}>✓</span>
           No open drift alerts. All practice areas are performing within expected accuracy bounds.
         </div>
       ) : (
@@ -409,31 +504,28 @@ function DriftAlerts() {
           {alerts.map((a) => (
             <div
               key={a.id}
+              className="fb-drift-item"
               style={{
-                borderLeft: `4px solid ${deltaColor(a.delta)}`,
-                background: a.delta < -0.15 ? 'var(--error-bg)' : 'var(--warning-bg)',
-                borderRadius: 'var(--radius-md)',
-                padding: '1rem 1.25rem',
+                borderColor: deltaColor(a.delta),
+                background: deltaBg(a.delta),
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
-                  <div style={{ fontFamily: 'var(--font-editorial)', fontWeight: 500, fontSize: 16, color: 'var(--color-on-surface)', marginBottom: 4, letterSpacing: '-0.01em' }}>
-                    {PA_LABEL(a.practice_area)}
-                  </div>
-                  <div style={{ fontSize: 12, color: 'var(--color-on-surface-variant)', fontFamily: 'var(--font-data)' }}>
+                  <div className="fb-drift-title">{PA_LABEL(a.practice_area)}</div>
+                  <div className="fb-drift-meta">
                     Detected {a.detected_at ? new Date(a.detected_at).toLocaleDateString() : '—'}
-                    {a.ks_pvalue != null && ` · KS p-value: ${a.ks_pvalue.toFixed(3)}`}
+                    {a.ks_pvalue != null && \` · KS p-value: \${a.ks_pvalue.toFixed(3)}\`}
                   </div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 18, fontWeight: 700, color: deltaColor(a.delta) }}>
+                  <div className="fb-drift-val" style={{ color: deltaColor(a.delta) }}>
                     {(a.delta * 100).toFixed(1)}pp
                   </div>
                   <div style={{ fontSize: 11, color: 'var(--color-on-surface-variant)' }}>accuracy change</div>
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: '2rem', marginTop: '0.75rem' }}>
+              <div className="fb-drift-stat">
                 <div>
                   <span style={{ fontSize: 11, color: 'var(--color-on-surface-variant)', display: 'block', fontFamily: 'var(--font-data)' }}>Before</span>
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, fontWeight: 600 }}>
@@ -461,24 +553,13 @@ function DriftAlerts() {
   )
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
-
 export default function FeedbackPage() {
+  injectCSS()
   return (
     <AppShell>
-      <div style={{ maxWidth: 860, margin: '0 auto', padding: '2.5rem 2rem' }}>
-        <h1 style={{
-          fontFamily: 'var(--font-editorial)',
-          fontWeight: 500,
-          fontSize: '1.75rem',
-          color: 'var(--color-primary)',
-          marginBottom: 6,
-          marginTop: 0,
-          letterSpacing: '-0.01em',
-        }}>
-          Mandate Feedback
-        </h1>
-        <p style={{ color: 'var(--color-on-surface-variant)', fontSize: 14, marginBottom: '2.5rem', marginTop: 0, fontFamily: 'var(--font-data)' }}>
+      <div className="fb-root">
+        <h1 className="fb-title">Mandate Feedback</h1>
+        <p className="fb-subtitle">
           Close the intelligence loop — record outcomes, measure accuracy, track model drift.
         </p>
 

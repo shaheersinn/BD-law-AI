@@ -1,10 +1,225 @@
-// src/pages/ScraperDashboard.jsx — Digital Atelier scraper health dashboard
-// Polls GET /api/scrapers/summary and GET /api/scrapers/health every 60 seconds.
+/**
+ * pages/ScraperDashboard.jsx — P25 Redesign
+ * 
+ * Digital Atelier scraper health dashboard
+ * Polls GET /api/scrapers/summary and GET /api/scrapers/health every 60 seconds.
+ * 
+ * Redesigned to use injected CSS layout architecture. Eliminates inline styles.
+ */
 
 import { useState, useEffect, useCallback } from "react";
 import AppShell from "../components/layout/AppShell";
 
-/* ── Shared primitives (Digital Atelier design system) ──────────────────── */
+const SCRAPER_CSS = `
+.scrap-root {
+  padding: 2.5rem 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.scrap-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 20px;
+}
+.scrap-title {
+  font-family: var(--font-editorial);
+  font-size: 1.75rem;
+  font-weight: 500;
+  color: var(--color-primary);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+.scrap-subtitle {
+  font-family: var(--font-data);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--color-on-primary-container);
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+.scrap-btn-refresh {
+  font-family: var(--font-data);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--color-on-surface-variant);
+  background: var(--color-surface-container-high);
+  border-radius: var(--radius-md);
+  padding: 6px 14px;
+  cursor: pointer;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  transition: background var(--transition-fast);
+  border: none;
+}
+.scrap-btn-refresh:hover {
+  background: var(--color-outline-variant);
+}
+
+.scrap-error {
+  background: var(--color-error-bg);
+  border-radius: var(--radius-md);
+  padding: 10px 16px;
+  margin-bottom: 16px;
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+  color: var(--color-error);
+}
+
+.scrap-filters {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.scrap-filter-label {
+  font-family: var(--font-data);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--color-on-surface-variant);
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+.scrap-filter-group {
+  display: flex;
+  gap: 4px;
+  background: var(--color-surface-container-low);
+  border-radius: var(--radius-xl);
+  padding: 4px;
+}
+.scrap-filter-btn {
+  font-family: var(--font-data);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  border: none;
+  transition: background var(--transition-fast);
+}
+
+.scrap-select {
+  font-family: var(--font-data);
+  font-size: 0.6875rem;
+  background: var(--color-surface-container-lowest);
+  outline: 1px solid rgba(197, 198, 206, 0.15);
+  border: none;
+  color: var(--color-on-surface);
+  border-radius: var(--radius-md);
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+/* Status Tag */
+.scrap-tag {
+  font-size: 0.6875rem;
+  font-family: var(--font-data);
+  font-weight: 700;
+  letter-spacing: .05em;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+
+/* Metric / Panel */
+.scrap-panel {
+  background: var(--color-surface-container-lowest);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-ambient);
+}
+.scrap-panel-title {
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--color-surface-container-low);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  font-family: var(--font-data);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--color-on-surface-variant);
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.scrap-metric {
+  background: var(--color-surface-container-lowest);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-ambient);
+  padding: 16px 20px;
+  min-width: 120px;
+  flex: 1;
+}
+.scrap-metric-label {
+  font-family: var(--font-data);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--color-on-surface-variant);
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.scrap-metric-val {
+  font-family: var(--font-editorial);
+  font-size: 1.75rem;
+  fontWeight: 500;
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+.scrap-metric-sub {
+  font-family: var(--font-data);
+  font-size: 0.6875rem;
+  color: var(--color-on-surface-variant);
+  margin-top: 4px;
+}
+
+/* Table */
+.scrap-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.scrap-th {
+  padding: 8px 12px;
+  text-align: left;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--color-on-surface-variant);
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  font-family: var(--font-data);
+}
+.scrap-td {
+  padding: 10px 12px;
+  font-size: 0.8125rem;
+  font-family: var(--font-data);
+  white-space: nowrap;
+}
+.scrap-tr {
+  transition: background var(--transition-fast);
+}
+.scrap-empty-td {
+  padding: 24px 12px;
+  text-align: center;
+  color: var(--color-on-surface-variant);
+  font-size: 0.8125rem;
+  font-family: var(--font-data);
+}
+`
+
+function injectCSS() {
+  if (typeof document !== 'undefined' && !document.getElementById('scrap-styles')) {
+    const el = document.createElement('style')
+    el.id = 'scrap-styles'
+    el.textContent = SCRAPER_CSS
+    document.head.appendChild(el)
+  }
+}
 
 const StatusTag = ({ status }) => {
   const map = {
@@ -15,39 +230,17 @@ const StatusTag = ({ status }) => {
   };
   const s = map[status] || map.disabled;
   return (
-    <span style={{
-      background: s.bg, color: s.tx,
-      fontSize: "0.6875rem", fontFamily: "var(--font-data)", fontWeight: 700,
-      letterSpacing: ".05em",
-      padding: "2px 8px", borderRadius: "var(--radius-full)", whiteSpace: "nowrap", textTransform: "uppercase",
-    }}>{status}</span>
+    <span className="scrap-tag" style={{ background: s.bg, color: s.tx }}>
+      {status}
+    </span>
   );
 };
 
 const Panel = ({ title, children, actions, style = {} }) => (
-  <div style={{
-    background: "var(--color-surface-container-lowest)",
-    borderRadius: "var(--radius-xl)",
-    boxShadow: "var(--shadow-ambient)",
-    ...style,
-  }}>
+  <div className="scrap-panel" style={style}>
     {title && (
-      <div style={{
-        padding: "12px 16px",
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        background: "var(--color-surface-container-low)",
-        borderRadius: "var(--radius-xl) var(--radius-xl) 0 0",
-      }}>
-        <span style={{
-          fontFamily: "var(--font-data)",
-          fontSize: "0.6875rem",
-          fontWeight: 700,
-          color: "var(--color-on-surface-variant)",
-          letterSpacing: ".05em",
-          textTransform: "uppercase",
-        }}>{title}</span>
+      <div className="scrap-panel-title">
+        <span>{title}</span>
         {actions}
       </div>
     )}
@@ -56,40 +249,12 @@ const Panel = ({ title, children, actions, style = {} }) => (
 );
 
 const MetricCard = ({ label, value, color = "var(--color-primary)", sub }) => (
-  <div style={{
-    background: "var(--color-surface-container-lowest)",
-    borderRadius: "var(--radius-xl)",
-    boxShadow: "var(--shadow-ambient)",
-    padding: "16px 20px",
-    minWidth: 120,
-  }}>
-    <div style={{
-      fontFamily: "var(--font-data)",
-      fontSize: "0.6875rem",
-      fontWeight: 700,
-      color: "var(--color-on-surface-variant)",
-      letterSpacing: ".05em",
-      textTransform: "uppercase",
-      marginBottom: 8,
-    }}>{label}</div>
-    <div style={{
-      fontFamily: "var(--font-editorial)",
-      fontSize: "1.75rem",
-      color,
-      fontWeight: 500,
-      lineHeight: 1,
-      letterSpacing: "-0.01em",
-    }}>{value ?? "—"}</div>
-    {sub && <div style={{
-      fontFamily: "var(--font-data)",
-      fontSize: "0.6875rem",
-      color: "var(--color-on-surface-variant)",
-      marginTop: 4,
-    }}>{sub}</div>}
+  <div className="scrap-metric">
+    <div className="scrap-metric-label">{label}</div>
+    <div className="scrap-metric-val" style={{ color }}>{value ?? "—"}</div>
+    {sub && <div className="scrap-metric-sub">{sub}</div>}
   </div>
 );
-
-/* ── Helpers ──────────────────────────────────────────────────────────── */
 
 const fmtTs = (ts) => {
   if (!ts) return "—";
@@ -98,24 +263,23 @@ const fmtTs = (ts) => {
   const diffMs = now - d;
   const diffMin = Math.floor(diffMs / 60000);
   if (diffMin < 1) return "just now";
-  if (diffMin < 60) return `${diffMin}m ago`;
-  if (diffMin < 1440) return `${Math.floor(diffMin / 60)}h ago`;
-  return `${Math.floor(diffMin / 1440)}d ago`;
+  if (diffMin < 60) return \`\${diffMin}m ago\`;
+  if (diffMin < 1440) return \`\${Math.floor(diffMin / 60)}h ago\`;
+  return \`\${Math.floor(diffMin / 1440)}d ago\`;
 };
 
 const fmtDur = (ms) => {
   if (ms == null) return "—";
-  if (ms < 1000) return `${Math.round(ms)}ms`;
-  return `${(ms / 1000).toFixed(1)}s`;
+  if (ms < 1000) return \`\${Math.round(ms)}ms\`;
+  return \`\${(ms / 1000).toFixed(1)}s\`;
 };
 
-const fmtPct = (f) => (f == null ? "—" : `${(f * 100).toFixed(0)}%`);
+const fmtPct = (f) => (f == null ? "—" : \`\${(f * 100).toFixed(0)}%\`);
 
 const STATUS_PRIORITY = { failing: 0, degraded: 1, disabled: 2, healthy: 3 };
 
-/* ── Main Component ──────────────────────────────────────────────────── */
-
 export default function ScraperDashboard() {
+  injectCSS()
   const [summary, setSummary] = useState(null);
   const [health, setHealth] = useState([]);
   const [statusFilter, setStatusFilter] = useState("all");
@@ -127,7 +291,7 @@ export default function ScraperDashboard() {
   const fetchData = useCallback(async () => {
     try {
       const token = sessionStorage.getItem('bdforlaw_token')
-      const authHeaders = token ? { Authorization: `Bearer ${token}` } : {}
+      const authHeaders = token ? { Authorization: \`Bearer \${token}\` } : {}
       const [sumRes, healthRes] = await Promise.all([
         fetch("/api/scrapers/summary", { headers: authHeaders }),
         fetch("/api/scrapers/health?limit=200", { headers: authHeaders }),
@@ -160,12 +324,7 @@ export default function ScraperDashboard() {
   if (loading) {
     return (
       <AppShell>
-        <div style={{
-          padding: 32,
-          fontFamily: "var(--font-data)",
-          color: "var(--color-on-surface-variant)",
-          fontSize: 12,
-        }}>
+        <div style={{ padding: 32, fontFamily: "var(--font-data)", color: "var(--color-on-surface-variant)", fontSize: 12 }}>
           Loading scraper health...
         </div>
       </AppShell>
@@ -174,71 +333,25 @@ export default function ScraperDashboard() {
 
   return (
     <AppShell>
-      <div style={{ padding: "2.5rem 2rem", maxWidth: 1200, margin: "0 auto" }}>
-        {/* ── Header ── */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 20 }}>
+      <div className="scrap-root">
+        {/* Header */}
+        <div className="scrap-header">
           <div>
-            <h1 style={{
-              fontFamily: "var(--font-editorial)",
-              fontSize: "1.5rem",
-              fontWeight: 500,
-              color: "var(--color-primary)",
-              margin: 0,
-              letterSpacing: "-0.01em",
-            }}>
-              Scraper Health
-            </h1>
-            <div style={{
-              fontFamily: "var(--font-data)",
-              fontSize: "0.6875rem",
-              fontWeight: 700,
-              color: "var(--color-on-primary-container)",
-              letterSpacing: ".05em",
-              textTransform: "uppercase",
-              marginTop: 4,
-            }}>
+            <h1 className="scrap-title">Scraper Health</h1>
+            <div className="scrap-subtitle">
               {summary?.registry_count ?? "?"} registered sources
-              {lastRefresh && ` · refreshed ${fmtTs(lastRefresh.toISOString())}`}
+              {lastRefresh && \` · refreshed \${fmtTs(lastRefresh.toISOString())}\`}
             </div>
           </div>
-          <button
-            onClick={fetchData}
-            style={{
-              fontFamily: "var(--font-data)",
-              fontSize: "0.6875rem",
-              fontWeight: 700,
-              color: "var(--color-on-surface-variant)",
-              background: "var(--color-surface-container-high)",
-              borderRadius: "var(--radius-md)",
-              padding: "6px 14px",
-              cursor: "pointer",
-              letterSpacing: ".05em",
-              textTransform: "uppercase",
-              transition: "background 150ms ease-out",
-            }}
-          >
-            REFRESH
-          </button>
+          <button className="scrap-btn-refresh" onClick={fetchData}>REFRESH</button>
         </div>
 
-        {error && (
-          <div style={{
-            background: "var(--color-error-bg)",
-            borderRadius: "var(--radius-md)",
-            padding: "10px 16px",
-            marginBottom: 16,
-            fontFamily: "var(--font-data)",
-            fontSize: 11,
-            color: "var(--color-error)",
-          }}>
-            Error: {error}
-          </div>
-        )}
+        {error && <div className="scrap-error">Error: {error}</div>}
 
-        {/* ── Summary Metrics ── */}
+        {/* Summary Metrics */}
         {summary && (
           <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
-            <MetricCard label="Total Scrapers" value={summary.total} color="var(--color-primary)" sub={`${summary.registry_count} in registry`} />
+            <MetricCard label="Total Scrapers" value={summary.total} color="var(--color-primary)" sub={\`\${summary.registry_count} in registry\`} />
             <MetricCard label="Healthy" value={summary.healthy} color="var(--color-success)" />
             <MetricCard label="Degraded" value={summary.degraded} color="var(--color-warning)" />
             <MetricCard label="Failing" value={summary.failing} color="var(--color-error)" />
@@ -246,123 +359,63 @@ export default function ScraperDashboard() {
           </div>
         )}
 
-        {/* ── Filters ── */}
-        <div style={{ display: "flex", gap: 8, marginBottom: 16, alignItems: "center", flexWrap: "wrap" }}>
-          <span style={{
-            fontFamily: "var(--font-data)",
-            fontSize: "0.6875rem",
-            fontWeight: 700,
-            color: "var(--color-on-surface-variant)",
-            letterSpacing: ".05em",
-            textTransform: "uppercase",
-          }}>STATUS:</span>
-          <div style={{
-            display: "flex", gap: 4,
-            background: "var(--color-surface-container-low)",
-            borderRadius: "var(--radius-xl)",
-            padding: 4,
-          }}>
+        {/* Filters */}
+        <div className="scrap-filters">
+          <span className="scrap-filter-label">STATUS:</span>
+          <div className="scrap-filter-group">
             {["all", "healthy", "degraded", "failing", "disabled"].map((s) => (
-              <button key={s} onClick={() => setStatusFilter(s)} style={{
-                fontFamily: "var(--font-data)",
-                fontSize: "0.6875rem",
-                fontWeight: 700,
-                padding: "4px 10px",
-                borderRadius: "var(--radius-md)",
-                cursor: "pointer",
-                letterSpacing: ".05em",
-                textTransform: "uppercase",
+              <button key={s} onClick={() => setStatusFilter(s)} className="scrap-filter-btn" style={{
                 background: statusFilter === s ? "var(--color-surface-container-lowest)" : "transparent",
                 color: statusFilter === s ? "var(--color-on-surface)" : "var(--color-on-surface-variant)",
                 boxShadow: statusFilter === s ? "var(--shadow-ambient)" : "none",
-                transition: "background 150ms ease-out",
               }}>
                 {s}
               </button>
             ))}
           </div>
-          <span style={{
-            fontFamily: "var(--font-data)",
-            fontSize: "0.6875rem",
-            fontWeight: 700,
-            color: "var(--color-on-surface-variant)",
-            letterSpacing: ".05em",
-            textTransform: "uppercase",
-            marginLeft: 8,
-          }}>CATEGORY:</span>
+          <span className="scrap-filter-label" style={{ marginLeft: 8 }}>CATEGORY:</span>
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            style={{
-              fontFamily: "var(--font-data)",
-              fontSize: "0.6875rem",
-              background: "var(--color-surface-container-lowest)",
-              outline: "1px solid rgba(197, 198, 206, 0.15)",
-              color: "var(--color-on-surface)",
-              borderRadius: "var(--radius-md)",
-              padding: "4px 8px",
-              cursor: "pointer",
-            }}
+            className="scrap-select"
           >
             <option value="all">All</option>
             {categories.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
-          <span style={{
-            fontFamily: "var(--font-data)",
-            fontSize: "0.6875rem",
-            color: "var(--color-on-surface-variant)",
-            marginLeft: 8,
-          }}>
+          <span className="scrap-filter-label" style={{ marginLeft: 8, textTransform: 'none', fontWeight: 600 }}>
             {filtered.length} scrapers
           </span>
         </div>
 
-        {/* ── Health Table ── */}
-        <Panel title={`Scraper Health (${filtered.length})`}>
+        {/* Health Table */}
+        <Panel title={\`Scraper Health (\${filtered.length})\`}>
           <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: "var(--font-data)", fontSize: 11 }}>
+            <table className="scrap-table">
               <thead>
                 <tr>
                   {["Scraper", "Category", "Status", "Last Run", "Last Success", "Records", "7d Rate", "Avg Dur", "Failures"].map((h) => (
-                    <th key={h} style={{
-                      padding: "8px 12px",
-                      textAlign: "left",
-                      fontSize: "0.6875rem",
-                      fontWeight: 700,
-                      color: "var(--color-on-surface-variant)",
-                      letterSpacing: ".05em",
-                      textTransform: "uppercase",
-                      whiteSpace: "nowrap",
-                    }}>{h}</th>
+                    <th key={h} className="scrap-th">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={9} style={{
-                      padding: "24px 12px",
-                      textAlign: "center",
-                      color: "var(--color-on-surface-variant)",
-                      fontSize: 11,
-                    }}>
+                    <td colSpan={9} className="scrap-empty-td">
                       No health records found. Run scrapers to populate.
                     </td>
                   </tr>
                 ) : filtered.map((row, i) => (
-                  <tr key={row.id} style={{
-                    background: i % 2 === 1 ? "var(--color-surface-container-low)" : "transparent",
-                    transition: "background 150ms ease-out",
-                  }}>
-                    <td style={{ padding: "10px 12px", color: "var(--color-on-surface)", fontWeight: 600 }}>{row.scraper_name}</td>
-                    <td style={{ padding: "10px 12px", color: "var(--color-on-surface-variant)" }}>{row.scraper_category}</td>
-                    <td style={{ padding: "10px 12px" }}><StatusTag status={row.status} /></td>
-                    <td style={{ padding: "10px 12px", color: "var(--color-on-surface-variant)" }}>{fmtTs(row.last_run_at)}</td>
-                    <td style={{ padding: "10px 12px", color: "var(--color-on-surface-variant)" }}>{fmtTs(row.last_success_at)}</td>
-                    <td style={{ padding: "10px 12px", color: "var(--color-on-surface-variant)" }}>{row.records_last_run ?? "—"}</td>
-                    <td style={{ padding: "10px 12px", color: row.success_rate_7d < 0.8 ? "var(--color-error)" : "var(--color-on-surface-variant)" }}>{fmtPct(row.success_rate_7d)}</td>
-                    <td style={{ padding: "10px 12px", color: "var(--color-on-surface-variant)" }}>{fmtDur(row.avg_run_duration_ms)}</td>
-                    <td style={{ padding: "10px 12px", color: row.consecutive_failures > 0 ? "var(--color-error)" : "var(--color-on-surface-variant)" }}>{row.consecutive_failures}</td>
+                  <tr key={row.id} className="scrap-tr" style={{ background: i % 2 === 1 ? "var(--color-surface-container-low)" : "transparent" }}>
+                    <td className="scrap-td" style={{ color: "var(--color-on-surface)", fontWeight: 600 }}>{row.scraper_name}</td>
+                    <td className="scrap-td" style={{ color: "var(--color-on-surface-variant)" }}>{row.scraper_category}</td>
+                    <td className="scrap-td"><StatusTag status={row.status} /></td>
+                    <td className="scrap-td" style={{ color: "var(--color-on-surface-variant)" }}>{fmtTs(row.last_run_at)}</td>
+                    <td className="scrap-td" style={{ color: "var(--color-on-surface-variant)" }}>{fmtTs(row.last_success_at)}</td>
+                    <td className="scrap-td" style={{ color: "var(--color-on-surface-variant)", fontFamily: "var(--font-mono)" }}>{row.records_last_run ?? "—"}</td>
+                    <td className="scrap-td" style={{ color: row.success_rate_7d < 0.8 ? "var(--color-error)" : "var(--color-on-surface-variant)", fontFamily: "var(--font-mono)" }}>{fmtPct(row.success_rate_7d)}</td>
+                    <td className="scrap-td" style={{ color: "var(--color-on-surface-variant)", fontFamily: "var(--font-mono)" }}>{fmtDur(row.avg_run_duration_ms)}</td>
+                    <td className="scrap-td" style={{ color: row.consecutive_failures > 0 ? "var(--color-error)" : "var(--color-on-surface-variant)", fontFamily: "var(--font-mono)" }}>{row.consecutive_failures}</td>
                   </tr>
                 ))}
               </tbody>
