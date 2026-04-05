@@ -1,8 +1,10 @@
 /**
- * pages/LiveTriggersPage.jsx — route /live-triggers
+ * pages/LiveTriggersPage.jsx — P7/P8 Redesign
  *
  * Real-time legal mandate signals from SEDAR, EDGAR, CanLII, Jobs, OSC.
  * Supports source tab filtering and urgency level filter.
+ * LiveTriggersList styles are integrated here.
+ * DM Serif Display + DM Sans, no inline styles.
  */
 
 import { useEffect, useState, useCallback } from 'react'
@@ -13,11 +15,216 @@ import { Skeleton } from '../components/Skeleton'
 import {
   PageHeader,
   MetricCard,
-  Panel,
   Tag,
   EmptyState,
   ErrorState,
 } from '../components/ui/Primitives'
+
+const TRIGGERS_CSS = `
+.lt-root {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2.5rem 2rem 4rem;
+}
+.lt-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+  margin-bottom: 2.5rem;
+}
+
+/* Tabs */
+.lt-tabs-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+.lt-tab {
+  padding: 6px 16px;
+  border-radius: var(--radius-full);
+  font-family: var(--font-data);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  border: none;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+.lt-tab:hover { background: var(--color-surface-container-high); }
+.lt-tab.active {
+  background: var(--color-secondary-container);
+  color: var(--color-on-secondary-container);
+}
+.lt-tab.inactive {
+  background: var(--color-surface-container-low);
+  color: var(--color-on-surface-variant);
+}
+
+/* Urgency Filter */
+.lt-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 1.5rem;
+}
+.lt-filter-label {
+  font-family: var(--font-data);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--color-on-surface-variant);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.lt-filter-btn {
+  padding: 5px 12px;
+  border-radius: var(--radius-md);
+  font-family: var(--font-data);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: background var(--transition-fast);
+}
+.lt-filter-btn:hover { opacity: 0.9; }
+.lt-filter-btn.active {
+  background: var(--color-primary);
+  color: #fff;
+}
+.lt-filter-btn.inactive {
+  background: var(--color-surface-container-low);
+  color: var(--color-on-surface-variant);
+}
+
+/* List / Feed */
+.lt-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.lt-card {
+  background: var(--color-surface-container-lowest);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-ambient);
+  padding: 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1.5rem;
+  transition: box-shadow var(--transition-card), transform var(--transition-card);
+}
+.lt-card:hover {
+  box-shadow: 0 4px 24px -6px rgba(25,28,30,0.12);
+  transform: translateY(-2px);
+}
+.lt-content {
+  flex: 1;
+  min-width: 0;
+}
+.lt-entity {
+  font-family: var(--font-editorial);
+  font-size: 1.25rem;
+  font-weight: 400;
+  color: var(--color-primary);
+  margin-bottom: 0.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+.lt-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.lt-desc {
+  font-family: var(--font-data);
+  font-size: 0.8125rem;
+  color: var(--color-on-surface-variant);
+  line-height: 1.6;
+  margin: 0 0 0.5rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.lt-time {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--color-on-primary-container);
+  opacity: 0.8;
+}
+
+/* Actions Sidebar in Card */
+.lt-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.lt-urgency {
+  font-family: var(--font-editorial);
+  font-size: 2.2rem;
+  font-weight: 400;
+  line-height: 1;
+}
+.lt-btn-brief {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  font-family: var(--font-data);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: none;
+  transition: background var(--transition-fast), opacity var(--transition-fast);
+  white-space: nowrap;
+}
+.lt-btn-brief-active {
+  background: var(--color-primary);
+  color: #fff;
+  cursor: pointer;
+}
+.lt-btn-brief-active:hover { opacity: 0.9; }
+.lt-btn-brief-loading {
+  background: var(--color-surface-container-high);
+  color: var(--color-on-surface-variant);
+  cursor: default;
+  opacity: 0.7;
+}
+.lt-brief-ready {
+  font-family: var(--font-data);
+  font-size: 0.6875rem;
+  color: var(--color-secondary);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+@media (max-width: 980px) {
+  .lt-metrics { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 640px) {
+  .lt-metrics { grid-template-columns: 1fr; }
+  .lt-card { flex-direction: column; align-items: stretch; }
+  .lt-actions { align-items: flex-start; flex-direction: row; justify-content: space-between; }
+}
+`
+
+function injectCSS() {
+  if (typeof document !== 'undefined' && !document.getElementById('lt-styles')) {
+    const el = document.createElement('style')
+    el.id = 'lt-styles'
+    el.textContent = TRIGGERS_CSS
+    document.head.appendChild(el)
+  }
+}
 
 const SOURCES = ['ALL', 'SEDAR', 'EDGAR', 'CANLII', 'JOBS', 'OSC']
 const URGENCY_OPTIONS = [
@@ -26,12 +233,6 @@ const URGENCY_OPTIONS = [
   { label: 'Medium (>50)', value: 50 },
 ]
 
-function urgencyColor(score) {
-  if (score > 80) return 'red'
-  if (score > 60) return 'gold'
-  return 'green'
-}
-
 function urgencyTextColor(score) {
   if (score > 80) return 'var(--color-error)'
   if (score > 60) return '#d97706'
@@ -39,6 +240,7 @@ function urgencyTextColor(score) {
 }
 
 export default function LiveTriggersPage() {
+  injectCSS()
   const [statsLoading, setStatsLoading] = useState(true)
   const [feedLoading, setFeedLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -89,8 +291,7 @@ export default function LiveTriggersPage() {
 
   return (
     <AppShell>
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '2rem 2rem 3rem' }}>
-
+      <div className="lt-root">
         <PageHeader
           tag="Signal Intelligence"
           title="Live Triggers"
@@ -98,12 +299,7 @@ export default function LiveTriggersPage() {
         />
 
         {/* Metric cards */}
-        <section style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
-          gap: '1.25rem',
-          marginBottom: '2.5rem',
-        }}>
+        <section className="lt-metrics">
           <MetricCard
             label="Total Today"
             value={statsLoading ? <Skeleton width={48} height={24} /> : (stats?.total_today ?? '--')}
@@ -116,7 +312,7 @@ export default function LiveTriggersPage() {
           />
           <MetricCard
             label="Avg Confidence"
-            value={statsLoading ? <Skeleton width={48} height={24} /> : (stats?.avg_confidence != null ? `${stats.avg_confidence}%` : '--')}
+            value={statsLoading ? <Skeleton width={48} height={24} /> : (stats?.avg_confidence != null ? \`\${stats.avg_confidence}%\` : '--')}
             accent="blue"
           />
           <MetricCard
@@ -127,94 +323,38 @@ export default function LiveTriggersPage() {
         </section>
 
         {/* Source tab bar */}
-        <div style={{
-          display: 'flex',
-          gap: '0.375rem',
-          marginBottom: '1rem',
-          flexWrap: 'wrap',
-        }}>
-          {SOURCES.map(src => {
-            const active = activeTab === src
-            return (
-              <button
-                key={src}
-                onClick={() => setActiveTab(src)}
-                style={{
-                  padding: '6px 16px',
-                  borderRadius: 'var(--radius-full)',
-                  fontFamily: 'var(--font-data)',
-                  fontSize: '0.6875rem',
-                  fontWeight: 700,
-                  letterSpacing: '0.05em',
-                  textTransform: 'uppercase',
-                  cursor: 'pointer',
-                  border: 'none',
-                  transition: 'background var(--transition-fast), color var(--transition-fast)',
-                  background: active ? 'var(--color-secondary-container)' : 'var(--color-surface-container-low)',
-                  color: active ? 'var(--color-on-secondary-container)' : 'var(--color-on-surface-variant)',
-                }}
-              >
-                {src}
-              </button>
-            )
-          })}
+        <div className="lt-tabs-row">
+          {SOURCES.map(src => (
+            <button
+              key={src}
+              onClick={() => setActiveTab(src)}
+              className={\`lt-tab \${activeTab === src ? 'active' : 'inactive'}\`}
+            >
+              {src}
+            </button>
+          ))}
         </div>
 
         {/* Urgency filter */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.75rem',
-          marginBottom: '1.5rem',
-        }}>
-          <span style={{
-            fontFamily: 'var(--font-data)',
-            fontSize: '0.6875rem',
-            fontWeight: 700,
-            color: 'var(--color-on-surface-variant)',
-            letterSpacing: '0.05em',
-            textTransform: 'uppercase',
-          }}>Urgency:</span>
-          {URGENCY_OPTIONS.map(opt => {
-            const active = urgencyFilter === opt.value
-            return (
-              <button
-                key={opt.label}
-                onClick={() => setUrgencyFilter(opt.value)}
-                style={{
-                  padding: '5px 12px',
-                  borderRadius: 'var(--radius-md)',
-                  fontFamily: 'var(--font-data)',
-                  fontSize: '0.6875rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  border: 'none',
-                  transition: 'background var(--transition-fast)',
-                  background: active ? 'var(--color-primary)' : 'var(--color-surface-container-low)',
-                  color: active ? '#fff' : 'var(--color-on-surface-variant)',
-                }}
-              >
-                {opt.label}
-              </button>
-            )
-          })}
+        <div className="lt-filter-row">
+          <span className="lt-filter-label">Urgency:</span>
+          {URGENCY_OPTIONS.map(opt => (
+            <button
+              key={opt.label}
+              onClick={() => setUrgencyFilter(opt.value)}
+              className={\`lt-filter-btn \${urgencyFilter === opt.value ? 'active' : 'inactive'}\`}
+            >
+              {opt.label}
+            </button>
+          ))}
         </div>
 
         {/* Trigger cards */}
-        {feedLoading ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} style={{
-                background: 'var(--color-surface-container-lowest)',
-                borderRadius: 'var(--radius-xl)',
-                padding: '1.25rem',
-                boxShadow: 'var(--shadow-ambient)',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                gap: '1rem',
-              }}>
-                <div style={{ flex: 1 }}>
+        <div className="lt-feed">
+          {feedLoading ? (
+            Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="lt-card">
+                <div className="lt-content">
                   <Skeleton width={180} height={18} style={{ marginBottom: 8 }} />
                   <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
                     <Skeleton width={60} height={20} />
@@ -222,81 +362,35 @@ export default function LiveTriggersPage() {
                   </div>
                   <Skeleton width="90%" height={14} />
                 </div>
-                <div style={{ textAlign: 'right' }}>
-                  <Skeleton width={48} height={36} style={{ marginBottom: 8 }} />
+                <div className="lt-actions">
+                  <Skeleton width={48} height={36} />
                   <Skeleton width={110} height={32} />
                 </div>
               </div>
-            ))}
-          </div>
-        ) : feed.length === 0 ? (
-          <EmptyState
-            icon={<Zap size={32} />}
-            title="No triggers found"
-            message="No signals match the current source and urgency filters."
-          />
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {feed.map((trigger, i) => {
+            ))
+          ) : feed.length === 0 ? (
+            <EmptyState
+              icon={<Zap size={32} />}
+              title="No triggers found"
+              message="No signals match the current source and urgency filters."
+            />
+          ) : (
+            feed.map((trigger, i) => {
               const id = trigger.id || trigger.trigger_id || i
               const urgency = trigger.urgency || trigger.urgency_score || 0
               const isBriefing = briefLoading[id]
               const hasBrief = briefResults[id]
               return (
-                <div
-                  key={id}
-                  style={{
-                    background: 'var(--color-surface-container-lowest)',
-                    borderRadius: 'var(--radius-xl)',
-                    boxShadow: 'var(--shadow-ambient)',
-                    padding: '1.25rem',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'flex-start',
-                    gap: '1.5rem',
-                    transition: 'box-shadow var(--transition-card)',
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.boxShadow = '0 4px 24px -6px rgba(25,28,30,0.12)'}
-                  onMouseLeave={e => e.currentTarget.style.boxShadow = 'var(--shadow-ambient)'}
-                >
-                  {/* Left side */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{
-                      fontFamily: 'var(--font-editorial)',
-                      fontSize: '1.125rem',
-                      fontWeight: 500,
-                      color: 'var(--color-primary)',
-                      marginBottom: '0.5rem',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}>
-                      {trigger.company_name || trigger.entity_name || 'Unknown Entity'}
-                    </div>
-                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.625rem' }}>
+                <div key={id} className="lt-card">
+                  <div className="lt-content">
+                    <div className="lt-entity">{trigger.company_name || trigger.entity_name || 'Unknown Entity'}</div>
+                    <div className="lt-tags">
                       {trigger.source && <Tag label={trigger.source} color="navy" />}
                       {trigger.practice_area && <Tag label={trigger.practice_area} color="blue" />}
                     </div>
-                    <p style={{
-                      fontFamily: 'var(--font-data)',
-                      fontSize: '0.8125rem',
-                      color: 'var(--color-on-surface-variant)',
-                      lineHeight: 1.55,
-                      margin: 0,
-                      marginBottom: '0.5rem',
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden',
-                    }}>
-                      {trigger.description || trigger.headline || trigger.summary || ''}
-                    </p>
+                    <p className="lt-desc">{trigger.description || trigger.headline || trigger.summary || ''}</p>
                     {(trigger.filed_at || trigger.created_at) && (
-                      <div style={{
-                        fontFamily: 'var(--font-data)',
-                        fontSize: '0.6875rem',
-                        color: 'var(--color-on-primary-container)',
-                      }}>
+                      <div className="lt-time">
                         {new Date(trigger.filed_at || trigger.created_at).toLocaleString('en-CA', {
                           month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
                         })}
@@ -304,55 +398,17 @@ export default function LiveTriggersPage() {
                     )}
                   </div>
 
-                  {/* Right side */}
-                  <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'flex-end',
-                    gap: '0.75rem',
-                    flexShrink: 0,
-                  }}>
-                    <div style={{
-                      fontFamily: 'var(--font-editorial)',
-                      fontSize: '2rem',
-                      fontWeight: 500,
-                      color: urgencyTextColor(urgency),
-                      lineHeight: 1,
-                    }}>
+                  <div className="lt-actions">
+                    <div className="lt-urgency" style={{ color: urgencyTextColor(urgency) }}>
                       {Math.round(urgency)}
                     </div>
                     {hasBrief && !hasBrief.error ? (
-                      <span style={{
-                        fontFamily: 'var(--font-data)',
-                        fontSize: '0.6875rem',
-                        color: 'var(--color-secondary)',
-                        fontWeight: 700,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.04em',
-                      }}>Brief Ready</span>
+                      <span className="lt-brief-ready">Brief Ready</span>
                     ) : (
                       <button
                         onClick={() => handleBrief(id)}
                         disabled={isBriefing}
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: 6,
-                          padding: '7px 16px',
-                          borderRadius: 'var(--radius-md)',
-                          fontFamily: 'var(--font-data)',
-                          fontSize: '0.6875rem',
-                          fontWeight: 700,
-                          letterSpacing: '0.04em',
-                          textTransform: 'uppercase',
-                          cursor: isBriefing ? 'default' : 'pointer',
-                          background: isBriefing ? 'var(--color-surface-container-high)' : 'var(--color-primary)',
-                          color: isBriefing ? 'var(--color-on-surface-variant)' : '#fff',
-                          border: 'none',
-                          transition: 'background var(--transition-fast)',
-                          whiteSpace: 'nowrap',
-                          opacity: isBriefing ? 0.7 : 1,
-                        }}
+                        className={\`lt-btn-brief \${isBriefing ? 'lt-btn-brief-loading' : 'lt-btn-brief-active'}\`}
                       >
                         {isBriefing && <Loader size={12} style={{ animation: 'spin 1s linear infinite' }} />}
                         {isBriefing ? 'Generating...' : 'Generate Brief'}
@@ -361,9 +417,9 @@ export default function LiveTriggersPage() {
                   </div>
                 </div>
               )
-            })}
-          </div>
-        )}
+            })
+          )}
+        </div>
 
       </div>
     </AppShell>

@@ -1,30 +1,216 @@
+/**
+ * pages/ClassActionRadar.jsx — P6 Redesign
+ *
+ * Module #23 — risk ranking, signal convergence, live cases, and counsel matching.
+ * DM Serif Display + DM Sans, tonal surfaces, no inline styles.
+ */
+
 import { useEffect, useMemo, useState } from 'react'
 import AppShell from '../components/layout/AppShell'
 import { classActions as classActionsApi } from '../api/client'
 
+const RADAR_CSS = `
+.car-root {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 2.5rem 2rem;
+}
+.car-header { margin-bottom: 2rem; }
+.car-title {
+  font-family: var(--font-editorial);
+  font-size: 1.6rem;
+  font-weight: 400;
+  color: var(--color-primary);
+  margin: 0 0 4px;
+}
+.car-subtitle {
+  font-family: var(--font-data);
+  color: var(--color-on-surface-variant);
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+/* Stats */
+.car-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.car-stat-card {
+  background: var(--color-surface-container-lowest);
+  border-radius: var(--radius-xl);
+  padding: 16px;
+  box-shadow: var(--shadow-ambient);
+}
+.car-stat-label {
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-on-surface-variant);
+  margin-bottom: 8px;
+}
+.car-stat-val {
+  font-family: var(--font-editorial);
+  font-size: 1.8rem;
+  font-weight: 400;
+  color: var(--color-primary);
+}
+
+/* Sections */
+.car-section {
+  background: var(--color-surface-container-lowest);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-ambient);
+}
+.car-section-padded {
+  padding: 18px;
+}
+.car-section-title {
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-on-surface-variant);
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--color-surface-container-high);
+}
+
+/* Tables */
+.car-table { width: 100%; border-collapse: collapse; }
+.car-th {
+  text-align: left;
+  padding: 12px 14px;
+  font-family: var(--font-data);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-on-surface-variant);
+  background: var(--color-surface-container-low);
+}
+.car-tr {
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  border-bottom: 1px solid var(--color-surface-container-low);
+}
+.car-tr:last-child { border-bottom: none; }
+.car-tr:hover { background: var(--color-surface-container-high) !important; }
+.car-tr.selected { background: var(--color-surface-container-low); }
+
+.car-td {
+  padding: 12px 14px;
+  font-family: var(--font-data);
+  font-size: 0.875rem;
+  color: var(--color-on-surface);
+}
+.car-td-strong {
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--color-primary);
+}
+
+/* Badges & Items */
+.car-badge {
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-container-high);
+  color: var(--color-on-surface-variant);
+  font-family: var(--font-data);
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 700;
+}
+.car-item {
+  background: var(--color-surface-container-low);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  margin-bottom: 8px;
+  transition: background var(--transition-fast);
+}
+.car-item:hover { background: var(--color-surface-container-high); }
+.car-item-title {
+  font-family: var(--font-data);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-bottom: 4px;
+}
+.car-item-sub {
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+  color: var(--color-on-surface-variant);
+}
+.car-item-mono {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-secondary);
+}
+
+/* Heatmap */
+.car-hm-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 12px;
+}
+.car-hm-cell {
+  background: var(--color-surface-container-low);
+  border-radius: var(--radius-md);
+  padding: 14px;
+}
+.car-hm-sector {
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--color-on-surface-variant);
+  margin-bottom: 8px;
+}
+.car-hm-val {
+  font-family: var(--font-editorial);
+  font-size: 1.4rem;
+  font-weight: 400;
+  color: var(--color-primary);
+  line-height: 1;
+}
+.car-hm-pct {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-secondary);
+  margin-top: 4px;
+}
+
+@media (max-width: 980px) {
+  .car-grid-main, .car-grid-sub { grid-template-columns: 1fr !important; }
+}
+`
+
+function injectCSS() {
+  if (typeof document !== 'undefined' && !document.getElementById('car-styles')) {
+    const el = document.createElement('style')
+    el.id = 'car-styles'
+    el.textContent = RADAR_CSS
+    document.head.appendChild(el)
+  }
+}
+
 function pct(value) {
-  return `${((value || 0) * 100).toFixed(1)}%`
+  return \`\${((value || 0) * 100).toFixed(1)}%\`
 }
 
 function TypeBadge({ type }) {
-  const label = type ? type.replaceAll('_', ' ') : 'unknown'
-  return (
-    <span style={{
-      padding: '2px 8px',
-      borderRadius: 999,
-      background: 'var(--color-surface-container-high)',
-      color: 'var(--color-on-surface-variant)',
-      fontSize: '0.6875rem',
-      textTransform: 'uppercase',
-      letterSpacing: '0.04em',
-      fontWeight: 700,
-    }}>
-      {label}
-    </span>
-  )
+  const label = type ? type.replace(/_/g, ' ') : 'unknown'
+  return <span className="car-badge">{label}</span>
 }
 
 export default function ClassActionRadar() {
+  injectCSS()
   const [loading, setLoading] = useState(true)
   const [risks, setRisks] = useState([])
   const [cases, setCases] = useState([])
@@ -68,120 +254,120 @@ export default function ClassActionRadar() {
 
   return (
     <AppShell>
-      <div style={{ maxWidth: 1320, margin: '0 auto', padding: '2rem' }}>
-        <div style={{ marginBottom: '1.5rem' }}>
-          <h1 style={{ fontFamily: 'var(--font-editorial)', color: 'var(--color-primary)', marginBottom: 4 }}>
-            Class Action Radar
-          </h1>
-          <p style={{ color: 'var(--color-on-surface-variant)', fontSize: '0.875rem' }}>
-            Module #23 — risk ranking, signal convergence, live cases, and counsel matching.
-          </p>
+      <div className="car-root">
+        <div className="car-header">
+          <h1 className="car-title">Class Action Radar</h1>
+          <p className="car-subtitle">Module #23 — risk ranking, signal convergence, live cases, and counsel matching.</p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(140px, 1fr))', gap: 12, marginBottom: 16 }}>
-          <div style={{ background: 'var(--color-surface-container-lowest)', borderRadius: 12, padding: 12 }}>
-            <div style={{ fontSize: '0.6875rem', color: 'var(--color-on-surface-variant)' }}>Scored Companies</div>
-            <div style={{ fontSize: '1.5rem', color: 'var(--color-primary)' }}>{dashboard?.total_risk_companies ?? '—'}</div>
+        <div className="car-stats">
+          <div className="car-stat-card">
+            <div className="car-stat-label">Scored Companies</div>
+            <div className="car-stat-val">{dashboard?.total_risk_companies ?? '—'}</div>
           </div>
-          <div style={{ background: 'var(--color-surface-container-lowest)', borderRadius: 12, padding: 12 }}>
-            <div style={{ fontSize: '0.6875rem', color: 'var(--color-on-surface-variant)' }}>High Risk (≥70%)</div>
-            <div style={{ fontSize: '1.5rem', color: 'var(--color-primary)' }}>{dashboard?.high_risk_companies ?? '—'}</div>
+          <div className="car-stat-card">
+            <div className="car-stat-label">High Risk (≥70%)</div>
+            <div className="car-stat-val">{dashboard?.high_risk_companies ?? '—'}</div>
           </div>
-          <div style={{ background: 'var(--color-surface-container-lowest)', borderRadius: 12, padding: 12 }}>
-            <div style={{ fontSize: '0.6875rem', color: 'var(--color-on-surface-variant)' }}>Active Cases</div>
-            <div style={{ fontSize: '1.5rem', color: 'var(--color-primary)' }}>{dashboard?.tracked_cases_active ?? '—'}</div>
+          <div className="car-stat-card">
+            <div className="car-stat-label">Active Cases</div>
+            <div className="car-stat-val">{dashboard?.tracked_cases_active ?? '—'}</div>
           </div>
-          <div style={{ background: 'var(--color-surface-container-lowest)', borderRadius: 12, padding: 12 }}>
-            <div style={{ fontSize: '0.6875rem', color: 'var(--color-on-surface-variant)' }}>Indexed Law Firms</div>
-            <div style={{ fontSize: '1.5rem', color: 'var(--color-primary)' }}>{dashboard?.law_firms_indexed ?? '—'}</div>
+          <div className="car-stat-card">
+            <div className="car-stat-label">Indexed Law Firms</div>
+            <div className="car-stat-val">{dashboard?.law_firms_indexed ?? '—'}</div>
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 16 }}>
-          <section style={{ background: 'var(--color-surface-container-lowest)', borderRadius: 12, overflow: 'hidden' }}>
-            <div style={{ padding: 14, borderBottom: '1px solid var(--color-surface-container-high)' }}>
-              <strong>Risk Table</strong>
+        <div className="car-grid-main" style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 16 }}>
+          {/* Risk Table */}
+          <section className="car-section">
+            <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--color-surface-container-high)' }}>
+              <div className="car-section-title" style={{ padding: 0, margin: 0, border: 'none' }}>Risk Table</div>
             </div>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ background: 'var(--color-surface-container-low)' }}>
-                  {['Company', 'Type', 'Horizon', 'Probability'].map((h) => (
-                    <th key={h} style={{ textAlign: 'left', padding: 10, fontSize: '0.6875rem', color: 'var(--color-on-surface-variant)' }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {(loading ? [] : risks).map((row) => (
-                  <tr
-                    key={row.company_id}
-                    onClick={() => setSelectedCompanyId(row.company_id)}
-                    style={{
-                      cursor: 'pointer',
-                      background: selectedCompanyId === row.company_id ? 'var(--color-surface-container-low)' : 'transparent',
-                    }}
-                  >
-                    <td style={{ padding: 10 }}>{row.company_name}</td>
-                    <td style={{ padding: 10 }}><TypeBadge type={row.predicted_type} /></td>
-                    <td style={{ padding: 10 }}>{row.time_horizon_days ? `${row.time_horizon_days}d` : '—'}</td>
-                    <td style={{ padding: 10, fontWeight: 700 }}>{pct(row.class_action_probability)}</td>
+            <div style={{ overflowX: 'auto' }}>
+              <table className="car-table">
+                <thead>
+                  <tr>
+                    {['Company', 'Type', 'Horizon', 'Probability'].map((h) => (
+                      <th key={h} className="car-th">{h}</th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {(loading ? [] : risks).map((row) => (
+                    <tr
+                      key={row.company_id}
+                      onClick={() => setSelectedCompanyId(row.company_id)}
+                      className={\`car-tr \${selectedCompanyId === row.company_id ? 'selected' : ''}\`}
+                    >
+                      <td className="car-td">{row.company_name}</td>
+                      <td className="car-td"><TypeBadge type={row.predicted_type} /></td>
+                      <td className="car-td">{row.time_horizon_days ? \`\${row.time_horizon_days}d\` : '—'}</td>
+                      <td className="car-td car-td-strong">{pct(row.class_action_probability)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </section>
 
-          <section style={{ background: 'var(--color-surface-container-lowest)', borderRadius: 12, padding: 14 }}>
-            <strong>Signal Timeline</strong>
-            <div style={{ marginTop: 10, display: 'grid', gap: 8 }}>
+          {/* Timeline */}
+          <section className="car-section car-section-padded">
+            <div className="car-section-title">Signal Timeline</div>
+            <div style={{ maxHeight: '400px', overflowY: 'auto', paddingRight: 4 }}>
               {(timeline || []).slice(0, 8).map((sig, idx) => (
-                <div key={`${sig.signal_type}-${idx}`} style={{ background: 'var(--color-surface-container-low)', borderRadius: 8, padding: 10 }}>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 700 }}>{sig.signal_type}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--color-on-surface-variant)' }}>
-                    weight: {(sig.weight || 0).toFixed ? sig.weight.toFixed(2) : sig.weight} · {sig.date ? new Date(sig.date).toLocaleDateString('en-CA') : 'n/a'}
+                <div key={\`\${sig.signal_type}-\${idx}\`} className="car-item">
+                  <div className="car-item-title">{sig.signal_type}</div>
+                  <div className="car-item-sub">
+                    weight:{' '}
+                    <span className="car-item-mono">{(sig.weight || 0).toFixed ? sig.weight.toFixed(2) : sig.weight}</span>
+                    {' · '} 
+                    {sig.date ? new Date(sig.date).toLocaleDateString('en-CA') : 'n/a'}
                   </div>
                 </div>
               ))}
-              {!timeline?.length && <div style={{ color: 'var(--color-on-surface-variant)', fontSize: '0.8125rem' }}>No convergence signals available for this company.</div>}
+              {!timeline?.length && <div className="car-item-sub">No convergence signals available for this company.</div>}
             </div>
           </section>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 16 }}>
-          <section style={{ background: 'var(--color-surface-container-lowest)', borderRadius: 12, padding: 14 }}>
-            <strong>Active Cases Tracker</strong>
-            <div style={{ marginTop: 10, display: 'grid', gap: 8, maxHeight: 280, overflow: 'auto' }}>
+        <div className="car-grid-sub" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 16 }}>
+          {/* Active Cases */}
+          <section className="car-section car-section-padded">
+            <div className="car-section-title">Active Cases Tracker</div>
+            <div style={{ maxHeight: 280, overflowY: 'auto', paddingRight: 4 }}>
               {cases.slice(0, 20).map((c) => (
-                <div key={c.id} style={{ background: 'var(--color-surface-container-low)', borderRadius: 8, padding: 10 }}>
-                  <div style={{ fontWeight: 700, fontSize: '0.8125rem' }}>{c.case_name}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--color-on-surface-variant)' }}>
-                    {c.jurisdiction} · {c.status} · {c.case_type || 'untyped'}
-                  </div>
+                <div key={c.id} className="car-item">
+                  <div className="car-item-title">{c.case_name}</div>
+                  <div className="car-item-sub">{c.jurisdiction} · {c.status} · {c.case_type || 'untyped'}</div>
                 </div>
               ))}
             </div>
           </section>
 
-          <section style={{ background: 'var(--color-surface-container-lowest)', borderRadius: 12, padding: 14 }}>
-            <strong>Firm Match Panel</strong>
+          {/* Firm Match Panel */}
+          <section className="car-section car-section-padded">
+            <div className="car-section-title">Firm Match Panel</div>
             {matchLoading ? (
-              <div style={{ marginTop: 10, color: 'var(--color-on-surface-variant)' }}>Loading firm recommendations…</div>
+              <div className="car-item-sub">Loading firm recommendations…</div>
             ) : (
-              <div style={{ marginTop: 10, display: 'grid', gap: 12 }}>
+              <div style={{ display: 'grid', gap: 16 }}>
                 <div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--color-on-surface-variant)', marginBottom: 6 }}>Plaintiff</div>
+                  <div className="car-item-sub" style={{ marginBottom: 6, fontWeight: 700, textTransform: 'uppercase' }}>Plaintiff</div>
                   {(firmMatches?.plaintiff_firms || []).slice(0, 3).map((m) => (
-                    <div key={m.firm.id} style={{ padding: 8, background: 'var(--color-surface-container-low)', borderRadius: 8, marginBottom: 6 }}>
-                      <div style={{ fontWeight: 700, fontSize: '0.8125rem' }}>{m.firm.name}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--color-on-surface-variant)' }}>match: {pct(m.score)}</div>
+                    <div key={m.firm.id} className="car-item">
+                      <div className="car-item-title">{m.firm.name}</div>
+                      <div className="car-item-sub">match: <span className="car-item-mono">{pct(m.score)}</span></div>
                     </div>
                   ))}
                 </div>
                 <div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--color-on-surface-variant)', marginBottom: 6 }}>Defence</div>
+                  <div className="car-item-sub" style={{ marginBottom: 6, fontWeight: 700, textTransform: 'uppercase' }}>Defence</div>
                   {(firmMatches?.defence_firms || []).slice(0, 3).map((m) => (
-                    <div key={m.firm.id} style={{ padding: 8, background: 'var(--color-surface-container-low)', borderRadius: 8, marginBottom: 6 }}>
-                      <div style={{ fontWeight: 700, fontSize: '0.8125rem' }}>{m.firm.name}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--color-on-surface-variant)' }}>match: {pct(m.score)}</div>
+                    <div key={m.firm.id} className="car-item">
+                      <div className="car-item-title">{m.firm.name}</div>
+                      <div className="car-item-sub">match: <span className="car-item-mono">{pct(m.score)}</span></div>
                     </div>
                   ))}
                 </div>
@@ -190,18 +376,20 @@ export default function ClassActionRadar() {
           </section>
         </div>
 
-        <section style={{ background: 'var(--color-surface-container-lowest)', borderRadius: 12, padding: 14, marginTop: 16 }}>
-          <strong>Sector Heatmap</strong>
-          <div style={{ marginTop: 10, display: 'grid', gridTemplateColumns: 'repeat(5, minmax(100px, 1fr))', gap: 8 }}>
+        {/* Sector Heatmap */}
+        <section className="car-section car-section-padded" style={{ marginTop: 16 }}>
+          <div className="car-section-title">Sector Heatmap</div>
+          <div className="car-hm-grid">
             {sectors.slice(0, 15).map((s) => (
-              <div key={s.sector} style={{ background: 'var(--color-surface-container-low)', borderRadius: 8, padding: 10 }}>
-                <div style={{ fontSize: '0.75rem', color: 'var(--color-on-surface-variant)' }}>{s.sector}</div>
-                <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--color-primary)' }}>{s.risk_count}</div>
-                <div style={{ fontSize: '0.75rem', color: 'var(--color-on-surface-variant)' }}>{pct(s.avg_probability)}</div>
+              <div key={s.sector} className="car-hm-cell">
+                <div className="car-hm-sector">{s.sector}</div>
+                <div className="car-hm-val">{s.risk_count}</div>
+                <div className="car-hm-pct">{pct(s.avg_probability)} avg prob</div>
               </div>
             ))}
           </div>
         </section>
+
       </div>
     </AppShell>
   )
